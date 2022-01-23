@@ -13,7 +13,6 @@ class CameraPlayer:
                  dim=None,
                  **kwargs):
 
-        self.camera_port = src
         self.capture = cv2.VideoCapture(src, cv2.CAP_V4L2)
         self.capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
 
