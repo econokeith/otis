@@ -47,11 +47,13 @@ class CameraPlayer:
         cv2.imshow(self.name, big_frame)
 
     def test(self):
-        tick = 0
+        fps = 100
         while True:
-            timer = cv2.getTickCount()
+            tick = time.time()
+
+            #timer = cv2.getTickCount()
             self.read(True)
-            fps = cv2.getTickFrequency() / (cv2.getTickCount() - timer)
+            #fps = cv2.getTickFrequency() / (cv2.getTickCount() - timer)
 
             h, w, _ = self.frame.shape
             cv2.putText(self.frame, f'dim = {w} x {h}', (10, 30), self.font, .75, (0, 0, 255), 1)
@@ -60,6 +62,9 @@ class CameraPlayer:
             cv2.putText(self.frame, f'LATENCY = {self.latency} ms', (10, int(self.dim[1] - 60)), self.font, .75, (0, 255, 0), 1)
             #cv2.putText(self.frame, f'LATENCY = {self.latency2}', (10, int(self.dim[1] - 30)), self.font, .75, (255,0, 0), 1)
             self.show()
+            tock = time.time()
+            fps = int(1/(tock-tick))
+
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
             tick = time.time()
