@@ -20,12 +20,12 @@ class CameraPlayer:
             self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, dim[0])
             self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, dim[1])
         else:
-            self.dim = int(self.capture.get(cv2.CAP_PROP_FRAME_WIDTH)), int(self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            self.dim = self.capture.get(cv2.CAP_PROP_FRAME_WIDTH), self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
             self.dim = [int(d) for d in self.dim]
 
         self.center = int(self.dim[0]/2), int(self.dim[1]/2)
         self.frame = np.empty((*self.dim[::-1], 3))
-        self.grabbed = None
+        self.grabbed = True
         self.name = name
         self.stopped = False
         self.font = cv2.FONT_HERSHEY_DUPLEX
