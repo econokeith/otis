@@ -5,7 +5,6 @@ import cv2
 import numpy as np
 import imutils
 
-
 class CameraPlayer:
 
     def __init__(self, src=0,
