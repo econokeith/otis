@@ -1,2 +1,3 @@
-**.ipynb**
-**.avi
+*.ipynb*
+*.avi
+*.idea*
