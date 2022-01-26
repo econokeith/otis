@@ -40,6 +40,8 @@ class CameraPlayer:
         self.fps_writer = writers.FPSWriter((10, 60), scale=2, ltype=2, color='r')
         self.latency = 0
         self.limit_fps = True
+        self.exit_warning = writers.TextWriter((150, 10), scale=2, ltype=2, color='r')
+        self.exit_warning.line = 'to exit hit ctrl-c or q'
 
     @property
     def max_fps(self):
@@ -66,17 +68,20 @@ class CameraPlayer:
         if silent is False:
             return self.grabbed, self.frame
 
-    def show(self, scale=1, width=None, wait=False, fps=False):
+    def show(self, scale=1, width=None, wait=False, fps=False, warn=False):
         if wait is True:
             self.sleeper()
         w = self.dim[0]*scale if width is None else width
         if fps is True:
             self.write_fps()
 
+        # if warn is True:
+        #     self.exit_warning.write(self.frame)
+
         big_frame = imutils.resize(self.frame, width=int(w))
         cv2.imshow(self.name, big_frame)
 
-    def test(self, wait=False):
+    def test(self, wait=False, warn=False):
         """
         test to confirm that camera feed is working and check the fps
         :return:
@@ -88,7 +93,7 @@ class CameraPlayer:
             self.read()
             self.write_fps()
             dim_writer.write(self.frame)
-            self.show(wait=wait)
+            self.show(wait=wait, warn=warn)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
@@ -133,8 +138,3 @@ class ThreadedCameraPlayer(CameraPlayer):
     def read(self, silent=False):
         if silent is False:
             return self.grabbed, self.frame
-
-
-if __name__=='__main__':
-    cam = CameraPlayer(dim=(1920, 1080))
-    cam.test()

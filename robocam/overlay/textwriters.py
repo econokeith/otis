@@ -7,10 +7,10 @@ import numpy as np
 import robocam.helpers.utility as uti
 import robocam.helpers.timers as timers
 import robocam.overlay.colortools as ctools
-from robocam.overlay.writer_base import Writer
+import robocam.overlay.writer_base as base
 
 
-class TextWriter(Writer):
+class TextWriter(base.Writer):
 
     def __init__(self,
                  pos,  #position

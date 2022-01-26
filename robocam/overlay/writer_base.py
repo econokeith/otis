@@ -4,6 +4,7 @@ cls().make_list which instantiates a list of identical Writer/subclass
 objects
 """
 import copy
+import robocam.overlay.colortools as ctools
 
 class Writer:
 
@@ -17,7 +18,18 @@ class Writer:
         cls().make_list which instantiates a list of identical Writer/subclass
         objects
         """
-        pass
+        self._color = (0,0,0)
+
+    @property
+    def color(self):
+        return self._color
+
+    @color.setter
+    def color(self, new_color):
+        if isinstance(new_color, str):
+            self._color = ctools.color_hash[new_color]
+        else:
+            self._color = new_color
 
     def copy(self):
         return copy.deepcopy(self)
