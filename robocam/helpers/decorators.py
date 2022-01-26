@@ -1,5 +1,5 @@
 """
-A collection of decorators that main usefuly when testing functionality in
+A collection of decorators that  are mainly useful when testing functionality in
 Jupyter notebooks
 """
 

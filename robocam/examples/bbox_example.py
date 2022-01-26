@@ -9,7 +9,7 @@ import numpy as np
 
 import robocam.camera as camera
 
-from robocam.helpers.multiprocessing import close_gracefully, ProcessDataSharer
+from robocam.helpers.multitools import close_gracefully, ProcessDataSharer
 from robocam.overlay.textwriters import FPSWriter, TypeWriter
 
 D_SHAPE = (1920, 1080)

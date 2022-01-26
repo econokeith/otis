@@ -1,4 +1,5 @@
 #todo: Extend CameraPlayer to work with PiCamera Backend
+#todo: add waitKey() break condition to CamperPlayer Method
 import time
 from threading import Thread
 
@@ -6,7 +7,6 @@ import cv2
 import numpy as np
 import imutils
 
-import robocam.helpers.decorators as decors
 import robocam.helpers.timers as timers
 import robocam.overlay.textwriters as writers
 
@@ -15,6 +15,7 @@ class CameraPlayer:
     def __init__(self, src=0,
                  name='tracker',
                  dim=None,
+                 max_fps=30,
                  **kwargs):
 
         self.capture = cv2.VideoCapture(src, cv2.CAP_V4L2)
@@ -34,7 +35,7 @@ class CameraPlayer:
         self.grabbed = True
         self.name = name
         self.stopped = False
-        self._max_fps = 30
+        self._max_fps = max_fps
         self.sleeper = timers.SmartSleep(1 / self._max_fps)
         self.fps_writer = writers.FPSWriter((10, 60), scale=2, ltype=2, color='r')
         self.latency = 0
@@ -65,9 +66,9 @@ class CameraPlayer:
         if silent is False:
             return self.grabbed, self.frame
 
-    def show(self, scale=1, width=None, wait=True, fps=False):
+    def show(self, scale=1, width=None, wait=False, fps=False):
         if wait is True:
-            self.sleeper(wait)
+            self.sleeper()
         w = self.dim[0]*scale if width is None else width
         if fps is True:
             self.write_fps()
@@ -75,7 +76,7 @@ class CameraPlayer:
         big_frame = imutils.resize(self.frame, width=int(w))
         cv2.imshow(self.name, big_frame)
 
-    def test(self):
+    def test(self, wait=False):
         """
         test to confirm that camera feed is working and check the fps
         :return:
@@ -87,7 +88,7 @@ class CameraPlayer:
             self.read()
             self.write_fps()
             dim_writer.write(self.frame)
-            self.show(wait=False)
+            self.show(wait=wait)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 

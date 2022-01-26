@@ -7,7 +7,6 @@ import numpy as np
 import robocam.helpers.utility as uti
 import robocam.helpers.timers as timers
 import robocam.overlay.colortools as ctools
-from robocam.examples.typewriter_example import main
 from robocam.overlay.writer_base import Writer
 
 
