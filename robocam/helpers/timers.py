@@ -6,17 +6,27 @@ class Timer(abc.ABC):
 
     @abc.abstractmethod
     def __init__(self):
+        """
+        abstract base class for all Timers. 
+        All are called via the __call__ method
+        """
         pass
 
     @abc.abstractmethod
-    def __call__(self):
+    def __call__(self, wait=None):
+        """
+        all call methods should allow for overriding the wait timer
+        if applicable
+        """
         return True
 
 
 class SmartSleep(Timer):
 
     def __init__(self, wait=1/30):
-
+        """
+        if time since last call is less than wait, sleeps for the difference. 
+        """
         self.wait = wait
         self.tick = None
 
@@ -34,7 +44,7 @@ class LastCallTimer(Timer):
 
     def __init__(self):
         """
-        returns the since the last time it was called
+        returns the time since the last time it was called
         """
         self._tick = time.time()
 
@@ -50,7 +60,7 @@ class BoolTimer(Timer):
 
     def __init__(self, wait=1/3):
         """
-
+        returns true wait is over else returns False
         :param wait: float in seconds
         """
         self.wait = wait
@@ -69,7 +79,9 @@ class Blinker(Timer):
 
     def __init__(self, cycle=.5):
         """
-        :type cycle: list [time_on, time_off]
+        returns True during on_time and False during off_time
+        :type cycle: if list : time_on, time_off = cycle
+                     if double : time_on = time_off = cycle
         """
         self.cycle = cycle
         self.on = False
@@ -98,4 +110,5 @@ class Blinker(Timer):
             if time.time() - self._tick > self._cycle[1]:
                 self._tick = time.time()
                 self.on = True
+                
             return False

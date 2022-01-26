@@ -1,3 +1,4 @@
+#todo: Extend CameraPlayer to work with PiCamera Backend
 import time
 from threading import Thread
 
@@ -7,7 +8,7 @@ import imutils
 
 import robocam.helpers.decorators as decors
 import robocam.helpers.timers as timers
-import robocam.overlay.texttools as ttools
+import robocam.overlay.textwriters as writers
 
 class CameraPlayer:
 
@@ -33,40 +34,70 @@ class CameraPlayer:
         self.grabbed = True
         self.name = name
         self.stopped = False
-        self.max_fps = 30
-        self.sleeper = timers.SmartSleep(1/self.max_fps)
-        self.fps_writer = ttools.FPSWriter((10, 60), scale=2, ltype=2, color='r')
+        self._max_fps = 30
+        self.sleeper = timers.SmartSleep(1 / self._max_fps)
+        self.fps_writer = writers.FPSWriter((10, 60), scale=2, ltype=2, color='r')
+        self.latency = 0
+        self.limit_fps = True
+
+    @property
+    def max_fps(self):
+        return self._max_fps
+
+    @max_fps.setter
+    def max_fps(self, new_fps):
+        self._max_fps = new_fps
+        self.sleeper.wait = 1/self._max_fps
+
+    def write_fps(self):
+        self.fps_writer.write(self.frame)
 
     def read(self, silent=False):
+        """
+        equivalent of cv2 VideoCapture().read()
+        reads new frame from buffer
+        :param silent:
+        :return:
+        """
         tick = time.time()
         self.grabbed, self.frame = self.capture.read()
         self.latency = int(1000*(time.time()-tick))
         if silent is False:
             return self.grabbed, self.frame
 
-    def show(self, scale=1, width=None, wait=None):
-        if wait is not None:
+    def show(self, scale=1, width=None, wait=True, fps=False):
+        if wait is True:
             self.sleeper(wait)
         w = self.dim[0]*scale if width is None else width
+        if fps is True:
+            self.write_fps()
 
         big_frame = imutils.resize(self.frame, width=int(w))
         cv2.imshow(self.name, big_frame)
 
     def test(self):
-        dim_writer = ttools.TextWriter((10, 120), scale=2, ltype=2, color='r')
+        """
+        test to confirm that camera feed is working and check the fps
+        :return:
+        """
+        dim_writer = writers.TextWriter((10, 120), scale=2, ltype=2, color='r')
         dim_writer.line = f'dim = {self.dim[0]} x {self.dim[1]}'
 
         while True:
             self.read()
-            self.fps_writer.write(self.frame)
+            self.write_fps()
             dim_writer.write(self.frame)
-            self.show()
+            self.show(wait=False)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
         self.stop()
 
     def stop(self):
+        """
+        release the VideoCapture and destroy any remaining windows
+        :return:
+        """
         self.capture.release()
         cv2.destroyAllWindows()
         self.stopped = True
@@ -75,6 +106,14 @@ class CameraPlayer:
 class ThreadedCameraPlayer(CameraPlayer):
 
     def __init__(self, *args, **kwargs):
+        """
+        separates the VideoCapture.read() and
+        cv2.imshow functions into separate threads. Only really useful
+        if you need the overlay to update more quickly than the camera is
+        able to provide new frames.
+        :param args:
+        :param kwargs:
+        """
         super().__init__(*args, **kwargs)
         self.clock = timers.SmartSleep()
 

@@ -1,3 +1,8 @@
+"""
+A collection of decorators that main usefuly when testing functionality in
+Jupyter notebooks
+"""
+
 import time
 import robocam.helpers.timers as timers
 

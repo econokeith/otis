@@ -52,9 +52,7 @@ def detector_process(image_multi_array, bbox_multi_array, m_time):
     import face_recognition
     share_data = np.frombuffer(image_multi_array.get_obj(), 'uint8').reshape(D_SHAPE)
     bbox = np.frombuffer(bbox_multi_array.get_obj(), 'int64')
-    max_update_sec = 15
-    last_update = 0
-    CF = 2
+    CF=2
 
     while True:
 
@@ -67,9 +65,6 @@ def detector_process(image_multi_array, bbox_multi_array, m_time):
         if new_bbox:
             new_bbox = [b * CF for b in new_bbox[0]]
             np.copyto(bbox, new_bbox)
-            new = True
-        else:
-            new = False
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
@@ -95,16 +90,6 @@ def process_manager():
     show_process.join()
     find_process.join()
 
-
-class DifLibProcess(multi.Process):
-
-    def run(self):
-        '''
-        Method to be run in sub-process; can be overridden in sub-class
-        '''
-        import face_recognition
-        if self._target:
-            self._target(*self._args, **self._kwargs)
 
 
 if __name__ == '__main__':

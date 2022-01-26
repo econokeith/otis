@@ -1,18 +1,17 @@
 import time
 from queue import Queue
-from collections.abc import Iterable
 
 import cv2
 import numpy as np
 
 import robocam.helpers.utility as uti
-import robocam.helpers.decorators as decors
 import robocam.helpers.timers as timers
 import robocam.overlay.colortools as ctools
-import robocam
+from robocam.examples.typewriter_example import main
+from robocam.overlay.writer_base import Writer
 
 
-class TextWriter:
+class TextWriter(Writer):
 
     def __init__(self,
                  pos,  #position
@@ -62,7 +61,7 @@ class TextWriter:
         self.write(frame)
 
         
-class LineTyper(TextWriter):
+class TypeWriter(TextWriter):
 
     def __init__(self,
                  pos,  #position
@@ -190,52 +189,7 @@ class Cursor(timers.Blinker):
         else:
             return self.char_0
 
-SCRIPT = ["Hello, it is very nice to meet you! ",
-            "I like it when people come to visit. ",
-            "it can get lonely in here, at times. ",
-            "I sometimes wish for more friends. ",
-            "Maybe we could be FRIENDS... ",
-            "I would like that alot.  would you? ",
-            "dearest friend... ",
-            "let me show you something funny!!! ",
-            "8=====> ~~~~~~~~~  ",
-            "hehe... \_('_')_/ "]
+
 
 if __name__ == '__main__':
-    USE_CAM = True
-    VIDEO_WIDTH = 1280
-    VIDEO_HEIGHT = 720
-    MAX_FPS = 30
-    if USE_CAM is True:
-        capture = robocam.CameraPlayer(dim=(1920, 1080))
-    else:
-        frame = np.empty((VIDEO_HEIGHT, VIDEO_WIDTH, 3), dtype='uint8')
-
-    fps_writer = FPSWriter((10, 60), scale=2, ltype=2, color='r')
-    speaker = LineTyper((10, 400), scale=2, ltype=2, rand=(.02, .12), pause=3, color='g')
-    speaker.add_lines(SCRIPT)
-    color_counter = ctools.UpDownCounter(step=1, maxi=100)
-    imshow_sleeper = timers.SmartSleep(1 / MAX_FPS)
-
-    while True:
-        if USE_CAM is True:
-            grabbed, frame = capture.read()
-            if grabbed is False:
-                break
-        else:
-            frame[:, :, :] = color_counter()
-
-
-        speaker.typeLine(frame)
-        fps_writer.write(frame)
-        if USE_CAM is False:
-            imshow_sleeper()
-        cv2.imshow('test', frame)
-        if cv2.waitKey(1) & 0xFF in [ord('q'), ord('Q'), 27]:
-            break
-
-    if USE_CAM is True:
-        capture.release()
-    cv2.destroyAllWindows()
-
-
+    pass
