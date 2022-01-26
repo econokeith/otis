@@ -5,7 +5,6 @@ from threading import Thread
 
 import cv2
 import numpy as np
-import imutils
 
 import robocam.helpers.timers as timers
 import robocam.overlay.textwriters as writers
@@ -37,10 +36,10 @@ class CameraPlayer:
         self.stopped = False
         self._max_fps = max_fps
         self.sleeper = timers.SmartSleep(1 / self._max_fps)
-        self.fps_writer = writers.FPSWriter((10, 60), scale=2, ltype=2, color='r')
+        self.fps_writer = writers.FPSWriter((10, int(self.dim[1] - 40)))
         self.latency = 0
         self.limit_fps = True
-        self.exit_warning = writers.TextWriter((150, 10), scale=2, ltype=2, color='r')
+        self.exit_warning = writers.TextWriter((10, 40), color='u')
         self.exit_warning.line = 'to exit hit ctrl-c or q'
 
     @property
@@ -75,18 +74,20 @@ class CameraPlayer:
         if fps is True:
             self.write_fps()
 
-        # if warn is True:
-        #     self.exit_warning.write(self.frame)
+        if warn is True:
+            self.exit_warning.write(self.frame)
 
-        big_frame = imutils.resize(self.frame, width=int(w))
-        cv2.imshow(self.name, big_frame)
+        if scale != 1:
+            self.frame = cv2.resize(self.frame, (0, 0), fx=scale, fy=scale)
+
+        cv2.imshow(self.name, self.frame)
 
     def test(self, wait=False, warn=False):
         """
         test to confirm that camera feed is working and check the fps
         :return:
         """
-        dim_writer = writers.TextWriter((10, 120), scale=2, ltype=2, color='r')
+        dim_writer = writers.TextWriter((10, 120), color='g')
         dim_writer.line = f'dim = {self.dim[0]} x {self.dim[1]}'
 
         while True:

@@ -1,4 +1,5 @@
 import argparse
+import os
 
 import cv2
 import numpy as np
@@ -14,7 +15,7 @@ parser.add_argument('-d','--dim',type=tuple, default=(1280, 720),
 parser.add_argument('-m','--max_fps', type=int, default=30, help='set max fps Default is 30')
 parser.add_argument('-c','--cam',type=bool, default=False,
                     help='USE_WEBCAM = True or False. Default is False')
-parser.add_argument('-s','--script',type=str,  default='robocam/examples/tw_script.txt',
+parser.add_argument('-s','--script',type=str,  default='robocam/examples/script.txt',
                     help='location_of_script.txt, defaults to ')
 
 args = parser.parse_args()

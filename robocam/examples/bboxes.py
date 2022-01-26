@@ -20,11 +20,12 @@ import robocam.overlay.assets as assets
 parser = argparse.ArgumentParser(description='Test For Camera Capture')
 parser.add_argument('-d','--dim',type=tuple, default=(1280, 720),
                     help='set video dimensions. default is (1280, 720)')
-parser.add_argument('-m','--max_fps', type=int, default=300, help='set max fps Default is 30')
+parser.add_argument('-m','--max_fps', type=int, default=300, help='set max fps Default is 300')
 parser.add_argument('-p', '--port', type=int, default=0, help='camera port default is 0')
 parser.add_argument('-cf', type=float, default=2, help='shrink the frame by a factor of cf before running algo')
 parser.add_argument('--faces', type=int, default=5, help='max number of bboxs to render. default =5')
-parser.add_argument('--device', type=str, default='cpu')
+parser.add_argument('--device', type=str, default='cpu', help='runs a hog if cpu and cnn if gpu')
+parser.add_argument('--ncpu', type=int, default='1', help='number of cpus')
 
 args = parser.parse_args()
 
@@ -37,16 +38,13 @@ def camera_process(shared_data_object):
     #shorten shared name
     shared = shared_data_object
     #set up writers
-    fps_writer = writers.FPSWriter((10, int(capture.dim[1] - 110)))
-    m_time_write = writers.TypeWriter((10, int(capture.dim[1] - 40)))
+    fps_writer = writers.FPSWriter((10, int(capture.dim[1] - 40)))
+    m_time_write = writers.TypeWriter((10, int(capture.dim[1] - 120)))
     #specify write function so that shared.m_time can be updated
     m_time_write.text_function = lambda : f'model compute time = {shared.m_time.value} ms'
-    n_face_writer = writers.TypeWriter((10, int(capture.dim[1] - 150)))
+    n_face_writer = writers.TypeWriter((10, int(capture.dim[1] - 80)))
     n_face_writer.text_function = lambda : f'{shared.n_faces.value} face(s) detected'
 
-    exit_warning = writers.TextWriter((150, 30))
-    exit_warning.line = 'to exit hit ctrl-c or q'
-    # set up bboxes
 
     BBoxes = []
     for i in range(args.faces):
@@ -94,14 +92,14 @@ def cv_model_process(shared_data_object):
         tick = time.time()
         # compress and convert from
         small_frame = cv2.resize(shared.frame, (0, 0), fx=1 / args.cf, fy=1 / args.cf)[:, :, ::-1]
-        new_bbox = face_recognition.face_locations(small_frame, model=model)
+        new_boxes = face_recognition.face_locations(small_frame, model=model)
         shared.m_time.value = int(1000*(time.time() - tick))
 
         #write new bbox lcoations to shared array
-        if new_bbox:
-            shared.n_faces.value = len(new_bbox)
-            for i, box in enumerate(new_bbox):
-                np.copyto(shared.bbox_coords[i,:], box)
+        shared.n_faces.value = len(new_boxes)
+        if shared.n_faces.value > 0:
+            for i in range(shared.n_faces.value):
+                np.copyto(shared.bbox_coords[i,:], new_boxes[i])
             shared.bbox_coords *= args.cf
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
