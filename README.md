@@ -13,7 +13,7 @@ get it. It's really easy to use.
 
 ### There are three examples:
 - camtest - tests the webcam works and shows its fps
-- otistypes - otis will type out an introduction
+- meetotis - otis will type out an introduction
 - bboxes - example of using the multiprocessing module to put bounding boxes on
     faces in your webcam
 
