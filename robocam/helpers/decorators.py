@@ -1,10 +1,10 @@
 import time
+import robocam.helpers.timers as timers
 
 def min_wait_between_calls(min_wait=1 / 30):
     """
     max_frequency(hz):
     sets a maximum frequency (hz) a function can be run
-
     """
     def decorate(func):
 
@@ -54,11 +54,21 @@ def make_me_blink(on_time=.5, off_time=.5):
         blink_fun.off_time = off_time
         blink_fun.tick = time.time()
         blink_fun.on = True
-
         return blink_fun
 
     return decorate
 
+def smart_sleeper_method(fps=30):
+    sleeper = timers.SmartSleep()
+    def decorate(func):
+        def sleeper_fun(*args, **kwargs):
+            sleeper(1/decorate.fps)
+            return func(*args, **kwargs)
+
+        return sleeper_fun
+
+    decorate.fps = fps
+    return decorate
 
 def frequency_tracker():
     """

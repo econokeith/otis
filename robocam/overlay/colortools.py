@@ -5,18 +5,18 @@ class UpDownCounter:
         self.maxi = maxi
         self.i = 0
         self.forward = True
-        self.step = 1
+        self.step = step
 
-    def get_next(self):
+    def __call__(self):
 
         if self.i < self.maxi and self.forward is True:
             self.i = min(self.i + self.step, self.maxi)
-            if self.i == 255:
+            if self.i >= self.maxi:
                 self.forward = False
 
         else:
             self.i = max(self.i - self.step, self.mini)
-            if self.i == self.mini:
+            if self.i <= self.mini:
                 self.forward = True
 
         return self.i

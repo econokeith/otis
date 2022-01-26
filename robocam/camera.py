@@ -5,6 +5,10 @@ import cv2
 import numpy as np
 import imutils
 
+import robocam.helpers.decorators as decors
+import robocam.helpers.timers as timers
+import robocam.overlay.texttools as ttools
+
 class CameraPlayer:
 
     def __init__(self, src=0,
@@ -19,6 +23,7 @@ class CameraPlayer:
             self.dim = dim
             self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, dim[0])
             self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, dim[1])
+
         else:
             self.dim = self.capture.get(cv2.CAP_PROP_FRAME_WIDTH), self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
             self.dim = [int(d) for d in self.dim]
@@ -28,9 +33,9 @@ class CameraPlayer:
         self.grabbed = True
         self.name = name
         self.stopped = False
-        self.font = cv2.FONT_HERSHEY_DUPLEX
-        self.latency = 0
-        self.latency2 = 0
+        self.max_fps = 30
+        self.sleeper = timers.SmartSleep(1/self.max_fps)
+        self.fps_writer = ttools.FPSWriter((10, 60), scale=2, ltype=2, color='r')
 
     def read(self, silent=False):
         tick = time.time()
@@ -39,34 +44,25 @@ class CameraPlayer:
         if silent is False:
             return self.grabbed, self.frame
 
-    def show(self, scale=1, width=None):
+    def show(self, scale=1, width=None, wait=None):
+        if wait is not None:
+            self.sleeper(wait)
         w = self.dim[0]*scale if width is None else width
 
         big_frame = imutils.resize(self.frame, width=int(w))
         cv2.imshow(self.name, big_frame)
 
     def test(self):
-        fps = 100
+        dim_writer = ttools.TextWriter((10, 120), scale=2, ltype=2, color='r')
+        dim_writer.line = f'dim = {self.dim[0]} x {self.dim[1]}'
+
         while True:
-            tick = time.time()
-
-            #timer = cv2.getTickCount()
-            self.read(True)
-            #fps = cv2.getTickFrequency() / (cv2.getTickCount() - timer)
-
-            h, w, _ = self.frame.shape
-            cv2.putText(self.frame, f'dim = {w} x {h}', (10, 30), self.font, .75, (0, 0, 255), 1)
-            cv2.putText(self.frame, f'FPS = {int(fps)}', (10, int(self.dim[1] - 90)), self.font, .75, (0, 0, 255), 1)
-            latency = 1000*(time.time() - tick)
-            cv2.putText(self.frame, f'LATENCY = {self.latency} ms', (10, int(self.dim[1] - 60)), self.font, .75, (0, 255, 0), 1)
-            #cv2.putText(self.frame, f'LATENCY = {self.latency2}', (10, int(self.dim[1] - 30)), self.font, .75, (255,0, 0), 1)
+            self.read()
+            self.fps_writer.write(self.frame)
+            dim_writer.write(self.frame)
             self.show()
-            tock = time.time()
-            fps = int(1/(tock-tick))
-
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
-            tick = time.time()
 
         self.stop()
 
@@ -80,6 +76,7 @@ class ThreadedCameraPlayer(CameraPlayer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.clock = timers.SmartSleep()
 
     def start(self):
         Thread(target=self.update, args=()).start()
@@ -90,11 +87,8 @@ class ThreadedCameraPlayer(CameraPlayer):
         while True:
             if self.stopped is True:
                 return
-            #timer = cv2.getTickCount()
-            tick = time.time()
+
             self.grabbed, self.frame = self.capture.read()
-            self.latency = int(1000*(time.time()-tick))
-            #self.latency2 = cv2.getTickFrequency() / (cv2.getTickCount() - timer)
 
     def read(self, silent=False):
         if silent is False:
@@ -102,6 +96,5 @@ class ThreadedCameraPlayer(CameraPlayer):
 
 
 if __name__=='__main__':
-    cam = ThreadedCameraPlayer(dim=(1920, 1080))
-    cam.start()
+    cam = CameraPlayer(dim=(1920, 1080))
     cam.test()
