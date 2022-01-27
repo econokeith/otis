@@ -27,7 +27,7 @@ class Writer:
     @color.setter
     def color(self, new_color):
         if isinstance(new_color, str):
-            self._color = ctools.color_hash[new_color]
+            self._color = ctools.COLOR_HASH[new_color]
         else:
             self._color = new_color
 

@@ -7,6 +7,7 @@ import numpy as np
 import robocam.camera as camera
 import robocam.helpers.timers as timers
 import robocam.overlay.colortools as ctools
+import robocam.overlay.cv2shapes
 import robocam.overlay.textwriters as writers
 import robocam.overlay.assets as assets
 
@@ -24,7 +25,7 @@ args = parser.parse_args()
 
 def main():
 
-    line = assets.Line()
+    line = robocam.overlay.cv2shapes.Line()
 
     video_width, video_height = args.dim
 

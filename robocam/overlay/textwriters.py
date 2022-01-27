@@ -23,7 +23,7 @@ class TextWriter(base.Writer):
         self.font = font
         
         if isinstance(color, str):
-            self.color = ctools.color_hash[color]
+            self.color = ctools.COLOR_HASH[color]
         else:
             self.color = color
 

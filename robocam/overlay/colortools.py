@@ -22,10 +22,16 @@ class UpDownCounter:
         return self.i
 
 
-color_hash = {
+COLOR_HASH = {
     'r': (0, 0, 255),
     'g': (0, 255, 0),
     'u': (255, 0, 0),
     'w': (255, 255, 255),
     'b': (0, 0, 0)
 }
+
+def color_function(color):
+    if color in COLOR_HASH.keys():
+        return COLOR_HASH[color]
+    else:
+        return color
