@@ -8,6 +8,7 @@ import robocam.camera as camera
 import robocam.helpers.timers as timers
 import robocam.overlay.colortools as ctools
 import robocam.overlay.textwriters as writers
+import robocam.overlay.assets as assets
 
 parser = argparse.ArgumentParser(description='Example of the TypeWriter screen object')
 parser.add_argument('-d','--dim',type=tuple, default=(1280, 720),
@@ -22,12 +23,6 @@ args = parser.parse_args()
 
 
 def main():
-    try:
-        with open(args.script,'r') as f:
-            script = f.read().split('\n')
-    except:
-        with open('robocam/examples/' +args.script,'r') as f:
-            script = f.read().split('\n')
 
     video_width, video_height = args.dim
 
@@ -38,8 +33,7 @@ def main():
         frame = np.empty((video_height, video_width, 3), dtype='uint8')
 
     fps_writer = writers.FPSWriter((10, 60), scale=2, ltype=2, color='r')
-    speaker = writers.TypeWriter((10, 400), scale=2, ltype=2, rand=(.02, .08), pause=1.5, color='g')
-    speaker.add_lines(script)
+
     color_counter = ctools.UpDownCounter(step=1, maxi=100)
     imshow_sleeper = timers.SmartSleep(1 / args.max_fps)
 
@@ -52,7 +46,7 @@ def main():
         else:
             frame[:, :, :] = color_counter()
 
-        speaker.typeLine(frame)
+
         fps_writer.write(frame)
         if args.cam is False:
             imshow_sleeper()

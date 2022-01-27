@@ -8,6 +8,7 @@ import robocam.camera as camera
 import robocam.helpers.timers as timers
 import robocam.overlay.colortools as ctools
 import robocam.overlay.textwriters as writers
+import robocam.overlay.assets as assets
 
 parser = argparse.ArgumentParser(description='Example of the TypeWriter screen object')
 parser.add_argument('-d','--dim',type=tuple, default=(1280, 720),
@@ -22,12 +23,8 @@ args = parser.parse_args()
 
 
 def main():
-    try:
-        with open(args.script,'r') as f:
-            script = f.read().split('\n')
-    except:
-        with open('robocam/examples/' +args.script,'r') as f:
-            script = f.read().split('\n')
+
+    line = assets.Line()
 
     video_width, video_height = args.dim
 
@@ -38,10 +35,12 @@ def main():
         frame = np.empty((video_height, video_width, 3), dtype='uint8')
 
     fps_writer = writers.FPSWriter((10, 60), scale=2, ltype=2, color='r')
-    speaker = writers.TypeWriter((10, 400), scale=2, ltype=2, rand=(.02, .08), pause=1.5, color='g')
-    speaker.add_lines(script)
+
     color_counter = ctools.UpDownCounter(step=1, maxi=100)
     imshow_sleeper = timers.SmartSleep(1 / args.max_fps)
+
+    cross = assets.CrossHair(radius=200, bbox_coords=False)
+    cross.coords = (400, 400, 150)
 
     while True:
         if args.cam is True:
@@ -52,8 +51,16 @@ def main():
         else:
             frame[:, :, :] = color_counter()
 
-        speaker.typeLine(frame)
+        #line.write(frame, (300, 300), 45, 200, wtype='cal')
+        # line.write(frame, (300, 300), 0, 200, wtype='cal')
+        # line.write(frame, (300, 300), 90, 200, wtype='cal')
+        # cv2.circle(frame, (300, 300), 3, (0, 255,0),-1)
+
+        # for angle in [0, 20, 40, 60, 80, 100, 120, 140, 160]:
+        #     line.write(frame, (300, 300), angle, 200, wtype='cal')
         fps_writer.write(frame)
+        cross.write(frame)
+
         if args.cam is False:
             imshow_sleeper()
         cv2.imshow('test', frame)

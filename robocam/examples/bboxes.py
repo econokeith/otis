@@ -48,7 +48,7 @@ def camera_process(shared_data_object):
 
     BBoxes = []
     for i in range(args.faces):
-        bbox = assets.BBox()
+        bbox = assets.BoundingBox()
         bbox.coords = shared.bbox_coords[i, :] # reference a line in teh shared array
         bbox.color = 'r'
         BBoxes.append(bbox)
