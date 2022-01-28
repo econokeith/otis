@@ -57,16 +57,20 @@ class LastTimer(Timer):
 
 class FirstTimer(Timer):
 
-    def __init__(self, chop=False):
+    def __init__(self, chop=False, round=False):
         """
         returns the time elapsed since the first call
         """
         self._tick = None
-        self.chop = False
+        self.chop = chop
+        self.round = round
 
     def __call__(self):
         if self._tick is None:
             self._tick = time.time()
+            return 0
+        elif isinstance(self.round, int):
+            return round(time.time() - self._tick, self.round)
         elif self.chop is True:
             return  int(time.time() - self._tick)
         else:
@@ -109,9 +113,8 @@ class BoolTimer(Timer):
             return False
         elif time.time() - self._tick < self.wait:
             return False
-
         else:
-            True
+            return True
 
     def reset(self):
         self._tick = 0

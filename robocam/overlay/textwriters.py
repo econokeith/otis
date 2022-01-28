@@ -80,7 +80,7 @@ class TypeWriter(TextWriter):
                  end_pause=1,
                  loop=False,
                  ref = None,
-                text = None,
+                 text = None,
                  ):
         
         super().__init__(position=position, text=None, font=font, color=color, scale=scale, ltype=ltype, ref=ref)
@@ -127,6 +127,10 @@ class TypeWriter(TextWriter):
     @kwait.setter
     def kwait(self, new_wait):
         self._kwait = new_wait
+
+    @property
+    def alldone(self):
+        return self.line_complete and self.script.empty()
 
     def add_lines(self, new_lines):
         """

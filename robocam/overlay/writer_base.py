@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 """
 Writer is basically just a fancy mixin to add the class method
 cls().make_list which instantiates a list of identical Writer/subclass
@@ -31,5 +32,11 @@ class Writer:
         else:
             self._color = new_color
 
-    def copy(self):
-        return copy.deepcopy(self)
+    def copy(self, make_list_of =None):
+        if make_list_of is None:
+            return copy.deepcopy(self)
+        else:
+            list_of_copies = [self]
+            for _ in range(make_list_of-1):
+                list_of_copies.append(self.copy())
+            return list_of_copies

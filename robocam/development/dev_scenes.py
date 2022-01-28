@@ -9,6 +9,8 @@ import robocam.helpers.timers as timers
 import robocam.overlay.colortools as ctools
 import robocam.overlay.textwriters as writers
 
+from queue import Queue
+
 parser = argparse.ArgumentParser(description='Example of the TypeWriter screen object')
 parser.add_argument('-d','--dim',type=tuple, default=(1280, 720),
                     help='set video dimensions. default is (1280, 720)')
@@ -20,49 +22,106 @@ parser.add_argument('-s','--script',type=str,  default='script.txt',
 
 args = parser.parse_args()
 
+try:
+    with open(args.script, 'r') as f:
+        _script = f.read().split('\n')
+except:
+    with open('robocam/development/' + args.script, 'r') as f:
+        _script = f.read().split('\n')
 
-def main():
-    try:
-        with open(args.script,'r') as f:
-            script = f.read().split('\n')
-    except:
-        with open('robocam/development' +args.script,'r') as f:
-            script = f.read().split('\n')
+TheScript = Queue()
+for s in _script:
+    TheScript.put(s)
 
-    video_width, video_height = args.dim
+video_width, video_height = args.dim
+clock = timers.FirstTimer(round=2)
+clock_writer = writers.TextWriter((10, 60), scale=2, ltype=2, color='r').add_fun(lambda: f'{clock()}')
+speaker = writers.TypeWriter((10, 200), scale=2, ltype=2, kwait=(.02, .08), end_pause=1.5, color='g', ref='bl')
 
-    if args.cam is True:
-        capture = camera.CameraPlayer(dim=(video_width, video_height))
-        capture.max_fps = args.max_fps
-    else:
-        frame = np.empty((video_height, video_width, 3), dtype='uint8')
+color_counter = ctools.UpDownCounter(step=1, maxi=100)
+imshow_sleeper = timers.SmartSleeper(1 / args.max_fps)
+frame = np.zeros((video_height, video_width, 3), dtype='uint8')
 
-    fps_writer = writers.FPSWriter((10, 60), scale=2, ltype=2, color='r')
-    speaker = writers.TypeWriter((10, 400), scale=2, ltype=2, kwait=(.02, .08), end_pause=1.5, color='g')
-    speaker.add_lines(script)
-    color_counter = ctools.UpDownCounter(step=1, maxi=100)
-    imshow_sleeper = timers.SmartSleeper(1 / args.max_fps)
+capture = camera.CameraPlayer(dim=(video_width, video_height), name='the script')
+capture.max_fps = args.max_fps
+
+def scene_0():
+
+    frame = np.zeros((video_height, video_width, 3), dtype='uint8')
+    speaker.add_lines([TheScript.get() for _ in range(1)])
+    start_timer = timers.BoolTimer(5)
+    end_timer = timers.BoolTimer(3)
 
     while True:
-        if args.cam is True:
-            grabbed, frame = capture.read()
-            if grabbed is False:
-                break
-            #frame[:, :, :] += color_counter()
-        else:
-            frame[:, :, :] = color_counter()
+        frame[:,:,:] = 0
+        if start_timer() is True:
+            speaker.type_line(frame)
 
-        speaker.type_line(frame)
-        fps_writer.write(frame)
-        if args.cam is False:
-            imshow_sleeper()
-        cv2.imshow('test', frame)
+        clock_writer.write_fun(frame)
+        imshow_sleeper()
+        cv2.imshow('the script', frame)
+
         if cv2.waitKey(1) & 0xFF in [ord('q'), ord('Q'), 27]:
             break
 
-    if args.cam is True:
-        capture.release()
-    cv2.destroyAllWindows()
+        if speaker.script.empty() and speaker.line_complete:
+            if end_timer() is True:
+                break
+
+def scene_1():
+
+    speaker.add_lines([TheScript.get() for _ in range(3)])
+    start_timer = timers.BoolTimer(3)
+    end_timer = timers.BoolTimer(2)
+
+    while True:
+        frame[:, :, :] = color_counter()
+        if start_timer() is True:
+            speaker.type_line(frame)
+
+        clock_writer.write_fun(frame)
+        imshow_sleeper()
+        cv2.imshow('the script', frame)
+
+        if cv2.waitKey(1) & 0xFF in [ord('q'), ord('Q'), 27]:
+            break
+
+        if speaker.script.empty() and speaker.line_complete:
+            if end_timer() is True:
+                break
+
+def scene_2():
+
+    start_timer = timers.BoolTimer(3)
+    end_timer = timers.BoolTimer(2)
+
+    while TheScript.empty() is False:
+        speaker.add_lines(TheScript.get())
+
+    while True:
+        capture.read()
+        if start_timer() is True:
+            speaker.type_line(capture.frame)
+        clock_writer.write_fun(capture.frame)
+        capture.show()
+
+        if cv2.waitKey(1) & 0xFF in [ord('q'), ord('Q'), 27]:
+            break
+
+        if speaker.script.empty() and speaker.line_complete and end_timer() is True:
+            break
+
+def main():
+    scene_manager = Queue()
+
+    for scene in [scene_0, scene_1, scene_2]:
+        scene_manager.put(scene)
+
+    while scene_manager.empty() is False:
+        next_scene = scene_manager.get()
+        next_scene()
+
+    capture.stop()
 
 if __name__=='__main__':
     main()
