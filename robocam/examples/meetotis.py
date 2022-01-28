@@ -38,7 +38,7 @@ def main():
         frame = np.empty((video_height, video_width, 3), dtype='uint8')
 
     fps_writer = writers.FPSWriter((10, 60), scale=2, ltype=2, color='r')
-    speaker = writers.TypeWriter((10, 400), scale=2, ltype=2, rand=(.02, .08), pause=1.5, color='g')
+    speaker = writers.TypeWriter((10, 400), scale=2, ltype=2, kwait=(.02, .08), end_pause=1.5, color='g')
     speaker.add_lines(script)
     color_counter = ctools.UpDownCounter(step=1, maxi=100)
     imshow_sleeper = timers.SmartSleeper(1 / args.max_fps)
@@ -52,7 +52,7 @@ def main():
         else:
             frame[:, :, :] = color_counter()
 
-        speaker.typeLine(frame)
+        speaker.type_line(frame)
         fps_writer.write(frame)
         if args.cam is False:
             imshow_sleeper()

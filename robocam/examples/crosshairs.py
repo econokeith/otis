@@ -41,9 +41,9 @@ def camera_process(shared_data_object):
     fps_writer = writers.FPSWriter((10, int(capture.dim[1] - 40)))
     m_time_write = writers.TypeWriter((10, int(capture.dim[1] - 120)))
     #specify write function so that shared.m_time can be updated
-    m_time_write.text_function = lambda : f'model compute time = {shared.m_time.value} ms'
+    m_time_write.text_fun = lambda : f'model compute time = {shared.m_time.value} ms'
     n_face_writer = writers.TypeWriter((10, int(capture.dim[1] - 80)))
-    n_face_writer.text_function = lambda : f'{shared.n_faces.value} face(s) detected'
+    n_face_writer.text_fun = lambda : f'{shared.n_faces.value} face(s) detected'
 
     CrossHairs = []
     for i in range(args.faces):

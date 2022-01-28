@@ -67,7 +67,14 @@ def draw_pal_line(frame, point, angle, length, color='r', thickness=1, ref=None)
     cv2.line(frame, _pt0, _pt0, _color, thickness)
 
 
-def write_text(frame, text, pos=(10, 50), font=None, color='b', scale=1, ltype=2, ref=None):
+def write_text(frame,
+               text,
+               pos=(10, 50),
+               font=None,
+               color='b',
+               scale=1,
+               ltype=2,
+               ref=None):
         _color = ctools.color_function(color)
         _pos = utis.abs_point(pos, ref, frame.shape)
         _font = cv2.FONT_HERSHEY_DUPLEX if font is None else font

@@ -1,5 +1,24 @@
 import numpy as np
 
+class BoundIterator:
+    """
+    iter type object with
+    """
+    def __init__(self, iterable):
+        self.n = len(iterable)
+        self.iterator = iter(iterable)
+
+    @property
+    def is_empty(self):
+        if self.n == 0:
+            return True
+        else:
+            return False
+
+    def __call__(self):
+        self.n -= 1
+        return next(self.iterator)
+
 def iter_none(iterable):
     """
     turns an iterable data structure into an iter where the last .next()

@@ -1,5 +1,5 @@
-# This project is really called O.t.i.s
-## Observer Tracking Interation System
+# This project is really called o.t.i.s,
+## Observer Tracking Interactive Scripting
 ### Dependencies:
 - python 3
 - numpy
@@ -21,7 +21,7 @@ get it. It's really easy to use.
 - download the package
 - in the command line:
   + $ cd path_to_outside_directory
-  + $ python -m robocam.examples.otistypes
+  + $ python -m robocam.examples.meetotis
 - you can see the examples' options via: 
   + $ python -m robocam.examples.bboxes --help
 

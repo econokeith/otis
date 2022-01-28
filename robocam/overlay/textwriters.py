@@ -4,34 +4,33 @@ from queue import Queue
 import cv2
 import numpy as np
 
-import robocam.helpers.utility as uti
+import robocam.helpers.utility as utils
 import robocam.helpers.timers as timers
 import robocam.overlay.colortools as ctools
 import robocam.overlay.writer_base as base
-
+import robocam.overlay.cv2shapes as shapes
 
 class TextWriter(base.Writer):
 
     def __init__(self,
-                 pos,  #position
+                 position,  #position
                  font=cv2.FONT_HERSHEY_DUPLEX,
                  color='r',  # must be either string in color hash or bgr value
                  scale=1,  # font scale,
-                 ltype=2,  # line type
+                 ltype=2,
+                 ref=None,
+                 text = None
                  ):
 
         self.font = font
-        
-        if isinstance(color, str):
-            self.color = ctools.COLOR_HASH[color]
-        else:
-            self.color = color
+        self.color = ctools.color_function(color)
 
-        self.pos = pos
+        self.ref = ref
+        self.position = position
         self.scale = scale
         self.ltype = ltype
-        self._line = None
-        self.text_function = None
+        self.line = text
+        self.text_fun = None
 
     @property
     def line(self):
@@ -41,51 +40,62 @@ class TextWriter(base.Writer):
     def line(self, new_text):
         self._line = new_text
 
-    def write(self, frame : np.array, text=None, color=None):
-        """
+    # @property
+    # def position(self):
+    #     return self._position
+    #
+    # @position.setter
+    # def position(self, new_position):
+    #     self._position = uti.abs_point(new_position, self.ref, self.dim)
 
+    def add_fun(self, fun):
+        self.text_fun = fun
+        return self
+
+    def write(self, frame, text=None, color=None):
+        """
         :type frame: np.array
         """
-        col = color if color is not None else self.color
-        text = text if text is not None else self.line
+        _color = color if color is not None else self.color
+        _text = text if text is not None else self.line
 
-        if text is not None:
-            cv2.putText(frame,
-                        text,
-                        self.pos,
-                        self.font, self.scale, col, self.ltype)
+        shapes.write_text(frame, _text, self.position, self.font, _color,
+                          self.scale, self.ltype, self.ref)
 
     def write_fun(self, frame, *args, **kwargs):
-        self.line = self.text_function(*args, **kwargs)
+        self.line = self.text_fun(*args, **kwargs)
         self.write(frame)
 
         
 class TypeWriter(TextWriter):
 
     def __init__(self,
-                 pos,  #position
+                 position,  #position
                  font=cv2.FONT_HERSHEY_DUPLEX,
                  color='r',  # must be either string in color hash or bgr value
                  scale=1,  # font scale,
                  ltype=2,
                  dt=None,
-                 rand = [.1,.3],
-                 pause=1,
+                 kwait = [.1, .3],
+                 end_pause=1,
                  loop=False,
+                 ref = None,
+                text = None,
                  ):
         
-        super().__init__(pos=pos, font=font, color=color, scale=scale, ltype=ltype)
+        super().__init__(position=position, text=None, font=font, color=color, scale=scale, ltype=ltype, ref=ref)
         
         self.dt = dt
-        self.rand = rand
-        self.wait = sum(rand)/2 if dt is None else dt
-        self.pause = pause
+        self._kwait = kwait
+        self.end_pause_timer = timers.BoolTimer(end_pause)
         self.loop = loop
-        self.line_iter = None
-        self.done = False
+        self.line_iter = utils.BoundIterator([0])
+        self.line = text
+        self.line_complete = False
         self.output = ""
         self.cursor = Cursor()
         self.script = Queue()
+        self.ktimer = timers.CallLimiter(self.kwait)
 
     @property
     def line(self):
@@ -99,13 +109,24 @@ class TypeWriter(TextWriter):
         
         if new_text is None:
             self.line_iter = None
-            self.done = True
-            self.output = None
+            self.line_complete = True
+            self.output = ""
             
         else:
-            self.line_iter = uti.iter_none(new_text)
-            self.done = False
+            self.line_iter = utils.BoundIterator(new_text)
+            self.line_complete = False
             self.output = ""
+
+    @property
+    def kwait(self):
+        if isinstance(self._kwait, (float, int)):
+            return self._kwait
+        else:
+            return np.random.rand() * (self._kwait[1] - self._kwait[0]) + self._kwait[0]
+
+    @kwait.setter
+    def kwait(self, new_wait):
+        self._kwait = new_wait
 
     def add_lines(self, new_lines):
         """
@@ -117,51 +138,44 @@ class TypeWriter(TextWriter):
         if not isinstance(new_lines, str):
             for new_line in new_lines:
                 self.add_lines(new_line)
+
         else:
             self.line = self.script.put(new_lines)
 
-    def typeLine(self, frame):
+        return self
+
+    def type_line(self, frame):
 
         # if there's more in the text generator, it will continue to type new letters
         # then will show the full message for length of time self.end_pause
         # then finally stop shows
-        if self.done is True and self.script.empty():
+        if self.line_complete is True and self.script.empty() is True:
             return
 
-        elif self.done is True and not self.script.empty():
+        elif self.line_complete is True and self.script.empty() is False:
             self.line = self.script.get()
-
         # update if there is more to teh line and t > wait
-        elif self.line_iter is not None and time.time() - self.tick >= self.wait:
-            char = next(self.line_iter)
-            #if the line_iter returns None, then it is done
-            if char is None:
-                self.line_iter = None
-            else:
-                self.output += char
-                # set random wait time
-                if self.dt is None:
-                    self.wait = np.random.rand() * (self.rand[1] - self.rand[0]) + self.rand[0]
+        elif self.line_iter.is_empty is False:
+
+            if self.ktimer(self.kwait):
+                self.output += self.line_iter()
 
             self.write(frame, self.output)
-            self.tick= time.time()
 
-        #write old output if there is more to write but it isn't update time
-        elif self.line_iter is not None:
-            self.write(frame, self.output)
         #if the line is done, but the end pause is still going. write whole line with cursor
-        elif self.line_iter is None and time.time() - self.tick < self.pause:
+        elif self.line_iter.is_empty and self.end_pause_timer() is False:
             self.write(frame, self.output+self.cursor())
 
         #empty line generator and t > pause sets the line to done
         else:
-            self.done = True
+            self.line_complete = True
+            self.end_pause_timer.reset()
 
 class FPSWriter(TextWriter):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.clock = timers.CallTimer()
+        self.clock = timers.LastTimer()
         self.text_function =  lambda fps : f'FPS = {int(1/fps)}'
 
     def write(self, frame: np.array, text=None, color=None):
@@ -187,8 +201,6 @@ class Cursor(timers.Blinker):
             return self.char_1
         else:
             return self.char_0
-
-
 
 if __name__ == '__main__':
     pass

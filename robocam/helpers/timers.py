@@ -40,7 +40,7 @@ class SmartSleeper(Timer):
             self.tick = time.time()
 
 
-class CallTimer(Timer):
+class LastTimer(Timer):
 
     def __init__(self):
         """
@@ -55,6 +55,24 @@ class CallTimer(Timer):
         self._tick = tock
         return out
 
+class FirstTimer(Timer):
+
+    def __init__(self, chop=False):
+        """
+        returns the time elapsed since the first call
+        """
+        self._tick = None
+        self.chop = False
+
+    def __call__(self):
+        if self._tick is None:
+            self._tick = time.time()
+        elif self.chop is True:
+            return  int(time.time() - self._tick)
+        else:
+            return time.time() - self._tick
+
+
 class FunctionTimer(Timer):
 
     def __init__(self, function):
@@ -63,7 +81,7 @@ class FunctionTimer(Timer):
         :param function: uncalled function
         """
         self.function = function
-        self._time
+        self._time = 0
 
     @property
     def time(self):
@@ -76,6 +94,28 @@ class FunctionTimer(Timer):
         self._time = time.time() - tick
         return out
 
+class BoolTimer(Timer):
+    """
+    return True if time since first call > wait else False
+    """
+
+    def __init__(self, wait=1):
+        self.wait = wait
+        self._tick = 0
+
+    def __call__(self):
+        if self._tick == 0:
+            self._tick = time.time()
+            return False
+        elif time.time() - self._tick < self.wait:
+            return False
+
+        else:
+            True
+
+    def reset(self):
+        self._tick = 0
+
 
 class CallLimiter(Timer):
 
@@ -87,9 +127,10 @@ class CallLimiter(Timer):
         self.wait = wait
         self._tick = 0
 
-    def __call__(self):
+    def __call__(self, wait=None):
+        wait = self.wait if wait is None else wait
 
-        if time.time() - self._tick >= self.wait:
+        if time.time() - self._tick >= wait:
             self._tick = time.time()
             return True
         else:

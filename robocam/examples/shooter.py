@@ -57,9 +57,9 @@ def camera_process(shared_data_object):
     write_fps = writers.FPSWriter((10, int(capture.dim[1] - 40)))
     write_model_time = writers.TypeWriter((10, int(capture.dim[1] - 120)))
     #specify write function so that shared.m_time can be updated
-    write_model_time.text_function = lambda : f'model compute time = {shared.m_time.value} ms'
+    write_model_time.text_fun = lambda : f'model compute time = {shared.m_time.value} ms'
     write_n_faces = writers.TypeWriter((10, int(capture.dim[1] - 80)))
-    write_n_faces.text_function = lambda : f'{shared.n_faces.value} face(s) detected'
+    write_n_faces.text_fun = lambda : f'{shared.n_faces.value} face(s) detected'
 
     BBoxes = []
     for i in range(args.faces):
