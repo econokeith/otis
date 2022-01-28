@@ -88,6 +88,7 @@ class CrossHair(BoundingCircle):
 
     def __init__(self, *args, radius=None, **kwargs):
         super().__init__(*args, **kwargs)
+        
         if radius is None:
             self.constant_size = False
             self._radius = 0

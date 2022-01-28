@@ -5,7 +5,7 @@ import abc
 class Timer(abc.ABC):
 
     @abc.abstractmethod
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         """
         abstract base class for all Timers. 
         All are called via the __call__ method
@@ -13,7 +13,7 @@ class Timer(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def __call__(self, wait=None):
+    def __call__(self, *args, **kwargs):
         """
         all call methods should allow for overriding the wait timer
         if applicable
@@ -21,7 +21,7 @@ class Timer(abc.ABC):
         return True
 
 
-class SmartSleep(Timer):
+class SmartSleeper(Timer):
 
     def __init__(self, wait=1/30):
         """
@@ -40,11 +40,11 @@ class SmartSleep(Timer):
             self.tick = time.time()
 
 
-class LastCallTimer(Timer):
+class CallTimer(Timer):
 
     def __init__(self):
         """
-        returns the time since the last time it was called
+        returns the time elapsed since the last time it was called
         """
         self._tick = time.time()
 
@@ -55,8 +55,29 @@ class LastCallTimer(Timer):
         self._tick = tock
         return out
 
+class FunctionTimer(Timer):
 
-class BoolTimer(Timer):
+    def __init__(self, function):
+        """
+
+        :param function: uncalled function
+        """
+        self.function = function
+        self._time
+
+    @property
+    def time(self):
+        return self._time
+
+    def __call__(self, *args, **kwargs):
+
+        tick = time.time()
+        out = self.function(*args, **kwargs)
+        self._time = time.time() - tick
+        return out
+
+
+class CallLimiter(Timer):
 
     def __init__(self, wait=1/3):
         """
@@ -112,3 +133,5 @@ class Blinker(Timer):
                 self.on = True
                 
             return False
+
+

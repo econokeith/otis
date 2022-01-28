@@ -36,7 +36,7 @@ def main():
     fps_writer = writers.FPSWriter((10, 60), scale=2, ltype=2, color='r')
 
     color_counter = ctools.UpDownCounter(step=1, maxi=100)
-    imshow_sleeper = timers.SmartSleep(1 / args.max_fps)
+    imshow_sleeper = timers.SmartSleeper(1 / args.max_fps)
 
     while True:
         if args.cam is True:

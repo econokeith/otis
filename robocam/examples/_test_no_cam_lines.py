@@ -7,7 +7,7 @@ import numpy as np
 import robocam.camera as camera
 import robocam.helpers.timers as timers
 import robocam.overlay.colortools as ctools
-import robocam.overlay.cv2shapes
+import robocam.overlay.cv2shapes as shapes
 import robocam.overlay.textwriters as writers
 import robocam.overlay.assets as assets
 
@@ -25,7 +25,7 @@ args = parser.parse_args()
 
 def main():
 
-    line = robocam.overlay.cv2shapes.Line()
+    line = shapes.Line()
 
     video_width, video_height = args.dim
 
@@ -38,7 +38,7 @@ def main():
     fps_writer = writers.FPSWriter((10, 60), scale=2, ltype=2, color='r')
 
     color_counter = ctools.UpDownCounter(step=1, maxi=100)
-    imshow_sleeper = timers.SmartSleep(1 / args.max_fps)
+    imshow_sleeper = timers.SmartSleeper(1 / args.max_fps)
 
     cross = assets.CrossHair(radius=200, bbox_coords=False)
     cross.coords = (400, 400, 150)
@@ -56,6 +56,7 @@ def main():
         # line.write(frame, (300, 300), 0, 200, wtype='cal')
         # line.write(frame, (300, 300), 90, 200, wtype='cal')
         # cv2.circle(frame, (300, 300), 3, (0, 255,0),-1)
+        shapes.draw_line(frame, (300, 300), (500, 500))
 
         # for angle in [0, 20, 40, 60, 80, 100, 120, 140, 160]:
         #     line.write(frame, (300, 300), angle, 200, wtype='cal')

@@ -161,7 +161,7 @@ class FPSWriter(TextWriter):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.clock = timers.LastCallTimer()
+        self.clock = timers.CallTimer()
         self.text_function =  lambda fps : f'FPS = {int(1/fps)}'
 
     def write(self, frame: np.array, text=None, color=None):

@@ -41,7 +41,7 @@ def main():
     speaker = writers.TypeWriter((10, 400), scale=2, ltype=2, rand=(.02, .08), pause=1.5, color='g')
     speaker.add_lines(script)
     color_counter = ctools.UpDownCounter(step=1, maxi=100)
-    imshow_sleeper = timers.SmartSleep(1 / args.max_fps)
+    imshow_sleeper = timers.SmartSleeper(1 / args.max_fps)
 
     while True:
         if args.cam is True:

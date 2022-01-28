@@ -64,7 +64,7 @@ def make_me_blink(on_time=.5, off_time=.5):
     return decorate
 
 def smart_sleeper_method(fps=30):
-    sleeper = timers.SmartSleep()
+    sleeper = timers.SmartSleeper()
     def decorate(func):
         def sleeper_fun(*args, **kwargs):
             sleeper(1/decorate.fps)

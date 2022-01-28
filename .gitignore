@@ -4,3 +4,4 @@
 /shelf/
 /workspace.xml
 **/_[Tt]test*
+**/__pycache__/*

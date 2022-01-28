@@ -109,7 +109,7 @@ def cv_model_process(shared_data_object):
 
 def main():
     #set up shared data
-    shared = mtools.ProcessDataSharer()
+    shared = mtools.SharedDataObject()
     shared.add_value('m_time', 'i', 0)
     shared.add_value('n_faces', 'i', 0)
 

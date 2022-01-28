@@ -18,18 +18,27 @@ import robocam.helpers.timers as timers
 import robocam.helpers.utility as utils
 import robocam.overlay.assets as assets
 import robocam.servos.pid as pid
+
 from robocam.servos import ArduinoServo
 
-parser = argparse.ArgumentParser(description='Test For Camera Capture')
-parser.add_argument('-d','--dim',type=tuple, default=(1280, 720),
-                    help='set video dimensions. default is (1280, 720)')
-parser.add_argument('-m','--max_fps', type=int, default=300, help='set max fps Default is 300')
-parser.add_argument('-p', '--port', type=int, default=0, help='camera port default is 0')
-parser.add_argument('-cf', type=float, default=2, help='shrink the frame by a factor of cf before running algo')
-parser.add_argument('--faces', type=int, default=5, help='max number of bboxs to render. default =5')
-parser.add_argument('--device', type=str, default='gpu', help='runs a hog if cpu and cnn if gpu')
-parser.add_argument('--ncpu', type=int, default='1', help='number of cpus')
+def make_parser():
+    parser = argparse.ArgumentParser(description='Try to avoid the Camera Bot Shooting You')
+    parser.add_argument('-d','--dim',type=tuple, default=(1280, 720),
+                        help='set video dimensions. default is (1280, 720)')
+    parser.add_argument('-m','--max_fps', type=int, default=300,
+                        help='set max fps Default is 300')
+    parser.add_argument('-p', '--port', type=int, default=0,
+                        help='camera port default is 0')
+    parser.add_argument('-cf', type=float, default=2,
+                        help='shrink the frame by a factor of cf before running algo')
+    parser.add_argument('--faces', type=int, default=5,
+                        help='max number of bboxs to render. default =5')
+    parser.add_argument('--device', type=str, default='gpu',
+                        help='runs a hog if cpu and cnn if gpu')
+    parser.add_argument('--ncpu', type=int, default='1',
+                        help='number of cpus')
 
+parser = make_parser()
 args = parser.parse_args()
 
 video_center = np.array(args.dim)
@@ -45,12 +54,12 @@ def camera_process(shared_data_object):
     #shorten shared name
     shared = shared_data_object
     #set up writers
-    fps_writer = writers.FPSWriter((10, int(capture.dim[1] - 40)))
-    m_time_write = writers.TypeWriter((10, int(capture.dim[1] - 120)))
+    write_fps = writers.FPSWriter((10, int(capture.dim[1] - 40)))
+    write_model_time = writers.TypeWriter((10, int(capture.dim[1] - 120)))
     #specify write function so that shared.m_time can be updated
-    m_time_write.text_function = lambda : f'model compute time = {shared.m_time.value} ms'
-    n_face_writer = writers.TypeWriter((10, int(capture.dim[1] - 80)))
-    n_face_writer.text_function = lambda : f'{shared.n_faces.value} face(s) detected'
+    write_model_time.text_function = lambda : f'model compute time = {shared.m_time.value} ms'
+    write_n_faces = writers.TypeWriter((10, int(capture.dim[1] - 80)))
+    write_n_faces.text_function = lambda : f'{shared.n_faces.value} face(s) detected'
 
     BBoxes = []
     for i in range(args.faces):
@@ -69,18 +78,20 @@ def camera_process(shared_data_object):
         for i in range(shared.n_faces.value):
             BBoxes[i].write(capture.frame)
 
+        #if the center of the box is within teh inner xhair cirlce change colors
         if utils.linear_distance(video_center, BBoxes[0].center) > CROSSHAIR_RADIUS/2:
             BBoxes[0].color = 'g'
             crosshair.color = 'r'
+
         else:
             BBoxes[0].color = 'r'
             crosshair.color = 'g'
 
         crosshair.write(capture.frame)
         #write other stuff
-        n_face_writer.write_fun(capture.frame)
-        fps_writer.write(capture.frame)
-        m_time_write.write_fun(capture.frame)
+        write_n_faces.write_fun(capture.frame)
+        write_fps.write(capture.frame)
+        write_model_time.write_fun(capture.frame)
         #render
         capture.show(warn=True)
 
@@ -132,7 +143,7 @@ def servo_process(shared_data_object):
 
     xPID = pid.PIDController(.08, 0, .0000000001)
     yPID = pid.PIDController(.05, 0, .0000000001)
-    servo_update_timer = timers.BoolTimer(1/5)
+    update_limiter = timers.CallLimiter(1 / 5)
     target = np.array(video_center)
     last_coords = np.array(shared.bbox_coords[0,:])
 
@@ -141,7 +152,7 @@ def servo_process(shared_data_object):
             break
 
     while True:
-        if servo_update_timer() and np.all(shared.bbox_coords[0,:] != last_coords):
+        if update_limiter() and np.all(shared.bbox_coords[0,:] != last_coords):
             t, r, b, l = shared.bbox_coords[0,:]
             target[0], target[1] = (r+l)//2, (b+t)//2
             error = target - video_center
@@ -158,27 +169,27 @@ def servo_process(shared_data_object):
 
 def main():
     #set up shared data
-
-    shared = mtools.ProcessDataSharer()
-    shared.add_value('m_time', 'i', 0)
-    shared.add_value('n_faces', 'i', 0)
-
-    shared.add_array('frame', ctypes.c_uint8, (args.dim[1], args.dim[0], 3))
-    shared.add_array('bbox_coords', ctypes.c_int64, (args.faces, 4))
-    shared.add_value('error', ctypes.c_double, 2)
-
+    shared_data_object = mtools.SharedDataObject()
+    #add shared values
+    shared_data_object.add_value('m_time', 'i', 0)
+    shared_data_object.add_value('n_faces', 'i', 0)
+    #add shared arrays
+    shared_data_object.add_array('frame', ctypes.c_uint8, (args.dim[1], args.dim[0], 3))
+    shared_data_object.add_array('bbox_coords', ctypes.c_int64, (args.faces, 4))
+    shared_data_object.add_value('error', ctypes.c_double, 2)
     #define Processes with shared data
-    show_process = multi.Process(target=camera_process, args=(shared,))
-    find_process = multi.Process(target=cv_model_process, args=(shared,))
-    move_process = multi.Process(target=servo_process, args=(shared,))
-
+    show_process = multi.Process(target=camera_process, args=(shared_data_object,))
+    find_process = multi.Process(target=cv_model_process, args=(shared_data_object,))
+    move_process = multi.Process(target=servo_process, args=(shared_data_object,))
+    #start processes
     show_process.start()
     find_process.start()
     move_process.start()
-
+    #join processes
     show_process.join()
     find_process.join()
     move_process.join()
+
     sys.exit()
 
 

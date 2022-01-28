@@ -123,7 +123,7 @@ def servo_process(shared_data_object):
 
     xPID = pid.PIDController(.08, 0, .0000000001)
     yPID = pid.PIDController(.025, 0, 0)
-    servo_update_timer = timers.BoolTimer(1/5)
+    servo_update_timer = timers.CallLimiter(1 / 5)
     target = np.array(video_center)
     last_coords = np.array(shared.bbox_coords[0,:])
 
@@ -150,7 +150,7 @@ def servo_process(shared_data_object):
 def main():
     #set up shared data
 
-    shared = mtools.ProcessDataSharer()
+    shared = mtools.SharedDataObject()
     shared.add_value('m_time', 'i', 0)
     shared.add_value('n_faces', 'i', 0)
 

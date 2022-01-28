@@ -35,7 +35,7 @@ class CameraPlayer:
         self.name = name
         self.stopped = False
         self._max_fps = max_fps
-        self.sleeper = timers.SmartSleep(1 / self._max_fps)
+        self.sleeper = timers.SmartSleeper(1 / self._max_fps)
         self.fps_writer = writers.FPSWriter((10, int(self.dim[1] - 40)))
         self.latency = 0
         self.limit_fps = True
@@ -122,7 +122,7 @@ class ThreadedCameraPlayer(CameraPlayer):
         :param kwargs:
         """
         super().__init__(*args, **kwargs)
-        self.clock = timers.SmartSleep()
+        self.clock = timers.SmartSleeper()
 
     def start(self):
         Thread(target=self.update, args=()).start()

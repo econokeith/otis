@@ -20,7 +20,8 @@ def close_gracefully(sig, frame):
     sys.exit(0)
 
 
-class ProcessDataSharer:
+class SharedDataObject:
+
     _ctype_hash = {'uint8': ctypes.c_uint8,
                    'str': ctypes.c_wchar_p,
                    'd': ctypes.c_double}
