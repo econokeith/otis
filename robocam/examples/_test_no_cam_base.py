@@ -9,6 +9,7 @@ import robocam.helpers.timers as timers
 import robocam.overlay.colortools as ctools
 import robocam.overlay.textwriters as writers
 import robocam.overlay.assets as assets
+import robocam.overlay.cv2shapes as shapes
 
 parser = argparse.ArgumentParser(description='Example of the TypeWriter screen object')
 parser.add_argument('-d','--dim',type=tuple, default=(1280, 720),
@@ -46,7 +47,7 @@ def main():
         else:
             frame[:, :, :] = color_counter()
 
-
+        shapes.write_text(frame, 'fjfjfj', (0,0), ref='c')
         fps_writer.write(frame)
         if args.cam is False:
             imshow_sleeper()

@@ -95,7 +95,7 @@ class CrossHair(BoundingCircle):
             self.constant_size = True
             self._radius = radius
 
-        self.line_writer = shapes.Line(color='b', thickness=self.thickness)
+        self.line_writer = shapes.Line(color='b', thickness=self.thickness, wtype='cal')
 
     @property
     def radius(self):
@@ -114,21 +114,18 @@ class CrossHair(BoundingCircle):
         radius = self.radius
         r75 = radius*.75
 
-        # self.line_writer.write(frame, center, 90, radius*2.2, wtype='cal')
-        # self.line_writer.write(frame, center, 0, radius*2.2, wtype='cal')
-        # self.line_writer.write(frame, (0, r75), 0, radius*.2, wtype='cal', ref=center, thickness=2)
-        # self.line_writer.write(frame, (0, -r75), 0, radius * .2, wtype='cal', ref=center, thickness=2)
-        # self.line_writer.write(frame, (r75, 0), 90, radius * .2, wtype='cal', ref=center, thickness=2)
-        # self.line_writer.write(frame, (-r75, 0), 90, radius * .2, wtype='cal', ref=center, thickness=2)
+        self.line_writer.write(frame, (0, r75), 0, radius*.2, ref=center, thickness=2)
+        self.line_writer.write(frame, (0, -r75), 0, radius * .2, ref=center, thickness=2)
+        self.line_writer.write(frame, (r75, 0), 90, radius * .2,  ref=center, thickness=2)
+        self.line_writer.write(frame, (-r75, 0), 90, radius * .2, ref=center, thickness=2)
+        #
+        # shapes.draw_cal_line(frame, center, 90, radius*2.2, color='g', thickness=2)
+        # shapes.draw_cal_line(frame, center, 0, radius*2.2, color='g', thickness=2)
 
-        shapes.draw_circle(frame, center, 3, 'g', -1)
         shapes.draw_circle(frame, center, radius, self.color, self.thickness)
         shapes.draw_circle(frame, center, radius/2, 'b', self.thickness/2)
 
+        self.line_writer.write(frame, center, 90, radius*2.2, wtype='cal', thickness=1)
+        self.line_writer.write(frame, center, 0, radius*2.2, wtype='cal',thickness=1)
 
-
-
-
-
-
-
+        shapes.draw_circle(frame, center, 3, 'g', -1)

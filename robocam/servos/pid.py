@@ -6,6 +6,7 @@ class PIDController:
         self.kP = kP
         self.kI = kI
         self.kD = kD
+        self.initialize()
         
     def initialize(self):
         self.time_curr = time.time()

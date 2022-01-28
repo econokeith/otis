@@ -1,6 +1,7 @@
 """
 Example of putting BBoxes around faces
 """
+
 import multiprocessing as multi
 import signal
 import ctypes
@@ -8,14 +9,17 @@ import sys
 import time
 import argparse
 
-
 import cv2
 import numpy as np
 
 import robocam.camera as camera
 import robocam.helpers.multitools as mtools
 import robocam.overlay.textwriters as writers
+import robocam.helpers.timers as timers
 import robocam.overlay.assets as assets
+import robocam.servos.pid as pid
+from robocam.servos import ArduinoServo
+
 
 parser = argparse.ArgumentParser(description='Test For Camera Capture')
 parser.add_argument('-d','--dim',type=tuple, default=(1280, 720),
@@ -28,6 +32,12 @@ parser.add_argument('--device', type=str, default='gpu', help='runs a hog if cpu
 parser.add_argument('--ncpu', type=int, default='1', help='number of cpus')
 
 args = parser.parse_args()
+
+video_center = np.array(args.dim)
+video_center //= 2
+
+
+
 
 def camera_process(shared_data_object):
     #make sure process closes when ctrl+c
@@ -52,7 +62,6 @@ def camera_process(shared_data_object):
         CrossHairs.append(crosshair)
 
     while True:
-
         #get frame
         capture.read()
         shared.frame[:]=capture.frame #write to share
@@ -81,20 +90,20 @@ def cv_model_process(shared_data_object):
     signal.signal(signal.SIGINT, mtools.close_gracefully)
 
     shared = shared_data_object
-
     model = 'cnn' if args.device == 'gpu' else 'hog'
 
     while True:
 
         tick = time.time()
         # compress and convert from
-        small_frame = cv2.resize(shared.frame, (0, 0), fx=1 / args.cf, fy=1 / args.cf)[:, :, ::-1]
+        small_frame = cv2.resize(shared.frame, (0, 0), fx=1/args.cf, fy=1/args.cf)[:, :, ::-1]
         new_boxes = face_recognition.face_locations(small_frame, model=model)
         shared.m_time.value = int(1000*(time.time() - tick))
-
         #write new bbox lcoations to shared array
         shared.n_faces.value = len(new_boxes)
+
         if shared.n_faces.value > 0:
+
             for i in range(shared.n_faces.value):
                 np.copyto(shared.bbox_coords[i,:], new_boxes[i])
             shared.bbox_coords *= args.cf
@@ -103,25 +112,65 @@ def cv_model_process(shared_data_object):
             break
     sys.exit()
 
+def servo_process(shared_data_object):
+
+    signal.signal(signal.SIGTERM, mtools.close_gracefully)
+    signal.signal(signal.SIGINT, mtools.close_gracefully)
+    shared = shared_data_object
+    Servo = ArduinoServo(2, '/dev/ttyACM0' , connect=True, use_micro=True)
+    Servo.angles = [70,60]
+    Servo.write()
+
+    xPID = pid.PIDController(.08, 0, .0000000001)
+    yPID = pid.PIDController(.025, 0, 0)
+    servo_update_timer = timers.BoolTimer(1/5)
+    target = np.array(video_center)
+    last_coords = np.array(shared.bbox_coords[0,:])
+
+    while True:
+        if shared.n_faces.value > 0:
+            break
+
+    while True:
+        if servo_update_timer() and np.all(shared.bbox_coords[0,:] != last_coords):
+            t, r, b, l = shared.bbox_coords[0,:]
+            target[0], target[1] = (r+l)//2, (b+t)//2
+            error = target - video_center
+            move_x = xPID.update(error[0], sleep=0)
+            move_y = yPID.update(error[1], sleep=0)
+            Servo.move([-move_x, -move_y])
+            last_coords = np.array(shared.bbox_coords[0,:])
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    Servo.close()
+
 
 def main():
     #set up shared data
+
     shared = mtools.ProcessDataSharer()
     shared.add_value('m_time', 'i', 0)
     shared.add_value('n_faces', 'i', 0)
 
     shared.add_array('frame', ctypes.c_uint8, (args.dim[1], args.dim[0], 3))
     shared.add_array('bbox_coords', ctypes.c_int64, (args.faces, 4))
+    shared.add_value('error', ctypes.c_double, 2)
 
     #define Processes with shared data
     show_process = multi.Process(target=camera_process, args=(shared,))
     find_process = multi.Process(target=cv_model_process, args=(shared,))
+    move_process = multi.Process(target=servo_process, args=(shared,))
 
     show_process.start()
     find_process.start()
+    move_process.start()
 
     show_process.join()
     find_process.join()
+    move_process.join()
+    sys.exit()
 
 
 if __name__ == '__main__':

@@ -7,14 +7,13 @@ from robocam.overlay import colortools as ctools
 
 def draw_circle(frame, center, radius, color='r', thickness=1, ref=None):
 
-    if color in ctools.COLOR_HASH.keys():
-        color = ctools.COLOR_HASH[color]
+    _color = ctools.color_function(color)
 
     c = utis.abs_point(center, ref)
     r = int(radius)
     t = int(thickness)
 
-    cv2.circle(frame, c, r, color, t)
+    cv2.circle(frame, c, r, _color, t)
 
 
 def draw_line(frame, pt1, pt2, color='r', thickness=1, ref=None):
@@ -68,18 +67,29 @@ def draw_pal_line(frame, point, angle, length, color='r', thickness=1, ref=None)
     cv2.line(frame, _pt0, _pt0, _color, thickness)
 
 
+def write_text(frame, text, pos=(10, 50), font=None, color='b', scale=1, ltype=2, ref=None):
+        _color = ctools.color_function(color)
+        _pos = utis.abs_point(pos, ref, frame.shape)
+        _font = cv2.FONT_HERSHEY_DUPLEX if font is None else font
+
+        cv2.putText(frame,
+                    text,
+                    _pos,
+                    _font, scale, _color, ltype)
+
 class Line(base.Writer):
 
     def __init__(self,
                  color='r',  # must be either string in color hash or bgr value
-                 thickness=2,  # line type
+                 thickness=2,
+                 wtype='ep'# line type
                  ):
 
         super().__init__()
         self.color = color
         self.thickness = thickness
         self.reference = None
-        self.wtype = None
+        self.wtype = wtype
 
     def write(self, frame, *args, ref=None, wtype=None, color=None, thickness=None):
 
@@ -95,7 +105,6 @@ class Line(base.Writer):
             point0, point1 = self._from_end_points(*args, ref=ref)
 
         cv2.line(frame, point0, point1, _color, _thickness)
-
 
     def _from_end_points(self, point_0, point_1, ref=None):
         a_point_0 = self._to_absolute_point(point_0, ref=ref)
