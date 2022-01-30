@@ -15,7 +15,7 @@ import robocam.camera as camera
 import robocam.helpers.multitools as mtools
 import robocam.overlay.textwriters as writers
 import robocam.helpers.timers as timers
-import robocam.helpers.utility as utils
+import robocam.helpers.utilities as utils
 import robocam.overlay.assets as assets
 import robocam.servos.pid as pid
 
@@ -37,6 +37,7 @@ def make_parser():
                         help='runs a hog if cpu and cnn if gpu')
     parser.add_argument('--ncpu', type=int, default='1',
                         help='number of cpus')
+    return parser
 
 parser = make_parser()
 args = parser.parse_args()
@@ -50,7 +51,8 @@ def camera_process(shared_data_object):
     signal.signal(signal.SIGTERM, mtools.close_gracefully)
     signal.signal(signal.SIGINT, mtools.close_gracefully)
     #start camera
-    capture = camera.CameraPlayer(dim=args.dim)
+    capture = camera.ThreadedCameraPlayer(dim=args.dim).start()
+    capture.max_fps = 29
     #shorten shared name
     shared = shared_data_object
     #set up writers

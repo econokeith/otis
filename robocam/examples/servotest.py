@@ -37,8 +37,6 @@ video_center = np.array(args.dim)
 video_center //= 2
 
 
-
-
 def camera_process(shared_data_object):
     #make sure process closes when ctrl+c
     signal.signal(signal.SIGTERM, mtools.close_gracefully)
@@ -68,7 +66,6 @@ def camera_process(shared_data_object):
         #make bbox
         for i in range(shared.n_faces.value):
             CrossHairs[i].write(capture.frame)
-
         #write other stuff
         n_face_writer.write_fun(capture.frame)
         fps_writer.write(capture.frame)

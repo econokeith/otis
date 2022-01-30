@@ -14,7 +14,7 @@ from queue import Queue
 parser = argparse.ArgumentParser(description='Example of the TypeWriter screen object')
 parser.add_argument('-d','--dim',type=tuple, default=(1280, 720),
                     help='set video dimensions. default is (1280, 720)')
-parser.add_argument('-m','--max_fps', type=int, default=60, help='set max fps Default is 30')
+parser.add_argument('-m','--max_fps', type=int, default=24, help='set max fps Default is 30')
 parser.add_argument('-c','--cam',type=bool, default=False,
                     help='USE_WEBCAM = True or False. Default is False')
 parser.add_argument('-s','--script',type=str,  default='script.txt',
@@ -34,6 +34,7 @@ for s in _script:
     TheScript.put(s)
 
 video_width, video_height = args.dim
+
 clock = timers.FirstTimer(round=2)
 clock_writer = writers.TextWriter((10, 60), scale=2, ltype=2, color='r').add_fun(lambda: f'{clock()}')
 speaker = writers.TypeWriter((10, 200), scale=2, ltype=2, kwait=(.02, .08), end_pause=1.5, color='g', ref='bl')
@@ -48,7 +49,7 @@ capture.max_fps = args.max_fps
 def scene_0():
 
     frame = np.zeros((video_height, video_width, 3), dtype='uint8')
-    speaker.add_lines([TheScript.get() for _ in range(1)])
+    speaker.add_lines([TheScript.get() for _ in range(2)])
     start_timer = timers.BoolTimer(5)
     end_timer = timers.BoolTimer(3)
 
@@ -59,6 +60,7 @@ def scene_0():
 
         clock_writer.write_fun(frame)
         imshow_sleeper()
+        print('awake!')
         cv2.imshow('the script', frame)
 
         if cv2.waitKey(1) & 0xFF in [ord('q'), ord('Q'), 27]:
@@ -86,7 +88,7 @@ def scene_1():
         if cv2.waitKey(1) & 0xFF in [ord('q'), ord('Q'), 27]:
             break
 
-        if speaker.script.empty() and speaker.line_complete:
+        if speaker.is_done:
             if end_timer() is True:
                 break
 
@@ -108,7 +110,7 @@ def scene_2():
         if cv2.waitKey(1) & 0xFF in [ord('q'), ord('Q'), 27]:
             break
 
-        if speaker.script.empty() and speaker.line_complete and end_timer() is True:
+        if speaker.is_done is True and end_timer() is True:
             break
 
 def main():

@@ -4,7 +4,7 @@ from queue import Queue
 import cv2
 import numpy as np
 
-import robocam.helpers.utility as utils
+import robocam.helpers.utilities as utils
 import robocam.helpers.timers as timers
 import robocam.overlay.colortools as ctools
 import robocam.overlay.writer_base as base
@@ -13,7 +13,7 @@ import robocam.overlay.cv2shapes as shapes
 class TextWriter(base.Writer):
 
     def __init__(self,
-                 position,  #position
+                 position = (0,0),  #position
                  font=cv2.FONT_HERSHEY_DUPLEX,
                  color='r',  # must be either string in color hash or bgr value
                  scale=1,  # font scale,
@@ -52,15 +52,17 @@ class TextWriter(base.Writer):
         self.text_fun = fun
         return self
 
-    def write(self, frame, text=None, color=None):
+    def write(self, frame, text=None, color=None, position=None, ref=None):
         """
         :type frame: np.array
         """
         _color = color if color is not None else self.color
         _text = text if text is not None else self.line
+        _position = position if position is not None else self.position
+        _ref = ref if ref is not None else self.ref
 
-        shapes.write_text(frame, _text, self.position, self.font, _color,
-                          self.scale, self.ltype, self.ref)
+        shapes.write_text(frame, _text, _position, self.font, _color,
+                          self.scale, self.ltype, _ref)
 
     def write_fun(self, frame, *args, **kwargs):
         self.line = self.text_fun(*args, **kwargs)
@@ -70,7 +72,7 @@ class TextWriter(base.Writer):
 class TypeWriter(TextWriter):
 
     def __init__(self,
-                 position,  #position
+                 position=(),  #position
                  font=cv2.FONT_HERSHEY_DUPLEX,
                  color='r',  # must be either string in color hash or bgr value
                  scale=1,  # font scale,
@@ -129,7 +131,7 @@ class TypeWriter(TextWriter):
         self._kwait = new_wait
 
     @property
-    def alldone(self):
+    def is_done(self):
         return self.line_complete and self.script.empty()
 
     def add_lines(self, new_lines):

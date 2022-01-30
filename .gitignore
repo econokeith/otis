@@ -1,6 +1,9 @@
 *.ipynb*
 *.avi
+*.jpg
+*.jpeg
 *.idea*
 /shelf/
 /workspace.xml
 **/__pycache__/*
+face_r.py

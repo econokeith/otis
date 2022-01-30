@@ -5,9 +5,13 @@ import robocam.overlay.colortools as ctools
 import robocam.overlay.writer_base as base
 from robocam.overlay.cv2shapes import Line
 from robocam.overlay import cv2shapes as shapes
+from robocam.overlay import textwriters
+from robocam.overlay.textwriters import TextWriter
 
 
 class BoundingBox(base.Writer):
+
+    name_writer: TextWriter
 
     def __init__(self,
                  color='r',  # must be either string in color hash or bgr value
@@ -19,6 +23,9 @@ class BoundingBox(base.Writer):
         self.coords = np.zeros(4, dtype='uint8')
         self.color = color
         self.thickness = thickness
+        self.name_writer = textwriters.TextWriter(scale=.75)
+        self.name = ""
+        self.show_name = True
 
     @property
     def center(self):
@@ -39,16 +46,22 @@ class BoundingBox(base.Writer):
 
     def distance_from_center(self, point):
         """
-
         :param point:
         :return: distance between center and point
         """
         c = self.center
         return np.sqrt((c[0]-point[0])**2 + (c[1]-point[1])**2)
 
-    def write(self, frame):
+
+    def write(self, frame, name=None):
         t, r, b, l = self.coords
         cv2.rectangle(frame, (l, t), (r, b), self.color, self.thickness)
+
+        if self.show_name is True or name is not None:
+            _name = self.name if name is None else name
+            self.name_writer.write(frame, position=(0, 20), text=_name, ref=(l, t))
+            shapes.draw_line(frame,(0,0), (0, 15),self.color, 1,  ref=(l+15, t))
+
 
 class BoundingCircle(BoundingBox):
 

@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from robocam.helpers import utility as utis
+from robocam.helpers import utilities as utis
 from robocam.overlay import writer_base as base
 from robocam.overlay import colortools as ctools
 
@@ -28,8 +28,8 @@ def draw_line(frame, pt1, pt2, color='r', thickness=1, ref=None):
     :return:
     """
     _color = ctools.color_function(color)
-    _pt1 = utis.abs_point(pt1, ref)
-    _pt2 = utis.abs_point(pt2, ref)
+    _pt1 = utis.abs_point(pt1, ref, frame.shape)
+    _pt2 = utis.abs_point(pt2, ref, frame.shape)
     cv2.line(frame, _pt1, _pt2, _color, thickness)
 
 
@@ -46,8 +46,8 @@ def draw_cal_line(frame, center, angle, length, color='r', thickness=1, ref=None
     :return:
     """
     _color = ctools.color_function(color)
-    _pt0, _pt1 = utis.line_from_center_angle_length(center, angle, length, ref=ref)
-    cv2.line(frame, _pt0, _pt0, _color, thickness)
+    _pt0, _pt1 = utis.line_from_center_angle_length(center, angle, length, ref=ref, dim=frame.shape)
+    cv2.line(frame, _pt0, _pt1, _color, thickness)
 
 
 def draw_pal_line(frame, point, angle, length, color='r', thickness=1, ref=None):
@@ -63,8 +63,8 @@ def draw_pal_line(frame, point, angle, length, color='r', thickness=1, ref=None)
     :return:
     """
     _color = ctools.color_function(color)
-    _pt0, _pt1 = utis.line_from_point_angle_length(point, angle, length, ref=ref)
-    cv2.line(frame, _pt0, _pt0, _color, thickness)
+    _pt0, _pt1 = utis.line_from_point_angle_length(point, angle, length, ref=ref, dim=frame.shape)
+    cv2.line(frame, _pt0, _pt1, _color, thickness)
 
 
 def write_text(frame,

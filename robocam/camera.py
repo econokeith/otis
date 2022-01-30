@@ -139,3 +139,6 @@ class ThreadedCameraPlayer(CameraPlayer):
     def read(self, silent=False):
         if silent is False:
             return self.grabbed, self.frame
+
+    def show(self, scale=1, width=None, wait=True, fps=False, warn=False):
+        super().show(scale, width, wait, fps, warn)

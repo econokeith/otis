@@ -31,12 +31,12 @@ class SmartSleeper(Timer):
         self.tick = None
 
     def __call__(self, wait=None):
-        wait = wait if wait is not None else self.wait
+        _wait = wait if wait is not None else self.wait
         if self.tick is None:
             self.tick = time.time()
         else:
-            if time.time() - self.tick < wait:
-                time.sleep(wait - time.time() + self.tick)
+            if time.time() - self.tick < _wait:
+                time.sleep(_wait - time.time() + self.tick)
             self.tick = time.time()
 
 
@@ -97,6 +97,7 @@ class FunctionTimer(Timer):
         out = self.function(*args, **kwargs)
         self._time = time.time() - tick
         return out
+
 
 class BoolTimer(Timer):
     """
