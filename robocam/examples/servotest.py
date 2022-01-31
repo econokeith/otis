@@ -120,7 +120,7 @@ def servo_process(shared_data_object):
 
     xPID = pid.PIDController(.08, 0, .0000000001)
     yPID = pid.PIDController(.025, 0, 0)
-    servo_update_timer = timers.CallLimiter(1 / 5)
+    servo_update_timer = timers.CallHzLimiter(1 / 5)
     target = np.array(video_center)
     last_coords = np.array(shared.bbox_coords[0,:])
 

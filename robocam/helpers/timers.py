@@ -15,15 +15,15 @@ class Timer(abc.ABC):
     @abc.abstractmethod
     def __call__(self, *args, **kwargs):
         """
-        all call methods should allow for overriding the wait timer
-        if applicable
+        all call methods should allow for overriding args in
+
         """
         return True
 
 
 class SmartSleeper(Timer):
 
-    def __init__(self, wait=1/30):
+    def __init__(self, wait=1 / 30):
         """
         if time since last call is less than wait, sleeps for the difference. 
         """
@@ -40,7 +40,7 @@ class SmartSleeper(Timer):
             self.tick = time.time()
 
 
-class LastTimer(Timer):
+class TimeSinceLast(Timer):
 
     def __init__(self):
         """
@@ -49,13 +49,13 @@ class LastTimer(Timer):
         self._tick = time.time()
 
     def __call__(self):
-
         tock = time.time()
-        out = tock - self._tick
+        out: float = tock - self._tick
         self._tick = tock
         return out
 
-class FirstTimer(Timer):
+
+class TimeSinceFirst(Timer):
 
     def __init__(self, chop=False, round=False):
         """
@@ -65,6 +65,7 @@ class FirstTimer(Timer):
         self.chop = chop
         self.round = round
 
+
     def __call__(self):
         if self._tick is None:
             self._tick = time.time()
@@ -72,7 +73,7 @@ class FirstTimer(Timer):
         elif isinstance(self.round, int):
             return round(time.time() - self._tick, self.round)
         elif self.chop is True:
-            return  int(time.time() - self._tick)
+            return int(time.time() - self._tick)
         else:
             return time.time() - self._tick
 
@@ -92,7 +93,6 @@ class FunctionTimer(Timer):
         return self._time
 
     def __call__(self, *args, **kwargs):
-
         tick = time.time()
         out = self.function(*args, **kwargs)
         self._time = time.time() - tick
@@ -103,7 +103,6 @@ class BoolTimer(Timer):
     """
     return True if time since first call > wait else False
     """
-
     def __init__(self, wait=1):
         self.wait = wait
         self._tick = 0
@@ -121,9 +120,9 @@ class BoolTimer(Timer):
         self._tick = 0
 
 
-class CallLimiter(Timer):
+class CallHzLimiter(Timer):
 
-    def __init__(self, wait=1/3):
+    def __init__(self, wait=1 / 3):
         """
         returns true wait is over else returns False
         :param wait: float in seconds
@@ -160,7 +159,7 @@ class Blinker(Timer):
     @cycle.setter
     def cycle(self, new_cycle):
         if isinstance(new_cycle, (int, float)):
-            self._cycle = [new_cycle]*2
+            self._cycle = [new_cycle] * 2
         else:
             self._cycle = new_cycle
 
@@ -176,7 +175,5 @@ class Blinker(Timer):
             if time.time() - self._tick > self._cycle[1]:
                 self._tick = time.time()
                 self.on = True
-                
+
             return False
-
-

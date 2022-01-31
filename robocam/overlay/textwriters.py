@@ -97,7 +97,7 @@ class TypeWriter(TextWriter):
         self.output = ""
         self.cursor = Cursor()
         self.script = Queue()
-        self.ktimer = timers.CallLimiter(self.kwait)
+        self.ktimer = timers.CallHzLimiter(self.kwait)
 
     @property
     def line(self):
@@ -181,7 +181,7 @@ class FPSWriter(TextWriter):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.clock = timers.LastTimer()
+        self.clock = timers.TimeSinceLast()
         self.text_function =  lambda fps : f'FPS = {int(1/fps)}'
 
     def write(self, frame: np.array, text=None, color=None):

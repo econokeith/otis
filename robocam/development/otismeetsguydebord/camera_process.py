@@ -40,14 +40,11 @@ def target(shared_data_object, args):
         for i in range(shared.n_faces.value):
             BBoxes[i].name = name_list[shared.names[i]]
             BBoxes[i].write(capture.frame)
-
-
         #write other stuff
         write_n_faces.write_fun(capture.frame)
         #write_fps.write(capture.frame)
         write_model_time.write_fun(capture.frame)
         #render
-
         capture.show(warn=True, wait=False)
         if utils.cv2waitkey() is True:
             break
@@ -64,12 +61,12 @@ class NameTracker:
 
         self.known_names = []
         self.n_known = 0
-        self.load()
+        self.loads_names()
         self.indices_of_observed = []
         self.unknown_count = 0
         self.name_for_unknowns = "Person"
 
-    def load(self):
+    def loads_names(self):
         # this  might have to change
         abs_dir = os.path.dirname(os.path.abspath(__file__))
         face_folder = os.path.join(abs_dir, 'faces')
@@ -91,13 +88,16 @@ class NameTracker:
         if i < self.n_known:
             if i not in self.indices_of_observed:
                 self.indices_of_observed.append(i)
+                print(f'{self.known_names[i]} seen for the first time')
             return self.known_names[i]
 
         else:
+            name = f'Person {i - self.n_known + 1}'
             if i not in self.indices_of_observed:
                 self.indices_of_observed.append(i)
                 self.unknown_count += 1
+                print(f'{name} seen for the first time')
 
-            return f'Person {i-self.n_known+1}'
+            return name
 
 

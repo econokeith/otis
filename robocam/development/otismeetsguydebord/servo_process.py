@@ -26,7 +26,7 @@ def target(shared_data_object, args):
 
     xPID = pid.PIDController(.08, 0, .0000000001)
     yPID = pid.PIDController(.05, 0, .0000000001)
-    update_limiter = timers.CallLimiter(1 / 5)
+    update_limiter = timers.CallHzLimiter(1 / 5)
     target = np.array(video_center)
     last_coords = np.array(shared.bbox_coords[0,:])
 

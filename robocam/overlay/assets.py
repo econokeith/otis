@@ -99,6 +99,7 @@ class BoundingCircle(BoundingBox):
 
 class CrossHair(BoundingCircle):
 
+
     def __init__(self, *args, radius=None, **kwargs):
         super().__init__(*args, **kwargs)
         

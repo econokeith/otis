@@ -23,12 +23,15 @@ def target(shared_data_object, args):
     known_names, known_encodings = load_face_data(face_recognition)
     face_locator = timers.FunctionTimer(face_recognition.face_locations)
 
+    model_timer = timers.TimeSinceLast()
+
     while True:
         # compress and convert from
+        model_timer()
         compressed_frame = utils.resize(shared.frame, 1/args.cf)[:, :, ::-1]
         observed_boxes = face_locator(compressed_frame, model=model)
         observed_encodings = face_recognition.face_encodings(compressed_frame, observed_boxes)
-        shared.m_time.value = face_locator.time
+        # shared.m_time.value = face_locator.time
         #write new bbox lcoations to shared array
         shared.n_faces.value = len(observed_boxes)
 
@@ -42,15 +45,15 @@ def target(shared_data_object, args):
                 first_match_index = matches.index(True)
                 shared.names[i] = first_match_index
             else:
-
                 known_encodings.append(observed_encodings[i])
                 shared.names[i] = len(observed_encodings)
 
         if utils.cv2waitkey() is True:
             break
 
-    sys.exit()
+        shared.m_time.value = model_timer()
 
+    sys.exit()
 
 #this is like this to preserve the local import
 def load_face_data(face_recognition):

@@ -31,7 +31,7 @@ def make_parser():
                         help='number of cpus')
     parser.add_argument('--servo', type=bool, default=False,
                         help='use servos')
-    parser.add_argument('-s', '--scale', type=float, default=1.2)
+    parser.add_argument('-s', '--scale', type=float, default=1)
     return parser
 
 parser = make_parser()
