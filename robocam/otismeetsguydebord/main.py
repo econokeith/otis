@@ -16,9 +16,9 @@ import servo_process
 def make_parser():
     parser = argparse.ArgumentParser(description='Try to avoid the Camera Bot Shooting You')
     parser.add_argument('-d','--dim',type=tuple, default=(1920, 1080),
-                        help='set video dimensions. default is (1280, 720)')
-    parser.add_argument('-m','--max_fps', type=int, default=29,
-                        help='set max fps Default is 300')
+                        help='set video dimensions. default is (1920, 1080)')
+    parser.add_argument('-m','--max_fps', type=int, default=60,
+                        help='set max fps Default is 60')
     parser.add_argument('-p', '--port', type=int, default=0,
                         help='camera port default is 0')
     parser.add_argument('-cf', type=float, default=2,
@@ -29,10 +29,11 @@ def make_parser():
                         help='runs a hog if cpu and cnn if gpu')
     parser.add_argument('--ncpu', type=int, default='1',
                         help='number of cpus')
-    parser.add_argument('--servo', type=bool, default=False,
+    parser.add_argument('--servo', type=bool, default=True,
                         help='use servos')
     parser.add_argument('-s', '--scale', type=float, default=1)
     return parser
+
 
 parser = make_parser()
 args = parser.parse_args()
@@ -45,6 +46,8 @@ def main():
     #add shared values
     shared_data_object.add_value('m_time', 'd', 0.0)
     shared_data_object.add_value('n_faces', 'i', 0)
+    shared_data_object.add_value('primary', 'i', 0)
+    shared_data_object.add_value('new_overlay', ctypes.c_bool, True)
     #add shared arrays
     shared_data_object.add_array('frame', ctypes.c_uint8, (args.dim[1], args.dim[0], 3)) #dims are backwards cause numpy
     shared_data_object.add_array('bbox_coords', ctypes.c_int64, (args.faces, 4))         #is reversed

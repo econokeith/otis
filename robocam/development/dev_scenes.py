@@ -35,9 +35,9 @@ for s in _script:
 
 video_width, video_height = args.dim
 
-clock = timers.TimeSinceFirst(round=2)
+clock = timers.TimeSinceFirst(rnd=2)
 clock_writer = writers.TextWriter((10, 60), scale=2, ltype=2, color='r').add_fun(lambda: f'{clock()}')
-speaker = writers.TypeWriter((10, 200), scale=2, ltype=2, kwait=(.02, .08), end_pause=1.5, color='g', ref='bl')
+speaker = writers.TypeWriter((10, 200), scale=2, ltype=2, key_wait=(.02, .08), end_pause=1.5, color='g', ref='bl')
 
 color_counter = ctools.UpDownCounter(step=1, maxi=100)
 imshow_sleeper = timers.SmartSleeper(1 / args.max_fps)

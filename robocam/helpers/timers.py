@@ -47,8 +47,14 @@ class TimeSinceLast(Timer):
         returns the time elapsed since the last time it was called
         """
         self._tick = time.time()
+        self.on = False
 
     def __call__(self):
+        if self.on is False:
+            self._tick = time.time()
+            self.on = True
+            return 0
+
         tock = time.time()
         out: float = tock - self._tick
         self._tick = tock
@@ -57,25 +63,33 @@ class TimeSinceLast(Timer):
 
 class TimeSinceFirst(Timer):
 
-    def __init__(self, chop=False, round=False):
+    def __init__(self, chop=False, rnd=False):
         """
         returns the time elapsed since the first call
         """
         self._tick = None
         self.chop = chop
-        self.round = round
+        self.rnd = rnd
 
+    def reset(self):
+        self._tick = None
+
+    def start(self):
+        self()
+        return self
 
     def __call__(self):
         if self._tick is None:
             self._tick = time.time()
-            return 0
-        elif isinstance(self.round, int):
-            return round(time.time() - self._tick, self.round)
+            return 0.
+
+        t_elapsed = time.time() - self._tick
+        if self.chop is False and self.rnd is False:
+            return t_elapsed
         elif self.chop is True:
-            return int(time.time() - self._tick)
+            return int(t_elapsed)
         else:
-            return time.time() - self._tick
+            return round(t_elapsed, self.rnd)
 
 
 class FunctionTimer(Timer):

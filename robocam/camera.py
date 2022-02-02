@@ -35,9 +35,10 @@ class CameraPlayer:
         self.name = name
         self.stopped = False
         self._max_fps = max_fps
+        self.capture.set(cv2.CAP_PROP_FPS, max_fps)
         self.sleeper = timers.SmartSleeper(1 / self._max_fps)
         self.fps_writer = writers.FPSWriter((10, int(self.dim[1] - 40)))
-        self.latency = 0
+        self.latency = 0.001
         self.limit_fps = True
         self.exit_warning = writers.TextWriter((10, 40), color='u')
         self.exit_warning.line = 'to exit hit ctrl-c or q'
@@ -115,9 +116,7 @@ class ThreadedCameraPlayer(CameraPlayer):
     def __init__(self, *args, **kwargs):
         """
         separates the VideoCapture.read() and
-        cv2.imshow functions into separate threads. Only really useful
-        if you need the overlay to update more quickly than the camera is
-        able to provide new frames.
+        cv2.imshow functions into separate threads.
         :param args:
         :param kwargs:
         """
@@ -134,7 +133,9 @@ class ThreadedCameraPlayer(CameraPlayer):
             if self.stopped is True:
                 return
 
+            tick = time.time()
             self.grabbed, self.frame = self.capture.read()
+            self.latency = 1//(time.time() - tick)
 
     def read(self, silent=False):
         if silent is False:

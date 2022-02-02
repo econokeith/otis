@@ -78,7 +78,7 @@ class TypeWriter(TextWriter):
                  scale=1,  # font scale,
                  ltype=2,
                  dt=None,
-                 kwait = [.1, .3],
+                 key_wait = [.1, .3],
                  end_pause=1,
                  loop=False,
                  ref = None,
@@ -88,16 +88,16 @@ class TypeWriter(TextWriter):
         super().__init__(position=position, text=None, font=font, color=color, scale=scale, ltype=ltype, ref=ref)
         
         self.dt = dt
-        self._kwait = kwait
-        self.end_pause_timer = timers.BoolTimer(end_pause)
+        self._key_wait = key_wait
+        self.end_timer = timers.BoolTimer(end_pause)
         self.loop = loop
         self.line_iter = utils.BoundIterator([0])
+        self.line_complete = True
         self.line = text
-        self.line_complete = False
         self.output = ""
         self.cursor = Cursor()
         self.script = Queue()
-        self.ktimer = timers.CallHzLimiter(self.kwait)
+        self.ktimer = timers.CallHzLimiter(self.key_wait)
 
     @property
     def line(self):
@@ -120,15 +120,15 @@ class TypeWriter(TextWriter):
             self.output = ""
 
     @property
-    def kwait(self):
-        if isinstance(self._kwait, (float, int)):
-            return self._kwait
+    def key_wait(self):
+        if isinstance(self._key_wait, (float, int)):
+            return self._key_wait
         else:
-            return np.random.rand() * (self._kwait[1] - self._kwait[0]) + self._kwait[0]
+            return np.random.rand() * (self._key_wait[1] - self._key_wait[0]) + self._key_wait[0]
 
-    @kwait.setter
-    def kwait(self, new_wait):
-        self._kwait = new_wait
+    @key_wait.setter
+    def key_wait(self, new_wait):
+        self._key_wait = new_wait
 
     @property
     def is_done(self):
@@ -163,19 +163,19 @@ class TypeWriter(TextWriter):
         # update if there is more to teh line and t > wait
         elif self.line_iter.is_empty is False:
 
-            if self.ktimer(self.kwait):
+            if self.ktimer(self.key_wait):
                 self.output += self.line_iter()
 
             self.write(frame, self.output)
 
         #if the line is done, but the end pause is still going. write whole line with cursor
-        elif self.line_iter.is_empty and self.end_pause_timer() is False:
+        elif self.line_iter.is_empty and self.end_timer() is False:
             self.write(frame, self.output+self.cursor())
 
         #empty line generator and t > pause sets the line to done
         else:
             self.line_complete = True
-            self.end_pause_timer.reset()
+            self.end_timer.reset()
 
 class FPSWriter(TextWriter):
 

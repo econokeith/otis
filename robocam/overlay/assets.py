@@ -23,7 +23,7 @@ class BoundingBox(base.Writer):
         self.coords = np.zeros(4, dtype='uint8')
         self.color = color
         self.thickness = thickness
-        self.name_writer = textwriters.TextWriter(scale=.75)
+        self.name_writer = textwriters.TextWriter(scale=.75, ltype=1)
         self.name = ""
         self.show_name = True
 

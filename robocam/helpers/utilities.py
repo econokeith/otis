@@ -89,6 +89,7 @@ def line_from_center_angle_length(center, angle, length, ref=None, dim=None):
 def linear_distance(p0, p1):
     return np.sqrt((p0[0]-p1[0])**2+(p0[1]-p1[1])**2)
 
+
 def cv2waitkey(n=1):
     """
     will return True on keyboard mash of q, Q or esc
@@ -101,5 +102,22 @@ def cv2waitkey(n=1):
     else:
         return False
 
+
 def resize(frame, scale=.5):
     return cv2.resize(frame, (0, 0), fx=scale, fy=scale)
+
+
+class CounterDict(dict):
+    """
+    unnecesarily complicated means of making a list of unique names with indexes
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.counter = 0
+
+    def __getitem__(self, key):
+        if key not in self.keys():
+            super().__setitem__(key, self.counter)
+            self.counter += 1
+
+        return super().__getitem__(key)
