@@ -50,8 +50,8 @@ def scene_0():
 
     frame = np.zeros((video_height, video_width, 3), dtype='uint8')
     speaker.add_lines([TheScript.get() for _ in range(2)])
-    start_timer = timers.BoolTimer(5)
-    end_timer = timers.BoolTimer(3)
+    start_timer = timers.SinceFirstBool(5)
+    end_timer = timers.SinceFirstBool(3)
 
     while True:
         frame[:,:,:] = 0
@@ -66,15 +66,15 @@ def scene_0():
         if cv2.waitKey(1) & 0xFF in [ord('q'), ord('Q'), 27]:
             break
 
-        if speaker.script.empty() and speaker.line_complete:
+        if speaker.script.empty() and speaker.stub_complete:
             if end_timer() is True:
                 break
 
 def scene_1():
 
     speaker.add_lines([TheScript.get() for _ in range(3)])
-    start_timer = timers.BoolTimer(3)
-    end_timer = timers.BoolTimer(2)
+    start_timer = timers.SinceFirstBool(3)
+    end_timer = timers.SinceFirstBool(2)
 
     while True:
         frame[:, :, :] = color_counter()
@@ -94,8 +94,8 @@ def scene_1():
 
 def scene_2():
 
-    start_timer = timers.BoolTimer(3)
-    end_timer = timers.BoolTimer(2)
+    start_timer = timers.SinceFirstBool(3)
+    end_timer = timers.SinceFirstBool(2)
 
     while TheScript.empty() is False:
         speaker.add_lines(TheScript.get())

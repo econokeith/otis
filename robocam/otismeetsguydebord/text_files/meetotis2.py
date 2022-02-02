@@ -64,7 +64,7 @@ def main():
         else:
             frame[:, :, :] = color_counter()
 
-        if speaker.line_complete and not script.empty():
+        if speaker.stub_complete and not script.empty():
             speaker.line = script.get()
             speaker.end_timer.wait = pauses.get()
 

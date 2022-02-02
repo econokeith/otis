@@ -75,6 +75,7 @@ def write_text(frame,
                scale=1,
                ltype=2,
                ref=None):
+
         _color = ctools.color_function(color)
         _pos = utis.abs_point(pos, ref, frame.shape)
         _font = cv2.FONT_HERSHEY_DUPLEX if font is None else font
@@ -168,7 +169,7 @@ class Line(base.Writer):
         if _wtype == 'pal':
             draw_pal_line(frame, *args, color=_color, thickness=_thickness, ref=ref)
         elif _wtype == 'cal':
-            draw_pal_line(frame, *args, color=_color, thickness=_thickness, ref=ref)
+            draw_cal_line(frame, *args, color=_color, thickness=_thickness, ref=ref)
         else:
             point0 = utis.abs_point(*args[0], ref, frame.shape[:2])
             point1 = utis.abs_point(*args[1], ref, frame.shape[:2])

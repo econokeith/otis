@@ -79,7 +79,7 @@ def target(shared_data_object, args):
         #write other stuff
 
         #update otis's message queue with hellos
-        if tracked_names.hello_queue.empty() is False and OTIS.line_complete is True:
+        if tracked_names.hello_queue.empty() is False and OTIS.stub_complete is True:
             p, line = tracked_names.hello_queue.get()
             OTIS.add_lines(line)
             shared.primary.value = p

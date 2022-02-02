@@ -113,25 +113,19 @@ class FunctionTimer(Timer):
         return out
 
 
-class BoolTimer(Timer):
+class SinceFirstBool(TimeSinceFirst):
     """
     return True if time since first call > wait else False
     """
-    def __init__(self, wait=1):
+    def __init__(self, wait=1, *args,**kwargs):
+        super().__init__(*args, **kwargs)
         self.wait = wait
-        self._tick = 0
 
     def __call__(self):
-        if self._tick == 0:
-            self._tick = time.time()
-            return False
-        elif time.time() - self._tick < self.wait:
-            return False
-        else:
+        if super().__call__() > self.wait:
             return True
-
-    def reset(self):
-        self._tick = 0
+        else:
+            return False
 
 
 class CallHzLimiter(Timer):

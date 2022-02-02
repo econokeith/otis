@@ -1,5 +1,6 @@
 import time
 from queue import Queue
+import copy
 
 import cv2
 import numpy as np
@@ -9,15 +10,17 @@ import robocam.helpers.timers as timers
 import robocam.overlay.colortools as ctools
 import robocam.overlay.writer_base as base
 import robocam.overlay.cv2shapes as shapes
+from robocam.camera import CameraPlayer
 
 class TextWriter(base.Writer):
 
     def __init__(self,
                  position = (0,0),  #position
-                 font=cv2.FONT_HERSHEY_DUPLEX,
+                 font = cv2.FONT_HERSHEY_DUPLEX,
                  color='r',  # must be either string in color hash or bgr value
                  scale=1,  # font scale,
                  ltype=2,
+                 thickness=1,
                  ref=None,
                  text = None
                  ):
@@ -48,6 +51,10 @@ class TextWriter(base.Writer):
     # def position(self, new_position):
     #     self._position = uti.abs_point(new_position, self.ref, self.dim)
 
+    def get_text_size(self, text=None):
+        _text = self.line if text is None else text
+        return cv2.getTextSize(_text, self.font, self.scale, self.ltype)
+
     def add_fun(self, fun):
         self.text_fun = fun
         return self
@@ -72,7 +79,7 @@ class TextWriter(base.Writer):
 class TypeWriter(TextWriter):
 
     def __init__(self,
-                 position=(),  #position
+                 position=(0,0),  #position
                  font=cv2.FONT_HERSHEY_DUPLEX,
                  color='r',  # must be either string in color hash or bgr value
                  scale=1,  # font scale,
@@ -89,7 +96,8 @@ class TypeWriter(TextWriter):
         
         self.dt = dt
         self._key_wait = key_wait
-        self.end_timer = timers.BoolTimer(end_pause)
+        self.end_pause = end_pause
+        self.end_timer = timers.SinceFirstBool(end_pause)
         self.loop = loop
         self.line_iter = utils.BoundIterator([0])
         self.line_complete = True
@@ -150,7 +158,9 @@ class TypeWriter(TextWriter):
 
         return self
 
-    def type_line(self, frame):
+    def type_line(self, frame, position=None, ref=None):
+        if position is not None:
+            self.position = utils.abs_point(position, ref, frame.shape)
 
         # if there's more in the text generator, it will continue to type new letters
         # then will show the full message for length of time self.end_pause
@@ -170,12 +180,16 @@ class TypeWriter(TextWriter):
 
         #if the line is done, but the end pause is still going. write whole line with cursor
         elif self.line_iter.is_empty and self.end_timer() is False:
+
             self.write(frame, self.output+self.cursor())
 
         #empty line generator and t > pause sets the line to done
         else:
+
             self.line_complete = True
+            print(self.line_complete)
             self.end_timer.reset()
+
 
 class FPSWriter(TextWriter):
 
@@ -208,5 +222,192 @@ class Cursor(timers.Blinker):
         else:
             return self.char_0
 
-if __name__ == '__main__':
-    pass
+
+class LineOfText:
+
+    def __init__(self,
+                 text=None,
+                 font=None,
+                 color=None,
+                 scale=None,
+                 ltype=None,
+                 end_pause=None):
+        """
+        I think some kind of container object will be important eventually
+        :param text:
+        :param font:
+        :param color:
+        :param scale:
+        :param ltype:
+        :param end_pause:
+        """
+
+        self.font = font
+        self.color = color
+        self.scale= scale
+        self.ltype = ltype
+        self.end_pause = end_pause
+        self.complete = True
+        self.length = 0
+        self.text = text
+
+    def copy(self):
+        return copy.copy(self)
+
+
+class MultiTypeWriter(TypeWriter):
+
+    def __init__(self, llength, vspace, *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
+
+        self.llength = llength
+        self.vspace = vspace
+        #so the super won't pause when switching lines
+        # self._end_timer = timers.SinceFirstBool(self.end_pause)
+        # self.end_timer.wait = .01
+        self.fheight = 0
+        self._used_stubs = []
+        self._stub_queue = Queue()
+        self._stub = ""
+        self._stub_iter = utils.BoundIterator(self._stub)
+        self._stub_complete = True
+
+    def next_stub(self):
+        self._used_stubs.append(self._stub)
+        self._stub = self._stub_queue.get()
+        self._stub_iter = utils.BoundIterator(self._stub)
+        self._stub_complete = False
+        self.output = ""
+
+    def add_line(self, text):
+        """
+        break up a long line into multiples that fit within self.llength
+        :param text:
+        :return:
+        """
+
+        ts, h = self.get_text_size(text)[0]
+        stubs = []
+        self.fheight = h
+
+        while ts > self.llength:
+
+            split_pos = int(self.llength / ts * len(text))
+            split_proposal = text[:split_pos + 1]
+            #break at last space in the shortened line
+            for i in range(split_pos+1):
+                if split_proposal[-1-i] == ' ':
+                    break
+
+            stubs.append(split_proposal[:split_pos-i])
+            text = text[split_pos - i:].strip(' ')
+            ts = self.get_text_size(text)[0][0]
+
+        stubs.append(text)
+
+        #set first stub
+        self._stub = stubs[0]
+        self._stub_iter = utils.BoundIterator(self._stub)
+
+        #set stub que
+        for stub in stubs[1:]:
+            self._stub_queue.put(stub)
+
+        #do some resets
+        self._used_stubs = []
+        self.line_complete = False
+        self.end_timer.reset()
+        self._stub_complete = False
+
+    def type_line(self, frame):
+        v_move = self.fheight + self.vspace
+        n_fin = len(self._used_stubs)
+        [p0, p1] = self.position
+
+        #do nothing if the line is complete
+        if self.line_complete is True:
+            return
+
+        if self._stub_complete is False:
+            #print finished lines as static
+            for i in range(n_fin):
+                self.write(frame, self._used_stubs[i], position=(p0, p1 + i * v_move))
+            #then type out current line
+            self._type_stub(frame, position=(p0, p1 + n_fin * v_move))
+            return
+
+        #refill and keep going
+        if self._stub_complete is True and self._stub_queue.empty() is False:
+            self.next_stub()
+
+        else:#same as above but the first check of the tiemr will start it.
+            if self.end_timer() is False:
+                for i in range(n_fin):
+                    self.write(frame, self._used_stubs[i], position=(p0, p1 + i * v_move))
+                self._type_stub(frame, position=(p0, p1 + (n_fin) * v_move))
+            else:
+                self.line_complete = True
+
+    def _type_stub(self, frame, position=None, ref=None):
+        """
+        single line stochastic typer just to clean things up.
+        :param frame:
+        :param position:
+        :param ref:
+        :return:
+        """
+        if position is None:
+            _position = self.position
+        else:
+            _position = utils.abs_point(position, ref, frame.shape)
+
+        if self._stub_iter.is_empty is False:
+
+            if self.ktimer(self.key_wait):
+                self.output += self._stub_iter()
+
+            self.write(frame, self.output, position=_position)
+
+        #if the line is done, but the end pause is still going. write whole line with cursor
+        else:
+            self.write(frame, self.output+self.cursor() , position=_position)
+            self._stub_complete = True
+
+
+if __name__=='__main__':
+    frame = np.zeros((720, 1080, 3), 'uint8')
+    sleeper = timers.SmartSleeper(1/60)
+    line = "hello, my name is otis! I am a bad boy and should be \
+spanked.... Would you like to spank me?"
+    mtw = MultiTypeWriter(880, 20, (100, 360))
+    mtw.end_pause = 3
+    mtw.add_line(line)
+    mtw.key_wait = .05
+
+    while True:
+        frame[:,:,:] = 0
+        mtw.type_line(frame)
+
+        if mtw.is_done:
+            break
+
+        #
+        #
+        #
+
+        sleeper()
+        cv2.imshow('test', frame)
+
+        if utils.cv2waitkey():
+            break
+
+
+
+
+
+
+
+
+
+

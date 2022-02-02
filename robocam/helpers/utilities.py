@@ -39,7 +39,7 @@ _FRAME_HASH['r'] = lambda s: (s[1], int(s[0] / 2))
 _FRAME_HASH['t'] = lambda s: (int(s[1] / 2), 0)
 _FRAME_HASH['b'] = lambda s: (int(s[1] / 2), s[0])
 
-
+#todo: clean up the dim variable to make it consistent between np.shape and regular dims
 def abs_point(relative_point, reference=None, dim=None):
 
     """
