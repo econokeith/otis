@@ -1,6 +1,6 @@
 # Robocam - Observer Tracking Interactive Scripting
 
-### What it does: 
+### What it does
 Robocam provides a framework for making interactive computer vision models and writing scripted encounters with 
 participants using them. It solves one of the major hurdles to making realistic viewing experiences for humans by 
 allowing for a hi-definition real-time camera feed even when the models being used don't update quickly enough. It 
@@ -20,7 +20,7 @@ Finally, robocam also includes a Servo package for controlling a pan-tilt camera
 derivative) controller. 
 
 
-### Dependencies:
+### Dependencies
 - python 3
 - numpy
 - cv2 (pip install opencv-python)
