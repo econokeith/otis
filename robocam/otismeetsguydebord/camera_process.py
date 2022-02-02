@@ -20,11 +20,11 @@ def target(shared_data_object, args):
     shared = shared_data_object
     #set up writers
     write_model_time = writers.TypeWriter((10, -30), ltype=1, scale=.5,
-                                          ref='tr', color='u')
+                                          ref='tl', color='u')
     write_n_faces = writers.TypeWriter((10, -60), ltype=1, scale=.5,
-                                         ref='tr', color='u')
+                                         ref='tl', color='u')
     write_latency = writers.TypeWriter((10, -90), ltype=1, scale=.5,
-                                       ref='tr', color='u')
+                                       ref='tl', color='u')
     #set up text functions
     write_model_time.text_fun = lambda mt : f'model compute time = {int(1000*mt)} ms'
     write_latency.text_fun = lambda l: f'camera fps = {int(l)}'
@@ -40,10 +40,10 @@ def target(shared_data_object, args):
 
     tracked_names = NameTracker()
     speech_queue = Queue()
+
+    # make the bboxes
     BBoxes = []
-
     bbox_coords = np.array(shared.bbox_coords)
-
     for i in range(args.faces):
         box = assets.BoundingBox()
         box.coords = bbox_coords[i, :] # reference a line in teh shared array
@@ -55,7 +55,6 @@ def target(shared_data_object, args):
         #get frame
         capture.read()
         shared.frame[:]=capture.frame #write to share
-
         #cache this stuff to avoid overwrites in the middle
         #only update
         if shared.new_overlay.value:
@@ -79,12 +78,13 @@ def target(shared_data_object, args):
             BBoxes[i].write(capture.frame)
         #write other stuff
 
-        #say hello
+        #update otis's message queue with hellos
         if tracked_names.hello_queue.empty() is False and OTIS.line_complete is True:
             p, line = tracked_names.hello_queue.get()
             OTIS.add_lines(line)
             shared.primary.value = p
 
+        #
         OTIS.type_line(capture.frame)
         write_n_faces.write_fun(capture.frame)
         write_model_time.write_fun(capture.frame, model_time_MA())
@@ -153,7 +153,7 @@ class NameTracker:
                 timer, count = self._bad_hello_dict[i]
                 print(timer(),count)
 
-                ##todo: this should not be hardcoded
+                ## todo: this should not be hardcoded
                 if timer() <= 1.5 and count > 10:
                     self.indices_of_observed.append(i)
                     hello = f'Hello {self.known_names[i]}, welcome!'
@@ -190,8 +190,8 @@ def box_stabilizer(box0, box1, threshold=.25):
     hopefully keeps bboxes from jumping around so much.
     :param box0: (t, r, b, l)
     :param box1: (t, r, b, l)
-    :param threshold:
-    :return:
+    :param threshold: float
+    :return: (t, r, b, l)
     """
     centers = []
     radii = []
