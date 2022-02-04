@@ -10,7 +10,7 @@ import robocam.helpers.timers as timers
 import robocam.overlay.colortools as ctools
 import robocam.overlay.writer_base as base
 import robocam.overlay.cv2shapes as shapes
-from robocam.camera import CameraPlayer
+
 
 class TextWriter(base.Writer):
 
@@ -19,21 +19,23 @@ class TextWriter(base.Writer):
                  font = cv2.FONT_HERSHEY_DUPLEX,
                  color='r',  # must be either string in color hash or bgr value
                  scale=1,  # font scale,
-                 ltype=2,
+                 ltype=-1,
                  thickness=1,
                  ref=None,
-                 text = None
+                 text = None,
+                 vspace = .5 # % of fheight for vertical space around
                  ):
 
         self.font = font
         self.color = ctools.color_function(color)
-
         self.ref = ref
         self.position = position
         self.scale = scale
         self.ltype = ltype
         self.line = text
         self.text_fun = None
+        self.fheight = self.get_text_size("T")[0][1]
+        self.vspace = int(self.fheight * vspace)
 
     @property
     def line(self):
@@ -68,8 +70,7 @@ class TextWriter(base.Writer):
         _position = position if position is not None else self.position
         _ref = ref if ref is not None else self.ref
 
-        shapes.write_text(frame, _text, _position, self.font, _color,
-                          self.scale, self.ltype, _ref)
+        shapes.write_text(frame, _text, _position, self.font, _color, self.scale, self.ltype, _ref)
 
     def write_fun(self, frame, *args, **kwargs):
         self.line = self.text_fun(*args, **kwargs)
@@ -85,14 +86,15 @@ class TypeWriter(TextWriter):
                  scale=1,  # font scale,
                  ltype=2,
                  dt=None,
-                 key_wait = [.1, .3],
+                 key_wait = [.02, .12],
                  end_pause=1,
                  loop=False,
                  ref = None,
                  text = None,
+                 **kwargs
                  ):
         
-        super().__init__(position=position, text=None, font=font, color=color, scale=scale, ltype=ltype, ref=ref)
+        super().__init__(position=position, text=None, font=font, color=color, scale=scale, ltype=ltype, ref=ref, **kwargs)
         
         self.dt = dt
         self._key_wait = key_wait
@@ -102,7 +104,7 @@ class TypeWriter(TextWriter):
         self.line_iter = utils.BoundIterator([0])
         self.line_complete = True
         self.line = text
-        self.output = ""
+        self._output = ""
         self.cursor = Cursor()
         self.script = Queue()
         self.ktimer = timers.CallHzLimiter(self.key_wait)
@@ -120,12 +122,12 @@ class TypeWriter(TextWriter):
         if new_text is None:
             self.line_iter = None
             self.line_complete = True
-            self.output = ""
+            self._output = ""
             
         else:
             self.line_iter = utils.BoundIterator(new_text)
             self.line_complete = False
-            self.output = ""
+            self._output = ""
 
     @property
     def key_wait(self):
@@ -161,7 +163,6 @@ class TypeWriter(TextWriter):
     def type_line(self, frame, position=None, ref=None):
         if position is not None:
             self.position = utils.abs_point(position, ref, frame.shape)
-
         # if there's more in the text generator, it will continue to type new letters
         # then will show the full message for length of time self.end_pause
         # then finally stop shows
@@ -174,14 +175,14 @@ class TypeWriter(TextWriter):
         elif self.line_iter.is_empty is False:
 
             if self.ktimer(self.key_wait):
-                self.output += self.line_iter()
+                self._output += self.line_iter()
 
-            self.write(frame, self.output)
+            self.write(frame, self._output)
 
         #if the line is done, but the end pause is still going. write whole line with cursor
         elif self.line_iter.is_empty and self.end_timer() is False:
 
-            self.write(frame, self.output+self.cursor())
+            self.write(frame, self._output + self.cursor())
 
         #empty line generator and t > pause sets the line to done
         else:
@@ -257,16 +258,11 @@ class LineOfText:
 
 class MultiTypeWriter(TypeWriter):
 
-    def __init__(self, llength, vspace, *args, **kwargs):
+    def __init__(self, llength, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
 
         self.llength = llength
-        self.vspace = vspace
-        #so the super won't pause when switching lines
-        # self._end_timer = timers.SinceFirstBool(self.end_pause)
-        # self.end_timer.wait = .01
-        self.fheight = 0
         self._used_stubs = []
         self._stub_queue = Queue()
         self._stub = ""
@@ -278,18 +274,25 @@ class MultiTypeWriter(TypeWriter):
         self._stub = self._stub_queue.get()
         self._stub_iter = utils.BoundIterator(self._stub)
         self._stub_complete = False
-        self.output = ""
+        self._output = ""
 
-    def add_line(self, text):
+    def add_line(self, text, pause=None):
         """
         break up a long line into multiples that fit within self.llength
         :param text:
         :return:
         """
+        #allow input to be a tuple so we can change the pacing of the pauses
+        if isinstance(text, (tuple, list)):
+            self.add_line(*text)
+            return
 
-        ts, h = self.get_text_size(text)[0]
+        #end pause will change for the current line but revert if it isn't updated
+        self.end_timer.wait = self.end_pause if pause is None else pause
+
+
+        ts = self.get_text_size(text)[0][0]
         stubs = []
-        self.fheight = h
 
         while ts > self.llength:
 
@@ -319,6 +322,7 @@ class MultiTypeWriter(TypeWriter):
         self.line_complete = False
         self.end_timer.reset()
         self._stub_complete = False
+        self._output = ''
 
     def type_line(self, frame):
         v_move = self.fheight + self.vspace
@@ -365,39 +369,79 @@ class MultiTypeWriter(TypeWriter):
         if self._stub_iter.is_empty is False:
 
             if self.ktimer(self.key_wait):
-                self.output += self._stub_iter()
+                self._output += self._stub_iter()
 
-            self.write(frame, self.output, position=_position)
+            self.write(frame, self._output, position=_position)
 
         #if the line is done, but the end pause is still going. write whole line with cursor
         else:
-            self.write(frame, self.output+self.cursor() , position=_position)
+            self.write(frame, self._output + self.cursor(), position=_position)
             self._stub_complete = True
 
 
 if __name__=='__main__':
-    frame = np.zeros((720, 1080, 3), 'uint8')
+    DIM = (1920, 1080)
+    #frame = np.zeros((720, 1080, 3), 'uint8')
     sleeper = timers.SmartSleeper(1/60)
-    line = "hello, my name is otis! I am a bad boy and should be \
-spanked.... Would you like to spank me?"
-    mtw = MultiTypeWriter(880, 20, (100, 360))
-    mtw.end_pause = 3
-    mtw.add_line(line)
-    mtw.key_wait = .05
+    _script = [("Hey, wanna hear a joke?", 2),
+               ("Awesome!", .5),
+                "So, a robot walks into a bar, orders a drink, and drops a bill on the bar",
+              "The bartender says, 'Hey, we don't serve robots in here'",
+              ("And the robots replies...", 2),
+               "'Oh Yeah!, well you will VERY SOON!!!'",
+               "HAHAHAHA, GET IT!?!?!?! It's so freakin' funny cause, you know, like robot overlords and stuff",
+               "I know, I know, I'm a genius, right?"
+               ]
+
+    script = Queue()
+    for line in _script:
+        script.put(line)
+
+    mtw = MultiTypeWriter(DIM[0]-550, (450, 900), scale=2, end_pause=3, color='g')
+    mtw.end_pause = 1
+    mtw.key_wait = [.02, .08]
+    capture = CameraPlayer(0, dim=DIM)
+
+
+
+
+    def frame_portion_to_grey(frame):
+        p = mtw.position
+        f = mtw.fheight
+        v = mtw.vspace
+        l = mtw.llength
+        portion = frame[p[1]-f-v:p[1]+2*f+int(3.5*v), p[0]-v:p[0]+l+2*v,:]
+        grey = cv2.cvtColor(portion, cv2.COLOR_BGR2GRAY)
+
+        # grey_new = np.where(grey - 30 < 0, 0, grey-30)
+        new_array = grey[:,:]*.25
+        portion[:,:, 0]=portion[:,:, 1]=portion[:,:, 2]=new_array.astype('uint8')
+
+
+    def frame_portion_to_dark(frame):
+        from robocam.camera import CameraPlayer
+        p = mtw.position
+        f = mtw.fheight
+        v = mtw.vspace
+        l = mtw.llength
+        portion = frame[p[1]-f-v:p[1]+2*f+int(3.5*v), p[0]-v:p[0]+l+v,:]
+        middle = (portion *.25)
+        portion[:, :, :] = middle.astype('uint8')
+
 
     while True:
-        frame[:,:,:] = 0
-        mtw.type_line(frame)
+        capture.read()
+        #frame[:,:,:] = 0
+        tick = time.time()
+        frame_portion_to_grey(capture.frame)
+        #print(round(1000*(time.time()-tick), 2))
 
-        if mtw.is_done:
-            break
+        if mtw.line_complete is True and script.empty() is False:
+            mtw.add_line(script.get())
 
-        #
-        #
-        #
-
-        sleeper()
-        cv2.imshow('test', frame)
+        mtw.type_line(capture.frame)
+        shapes.write_bordered_text(capture.frame, "TEST TEST TEST TEST", (0,0), ref="c", jtype='c')
+        capture.show()
 
         if utils.cv2waitkey():
             break
