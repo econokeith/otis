@@ -2,8 +2,9 @@ import cv2
 import numpy as np
 
 from robocam.helpers import utilities as utis
-from robocam.overlay import writer_base as base
+from robocam.overlay import bases as base
 from robocam.overlay import colortools as ctools
+from robocam.overlay import bases
 
 def draw_circle(frame, center, radius, color='r', thickness=1, ref=None):
 
@@ -15,6 +16,30 @@ def draw_circle(frame, center, radius, color='r', thickness=1, ref=None):
 
     cv2.circle(frame, c, r, _color, t)
 
+class Circle(bases.Writer):
+
+    def __init__(self,
+                 position,
+                 radius,
+                 color='r',
+                 thickness=1,
+                 ref=None):
+
+        super().__init__()
+        self.position = position
+        self.radius = radius
+        self.color = color
+        self.thickness = thickness
+        self.ref = ref
+
+    def write(self, frame, position=None):
+        _center = self.position if position is None else position
+        draw_circle(frame,
+                    _center,
+                    self.radius,
+                    color=self.color,
+                    thickness=self.thickness,
+                    ref=self.ref)
 
 def draw_line(frame, pt1, pt2, color='r', thickness=1, ref=None):
     """

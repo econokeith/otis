@@ -8,7 +8,7 @@ import numpy as np
 import robocam.helpers.utilities as utils
 import robocam.helpers.timers as timers
 import robocam.overlay.colortools as ctools
-import robocam.overlay.writer_base as base
+import robocam.overlay.bases as base
 import robocam.overlay.cv2shapes as shapes
 
 
@@ -197,12 +197,8 @@ class FPSWriter(TextWriter):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.clock = timers.TimeSinceLast()
-        self.text_function =  lambda fps : f'FPS = {int(1/fps)}'
-
-    def write(self, frame: np.array, text=None, color=None):
-        fps = self.text_function(self.clock())
-        super().write(frame, fps)
-
+        self.clock()
+        self.text_fun =  lambda : f'FPS = {int(1/self.clock())}'
 
 class Cursor(timers.Blinker):
 

@@ -5,13 +5,13 @@ import cv2
 import numpy as np
 
 import robocam.overlay.colortools as ctools
-import robocam.overlay.writer_base as base
+import robocam.overlay.bases as base
 from robocam.overlay.cv2shapes import Line
 from robocam.overlay import cv2shapes as shapes
 from robocam.overlay import textwriters
 from robocam.overlay.textwriters import TextWriter
 from robocam.helpers import utilities as utils
-import robocam.camera as camera
+
 
 #Todo: make this more easily resizeable
 class ImageAsset(base.Writer):
@@ -77,6 +77,7 @@ class ImageAsset(base.Writer):
 
 
 if __name__=='__main__':
+    import robocam.camera as camera
     Capture = camera.ThreadedCameraPlayer(0, dim=(1920, 1080)).start()
     Pie = ImageAsset('./photo_asset_files/pie_asset')
 

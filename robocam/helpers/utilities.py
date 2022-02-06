@@ -99,10 +99,6 @@ def line_from_center_angle_length(center, angle, length, ref=None, dim=None):
     return point_0, point_1
 
 
-def linear_distance(p0, p1):
-    return np.sqrt((p0[0]-p1[0])**2+(p0[1]-p1[1])**2)
-
-
 def cv2waitkey(n=1):
     """
     will return True on keyboard mash of q, Q or esc

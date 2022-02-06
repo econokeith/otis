@@ -70,7 +70,7 @@ class SharedDataObject:
         setattr(self, value_name, new_value)
 
 
-class DifLibraryProcess(multi.Process):
+class LibraryImportProcess(multi.Process):
 
     def run(self):
         '''

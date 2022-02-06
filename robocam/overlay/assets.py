@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 import robocam.overlay.colortools as ctools
-import robocam.overlay.writer_base as base
+import robocam.overlay.bases as base
 from robocam.overlay.cv2shapes import Line
 from robocam.overlay import cv2shapes as shapes
 from robocam.overlay import textwriters

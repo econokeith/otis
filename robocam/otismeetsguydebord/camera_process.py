@@ -6,6 +6,8 @@ from collections import defaultdict, deque
 
 import cv2
 import numpy as np
+
+import robocam.helpers.math
 from robocam import camera as camera
 from robocam.helpers import multitools as mtools, timers as timers, utilities as utils
 from robocam.overlay import textwriters as writers, assets as assets
@@ -202,7 +204,7 @@ def box_stabilizer(box0, box1, threshold=.25):
         centers.append(c)
         radii.append(r)
 
-    distance = utils.linear_distance(*centers)
+    distance = robocam.helpers.math.linear_distance(*centers)
     if distance > threshold * radii[0]:
         return box1
     else:

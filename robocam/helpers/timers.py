@@ -139,9 +139,9 @@ class CallHzLimiter(Timer):
         self._tick = 0
 
     def __call__(self, wait=None):
-        wait = self.wait if wait is None else wait
+        _wait = self.wait if wait is None else wait
 
-        if time.time() - self._tick >= wait:
+        if time.time() - self._tick >= _wait:
             self._tick = time.time()
             return True
         else:
