@@ -3,6 +3,7 @@ from collections import defaultdict
 import numpy as np
 import cv2
 
+from robocam.examples.balls import main
 from robocam.helpers import timers
 
 
@@ -27,7 +28,8 @@ class AssetMover:
                  x_range,
                  y_range,
                  border_collision=False,
-                 ups=30  # updates per second
+                 ups=30,
+                 mass=None # updates per second
                  ):
         """
         wrapper class for an asset so it can move around on the screen
@@ -65,7 +67,7 @@ class AssetMover:
         self.real_timer = timers.TimeSinceLast()
         self.real_timer()
         self.finished = False
-        self.mass = self.radius
+        self.mass = self.radius if mass is None else mass
         self.x_collision = False
         self.y_collision = False
 
@@ -165,38 +167,6 @@ class AssetMover:
             self.movers.pop(self.n)
 
 
-# def ball_collision(ball1, ball2):
-#     v1 = ball1.velocity
-#     v2 = ball2.velocity
-#     x1 = ball1.position
-#     x2 = ball2.position
-#     m1 = ball1.mass
-#     m2 = ball2.mass
-#
-#     dv = v1 - v2
-#     dx = x1 - x2
-#     dx_norm_2 = np.sum(dx ** 2)
-#
-#     dot_p1 = np.inner(dv, dx)
-#     dot_p2 = np.inner(-dv, -dx)
-#     v1_new = v1 - 2 * m2 / (m1 + m2) * (dot_p1 / dx_norm_2) * dx
-#     v2_new = v2 - 2 * m1 / (m1 + m2) * (dot_p2 / dx_norm_2) * (-dx)
-
-    # return v1_new, b
-
-
-# def post_collision_velocities(v1, v2, x1, x2, m1=1, m2=1):
-#     dv = v1 - v2
-#     dx = x1 - x2
-#     dx_norm_2 = np.sum(dx ** 2)
-#
-#     dot_p1 = np.inner(dv, dx)
-#     dot_p2 = np.inner(-dv, -dx)
-#     v1_new = v1 - 2 * m2 / (m1 + m2) * (dot_p1 / dx_norm_2) * dx
-#     v2_new = v2 - 2 * m1 / (m1 + m2) * (dot_p2 / dx_norm_2) * (-dx)
-#     return v1_new, v2_new
-
-
 def remove_overlap(ball1, ball2):
     x1 = ball1.position
     x2 = ball2.position
@@ -220,213 +190,109 @@ def remove_overlap(ball1, ball2):
         x1[1] -= db * m1 / (m1 + m2)
         x2[1] += da * m2 / (m1 + m2)
 #
-#
-# class CollisionManager:
-#
-#     def __init__(self, balls):
-#         self.balls = balls
-#
-#     def detection_collisions(self):
-#         for i, b1 in enumerate(self.balls):
-#
-#             for b2 in self.balls[i + 1:]:
-#
-#                 r1 = b1.radius
-#                 r2 = b2.radius
-#                 x1 = b1.position
-#                 x2 = b2.position
-#                 dx = x1 - x2
-#                 dx_norm = np.sqrt(np.sum(dx ** 2))
-#
-#                 if dx_norm <= (r1 + r2):
-#                     v1 = b1.velocity
-#                     v2 = b2.velocity
-#                     m1 = b1.mass
-#                     m2 = b2.mass
-#                     remove_overlap(b1, b2)
-#                     v1, v2 = post_collision_velocities(v1, v2,
-#                                                        b1.position, b2.position,
-#                                                        m1, m2)
-#                     b1.velocity = v1
-#                     b2.velocity = v2
 
-
-if __name__=='__main__':
+def main2():
     from robocam.overlay.cv2shapes import Circle
-    from robocam.helpers.timers import CallHzLimiter
     from robocam.helpers.utilities import cv2waitkey
     from itertools import cycle
-    from textwriters import FPSWriter, TextWriter
+    from textwriters import TextWriter
+    from robocam.overlay.colortools import COLOR_HASH
 
-    color_cycle = cycle(['r', 'g', 'u', 'w'])
-    DIMENSIONS = DX, DY = (1920, 1080)
+    MAX_FPS = 30
+    DIMENSIONS = DX, DY = (1080, 720)
+    RECORD = False
+    MAX_BALLS = 200
+    BALL_FREQUENCY = [1, 3]
+    RADIUS_BOUNDS = [2, 10]
+    BALL_V_ANGLE_BOUNDS = [10, 80]
+    BALL_V_MAGNI_BOUNDS = [1000, 2000]
+    STARTING_LOCATION = [50, DY - 50]
+
+    colors = list(COLOR_HASH.keys())
+    colors.remove('b')
+    color_cycle = cycle(colors)
+
     frame = np.zeros((*DIMENSIONS[::-1], 3), dtype='uint8')
 
-    fps_limit = timers.SmartSleeper(1 / 60)
+    if RECORD is True:
+        recorder = cv2.VideoWriter('outpy.avi',
+                                   cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'),
+                                   MAX_FPS,
+                                   DIMENSIONS)
 
-    fps_timer = timers.TimeSinceLast()
-    fps_timer()
-    fps_writer = TextWriter((100,100), ltype=1)
-    fps_writer.text_fun = lambda : f'{int(1/fps_timer())}'
+    fps_limiter = timers.SmartSleeper(1. / MAX_FPS)
+    fps_timer = timers.TimeSinceLast(); fps_timer()
 
-    pie_timer = timers.TimeSinceLast()
-    pie_writer = TextWriter((100,200), ltype=1)
-    pie_writer.text_fun = lambda t : f'{int(t*1000)}'
+    fps_writer = TextWriter((10, 40), ltype=1)
+    fps_writer.text_fun = lambda: f'fps = {int(1 / fps_timer())}'
 
-    n_writer = TextWriter((100,300), ltype=1)
+    collision_timer = timers.TimeSinceLast()
+    collision_writer = TextWriter((10, 80), ltype=1)
+    collision_writer.text_fun = lambda t: f'comp time = {int(t * 1000)} ms'
+
+    n_writer = TextWriter((10, 120), ltype=1)
     n_writer.text_fun = lambda t: f'{t} balls'
-
-
-    Circles = []
 
     def circle_fun():
         circle = Circle((0, 0),
-                        np.random.randint(5, 25),
-                        color=next(color_cycle))
+                        np.random.randint(*RADIUS_BOUNDS),
+                        color=next(color_cycle),
+                        thickness=-1)
 
-        m = np.random.randint(500, 1000)
-        a = np.random.randint(10, 80)
-        v = np.array([np.cos(a/180 * np.pi)*m, -np.sin(a/180 *np.pi)*m])
+        m = np.random.randint(*BALL_V_MAGNI_BOUNDS)
+        a = np.random.randint(*BALL_V_ANGLE_BOUNDS)
+        v = np.array([np.cos(a / 180 * np.pi) * m, -np.sin(a / 180 * np.pi) * m])
 
         AssetMover(circle, circle.radius,
-                       (100, 900),
-                       v,
-                       (0, DX - 1), (0, DY - 1),
-                       border_collision=True,
-                       ups=120)
+                   STARTING_LOCATION,
+                   v,
+                   (0, DX - 1), (0, DY - 1),
+                   border_collision=True,
+                   ups=MAX_FPS)
 
 
 
-    # for _ in range(100):
-    #     circle = Circle((0, 0),
-    #                     10,#np.random.randint(10, 50),
-    #                     color=next(color_cycle))
-    #     mover = AssetMover(circle, circle.radius,
-    #                        np.random.randint(200, 600, 2),
-    #                        np.random.randint(-500, 500, 2),
-    #                        (0, DX - 1), (0, DY - 1),
-    #                        border_collision=True,
-    #                        ups=30)
-    #
-    #     Circles.append(mover)
-    #
-    # collision_manager = CollisionManager(Circles)
-    # for i, circle1 in enumerate(Circles):
-    #     for circle2 in Circles[i + 1:]:
-    #         remove_overlap(circle1, circle2)
 
-    new_circle_timer = timers.CallHzLimiter(1)
-    n = 0
+
+    new_circle_timer = timers.CallHzLimiter()
+    bf = BALL_FREQUENCY
+
     while True:
         frame[:, :, :] = 0
 
-        if new_circle_timer():
+        dt = np.random.randn(1) * (bf[1] - bf[0]) + bf[0]
+        if new_circle_timer(dt) is True:
             circle_fun()
-            n+=1
-            if len(Circles) > np.inf:
-                Circles.pop(0)
-        pie_timer()
+            if len(AssetMover.movers) > MAX_BALLS:
+                AssetMover.movers.pop(0)
+
+        collision_timer()  # start
         for i, circle1 in enumerate(AssetMover.movers):
             for circle2 in AssetMover.movers[i + 1:]:
                 circle1.collide(circle2)
                 remove_overlap(circle1, circle2)
-
-        pie_writer.write_fun(frame, pie_timer())
+        ct = collision_timer()
 
         for circle in AssetMover.movers:
             circle.move()
             circle.write(frame)
 
-
-        n_writer.write_fun(frame, n)
-
-
-        # for circle in Circles:q
-        #     circle1.move()
-        #     circle.write(frame)
-        #fps_limit()
+        collision_writer.write_fun(frame, ct)
+        n_writer.write_fun(frame, len(AssetMover.movers))
         fps_writer.write_fun(frame)
+        fps_limiter()
         cv2.imshow('test', frame)
+        # out.write(frame)
 
         if cv2waitkey(1):
             break
 
     cv2.destroyAllWindows()
+    if RECORD is True:
+        recorder.release()
 
-# if __name__=='__main__':
-#     from robocam.overlay.cv2shapes import Circle
-#     from robocam.helpers.timers import CallHzLimiter
-#     from robocam.helpers.utilities import cv2waitkey
-#     from itertools import cycle
-#     from textwriters import FPSWriter, TextWriter
-#
-#     color_cycle = cycle(['r', 'g', 'u', 'w'])
-#     DIMENSIONS = DX, DY = (1920, 1080)
-#     frame = np.zeros((*DIMENSIONS[::-1], 3), dtype='uint8')
-#
-#     fps_limit = timers.SmartSleeper(1 / 60)
-#
-#     fps_timer = timers.TimeSinceLast()
-#     fps_timer()
-#     fps_writer = TextWriter((100,100), ltype=1)
-#     fps_writer.text_fun = lambda : f'{int(1/fps_timer())}'
-#
-#     pie_timer = timers.TimeSinceLast()
-#     pie_writer = TextWriter((100,200), ltype=1)
-#     pie_writer.text_fun = lambda t : f'{int(1000*t)}'
-#
-#     Circles = []
-#     for _ in range(100):
-#         circle = Circle((0, 0),
-#                         10,#np.random.randint(10, 50),
-#                         color=next(color_cycle))
-#         mover = AssetMover(circle, circle.radius,
-#                            np.random.randint(200, 600, 2),
-#                            np.random.randint(-500, 500, 2),
-#                            (0, DX - 1), (0, DY - 1),
-#                            border_collision=True,
-#                            ups=30)
-#
-#         Circles.append(mover)
-#
-#     # collision_manager = CollisionManager(Circles)
-#     for i, circle1 in enumerate(Circles):
-#         for circle2 in Circles[i + 1:]:
-#             remove_overlap(circle1, circle2)
-#
-#     # remove_overlap(circle1, circle2)
-#     i = 0
-#     while True:
-#         frame[:, :, :] = 0
-#         # print(pie_timer())
-#         # i+=1
-#         # if i == 2:
-#         #     for i, circle1 in enumerate(Circles):
-#         #         for circle2 in Circles[i + 1:]:
-#         #             remove_overlap(circle1, circle2)
-#         #     i=0
-#         # collision_manager.detection_collisions()
-#         for i, circle1 in enumerate(Circles):
-#             for circle2 in Circles[i + 1:]:
-#                 circle1.collide(circle2)
-#
-#                 # remove_overlap(circle1, circle2)
-#                 # circle2.move()
-#
-#         for circle in Circles:
-#             circle.move()
-#             circle.write(frame)
-#         pie_writer.write_fun(frame, pie_timer())
-#
-#
-#         # for circle in Circles:q
-#         #     circle1.move()
-#         #     circle.write(frame)
-#         #fps_limit()
-#         fps_writer.write_fun(frame)
-#         cv2.imshow('test', frame)
-#
-#         if cv2waitkey(1):
-#             break
-#
-#         cv2.destroyAllWindows()
+if __name__=='__main__':
+
+    main()
+
+

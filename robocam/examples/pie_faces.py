@@ -51,10 +51,6 @@ def camera_process(shared_data_object):
     n_face_writer = writers.TypeWriter((10, int(capture.dim[1] - 80)))
     n_face_writer.text_fun = lambda : f'{shared.n_faces.value} face(s) detected'
 
-    # Pies = []
-    # for i in range(args.faces):
-    #     bbox = imgassets.ImageAsset(pie_folder)
-    #     Pies.append(bbox)
     Pies = [imgassets.ImageAsset(pie_folder)]
     for i in range(args.faces):
         Pies.append(copy.deepcopy(Pies[0]))

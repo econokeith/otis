@@ -10,7 +10,7 @@ import robocam.helpers.timers as timers
 import robocam.overlay.colortools as ctools
 import robocam.overlay.bases as base
 import robocam.overlay.cv2shapes as shapes
-from robocam.camera import CameraPlayer
+
 
 
 class TextWriter(base.Writer):
@@ -377,6 +377,7 @@ class MultiTypeWriter(TypeWriter):
 
 
 if __name__=='__main__':
+    from robocam.camera import CameraPlayer
     DIM = (1920, 1080)
     #frame = np.zeros((720, 1080, 3), 'uint8')
     sleeper = timers.SmartSleeper(1/60)
