@@ -2,14 +2,14 @@ import signal
 import sys
 import os
 from queue import Queue
-from collections import defaultdict, deque
+from collections import defaultdict
 
-import cv2
 import numpy as np
 
 import robocam.helpers.math
 from robocam import camera as camera
 from robocam.helpers import multitools as mtools, timers as timers, utilities as utils
+from robocam.helpers.utilities import MovingAverage
 from robocam.overlay import textwriters as writers, assets as assets
 
 def target(shared_data_object, args):
@@ -221,25 +221,6 @@ def box_stabilizer(box0, box1, threshold=.25):
     #         return box0
     #
     # return box1
-
-class MovingAverage:
-
-    def __init__(self, n):
-        self.n = n
-        self.data = Queue()
-        for _ in range(self.n):
-            self.data.put(0)
-        self.ma = 0
-
-    def __call__(self, x=None):
-        return self.ma
-
-    def update(self, x):
-
-        _x = x / self.n
-        self.ma = self.ma + _x - self.data.get()
-        self.data.put(_x)
-        return self.ma
 
 
 

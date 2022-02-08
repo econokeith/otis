@@ -30,7 +30,8 @@ class CameraPlayer:
             self.dim = [int(d) for d in self.dim]
 
         self.center = int(self.dim[0]/2), int(self.dim[1]/2)
-        self.frame = np.empty((*self.dim[::-1], 3))
+        self._frame = np.empty((*self.dim[::-1], 3))
+        self._c_frame = np.array(self._frame)
         self.grabbed = True
         self.name = name
         self.stopped = False
@@ -42,6 +43,14 @@ class CameraPlayer:
         self.limit_fps = True
         self.exit_warning = writers.TextWriter((10, 40), color='u')
         self.exit_warning.line = 'to exit hit ctrl-c or q'
+
+    @property
+    def frame(self):
+        return self._frame
+
+    @frame.setter
+    def frame(self, new_frame):
+        self._frame = new_frame
 
     @property
     def max_fps(self):
@@ -110,10 +119,10 @@ class CameraPlayer:
         cv2.destroyAllWindows()
         self.stopped = True
 
-
+#TODO maybe put in a wait until next frame option
 class ThreadedCameraPlayer(CameraPlayer):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, cache=True, **kwargs):
         """
         separates the VideoCapture.read() and
         cv2.imshow functions into separate threads.
@@ -122,6 +131,16 @@ class ThreadedCameraPlayer(CameraPlayer):
         """
         super().__init__(*args, **kwargs)
         self.clock = timers.SmartSleeper()
+        self.cache = cache
+        self._frame = None
+        self._c_frame = None
+
+    @property
+    def frame(self):
+        if self.cache is True:
+            return self._c_frame
+        else:
+            return self._frame
 
     def start(self):
         Thread(target=self.update, args=()).start()
@@ -134,12 +153,17 @@ class ThreadedCameraPlayer(CameraPlayer):
                 return
 
             tick = time.time()
-            self.grabbed, self.frame = self.capture.read()
+            self.grabbed, self._frame = self.capture.read()
+            #self.new_frame = True
             self.latency = 1//(time.time() - tick)
 
-    def read(self, silent=False):
-        if silent is False:
+    def read(self, Silent=False):
+            #cache the newest frame
+            # if self.new_frame is True and self.cache is True:
+            #     self._c_frame = np.array(self._frame)
+            #     self.new_frame = False
+            self._c_frame = np.array(self._frame)
+
             return self.grabbed, self.frame
 
-    def show(self, scale=1, width=None, wait=True, fps=False, warn=False):
-        super().show(scale, width, wait, fps, warn)
+

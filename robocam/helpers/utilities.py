@@ -1,3 +1,5 @@
+from queue import Queue
+
 import numpy as np
 import cv2
 
@@ -130,3 +132,23 @@ class CounterDict(dict):
             self.counter += 1
 
         return super().__getitem__(key)
+
+
+class MovingAverage:
+
+    def __init__(self, n):
+        self.n = n
+        self.data = Queue()
+        for _ in range(self.n):
+            self.data.put(0)
+        self.ma = 0
+
+    def __call__(self, x=None):
+        return self.ma
+
+    def update(self, x):
+
+        _x = x / self.n
+        self.ma = self.ma + _x - self.data.get()
+        self.data.put(_x)
+        return self.ma

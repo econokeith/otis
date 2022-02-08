@@ -1,6 +1,7 @@
 import signal
 import sys
 import os
+import time
 from queue import Queue
 from collections import defaultdict, deque
 
@@ -10,20 +11,23 @@ import numpy as np
 import robocam.helpers.math
 from robocam import camera as camera
 from robocam.helpers import multitools as mtools, timers as timers, utilities as utils
-from robocam.overlay import textwriters as writers, assets as assets 
+from robocam.overlay import textwriters as writers, assets as assets, colortools as ctools
 
 
 def target(shared, args):
+    signal.signal(signal.SIGTERM, mtools.close_gracefully)
+    signal.signal(signal.SIGINT, mtools.close_gracefully)
 
     manager = SceneManager(shared, args)
+    time.sleep(3)
     while True:
 
         if shared.scene.value == 1: 
-            manager.loop1()
-        elif shared.scene.value == 2:
-            manager.loop2()
+            manager.hello_fr_loop()
+        elif shared.scene.value == 0:
+            manager.otis_tells_a_joke_loop()
         else:
-            manager.loop3()
+            break
 
         if utils.cv2waitkey() is True:
             break
@@ -39,30 +43,56 @@ class SceneManager:
         self.shared = shared
         self.args = args
 
-        self.capture = camera.ThreadedCameraPlayer(dim=args.dim, 
-                                                   max_fps=args.max_fps).start()
+        self.capture = camera.ThreadedCameraPlayer(dim=args.dim).start()
+        time.sleep(2)
 
-        self.write_model_time = writers.TypeWriter((10, -30), ltype=1, scale=.5,
-                                                   ref='tl', color='u')
-        self.write_n_faces = writers.TypeWriter((10, -60), ltype=1, scale=.5,
-                                                ref='tl', color='u')
-        self.write_latency = writers.TypeWriter((10, -90), ltype=1, scale=.5,
-                                                ref='tl', color='u')
+        ### writers for info info writer section
+        self.info_writers = []
+        for i in range(3):
+            new_writer = writers.TextWriter((10, -30*(1+i)), ltype=1, scale=.5,
+                                               ref='tl', color='u')
+            self.info_writers.append(new_writer)
 
-        self.write_model_time.text_fun = lambda mt : f'model compute time = {int(1000*mt)} ms'
-        self.write_latency.text_fun = lambda l : f'camera fps = {int(l)}'
-        self.write_n_faces.text_fun = lambda : f'{self.shared.n_faces.value} face(s) detected'
+        self.info_writers[0].text_fun = lambda mt : f'model compute time = {int(1000 * mt)} ms'
+        self.info_writers[1].text_fun = lambda l : f'camera fps = {int(l)}'
+        self.info_writers[2].text_fun = lambda n: f'{n} face(s) detected'
 
         MA_N = 10
-        self.model_time_MA = MovingAverage(MA_N)
-        self.latency_MA = MovingAverage(MA_N)
-        #OTIS!!!!
+        self.model_time_MA = utils.MovingAverage(MA_N)
+        self.latency_MA = utils.MovingAverage(MA_N)
+
+        #trackers/queues/etc
+        self.name_tracker = NameTracker()
+        self.speech_queue = Queue()
+        self.joke_script = Queue()
+
+        #OTIS!!!! and otis section stuff
         self.OTIS = writers.TypeWriter((10, 400), scale=2, ltype=2,
                                     key_wait=(.02, .08),
                                     end_pause=1.5, color='g')
 
-        self.name_tracker = NameTracker()
-        self.speech_queue = Queue()
+        mtw = writers.MultiTypeWriter(args.dim[0] - 550, (450, 900), scale=2, end_pause=3, color='g')
+        mtw.end_pause = 3
+        mtw.key_wait = [.05, .12]
+
+        self.mtw = mtw
+
+        p = mtw.position
+        f = mtw.fheight
+        v = mtw.vspace
+        l = mtw.llength
+        ### portions to grey out
+        self.gls = (
+            p[1] - f - v,
+            p[1] + 2 * f + int(3.5 * v),
+            p[0] - v,
+            p[0] + l + 2 * v
+        )
+
+        for line in _JOKE_SCRIPT:
+            self.joke_script.put(line)
+
+    ####################################################################################################################
 
         BBoxes = []
         self.bbox_coords = np.array(shared.bbox_coords)
@@ -75,13 +105,24 @@ class SceneManager:
         self.BBoxes = BBoxes
         self.is_updated = True
 
+
+    ####################################################################################################################
+
+        self.countdown_writer = writers.TextWriter(ref='c', scale=10)
+        self.countdown_timer = timers.CallHzLimiter(1)
+        self.countdown = 10
+
+
+    ####################################################################################################################
     def write_info(self):
         frame = self.capture.frame
-        self.write_n_faces.write_fun(frame)
-        self.write_model_time.write_fun(frame, self.model_time_MA())
-        self.write_latency.write_fun(frame, self.latency_MA())
+        mtma = self.model_time_MA.ma
+        lat = self.latency_MA.ma
+        n = self.shared.n_faces.value
+        for writer, data in zip(self.info_writers, (mtma, lat, n)):
+            writer.write_fun(frame, data)
 
-    def loop1(self):
+    def hello_fr_loop(self):
         capture = self.capture
         shared = self.shared
         BBoxes = self.BBoxes
@@ -101,8 +142,8 @@ class SceneManager:
             self.model_time_MA.update(shared.m_time.value)
             #update and hopefully stabilize
             for i in range(shared.n_faces.value):
-                bbox_coords[i] = box_stabilizer(old_coords[i], bbox_coords[i], .1)
-                BBoxes[i].coords = bbox_coords[i]
+                self.bbox_coords[i] = box_stabilizer(old_coords[i], bbox_coords[i], .1)
+                BBoxes[i].coords = self.bbox_coords[i]
                 BBoxes[i].name = self.name_tracker[names[i]]
 
             self.is_updated = True
@@ -113,7 +154,7 @@ class SceneManager:
         #write other stuff
 
         #update otis's message queue with hellos
-        if self.name_tracker.hello_queue.empty() is False and OTIS.stub_complete is True:
+        if self.name_tracker.hello_queue.empty() is False and OTIS.line_complete is True:
             p, line = self.name_tracker.hello_queue.get()
             OTIS.add_lines(line)
             shared.primary.value = p
@@ -128,104 +169,42 @@ class SceneManager:
             self.is_updated = False
          #next loop won't update
 
-    def loop2(self):
+    def otis_tells_a_joke_loop(self):
+        gls = self.gls
+        _, frame = self.capture.read()
+        frame = np.array(frame)
+        mtw = self.mtw
+        script = self.joke_script
+        portion = frame[gls[0]:gls[1], gls[2]:gls[3]]
+        grey = cv2.cvtColor(portion, cv2.COLOR_BGR2GRAY)*.25
+        portion[:, :, 0] = portion[:, :, 1] = portion[:, :, 2] = grey.astype('uint8')
+        ctools.frame_portion_to_grey(portion)
+        if mtw.line_complete is True and script.empty() is False:
+            mtw.add_line(script.get())
+
+        mtw.type_line(frame)
+        self.write_info()
+        cv2.imshow('jokes', frame)
+
+    def countdown_loop(self):
         pass
 
 
 
-
-# def target(shared_data_object, args):
-#     #make sure process closes when ctrl+c
-#     signal.signal(signal.SIGTERM, mtools.close_gracefully)
-#     signal.signal(signal.SIGINT, mtools.close_gracefully)
-#     #start camera
-#     capture = camera.ThreadedCameraPlayer(dim=args.dim, max_fps=args.max_fps).start()
-#     #shorten shared name
-#     shared = shared_data_object
-#     #set up writers
-#     write_model_time = writers.TypeWriter((10, -30), ltype=1, scale=.5,
-#                                           ref='tl', color='u')
-#     write_n_faces = writers.TypeWriter((10, -60), ltype=1, scale=.5,
-#                                          ref='tl', color='u')
-#     write_latency = writers.TypeWriter((10, -90), ltype=1, scale=.5,
-#                                        ref='tl', color='u')
-#     #set up text functions
-#     write_model_time.text_fun = lambda mt : f'model compute time = {int(1000*mt)} ms'
-#     write_latency.text_fun = lambda l: f'camera fps = {int(l)}'
-#     write_n_faces.text_fun = lambda : f'{shared.n_faces.value} face(s) detected'
-#     #moving average to smooth the
-#     MA_N = 10
-#     model_time_MA = MovingAverage(MA_N)
-#     latency_MA = MovingAverage(MA_N)
-#     #OTIS!!!!
-#     OTIS = writers.TypeWriter((10, 400), scale=2, ltype=2,
-#                                  key_wait=(.02, .08),
-#                                  end_pause=1.5, color='g')
-
-#     tracked_names = NameTracker()
-#     speech_queue = Queue()
-
-#     # make the bboxes
-#     BBoxes = []
-#     bbox_coords = np.array(shared.bbox_coords)
-#     for i in range(args.faces):
-#         box = assets.BoundingBox()
-#         box.coords = bbox_coords[i, :] # reference a line in teh shared array
-#         BBoxes.append(box)
-
-#     is_updated = True
-
-#     while True:
-#         #get frame
-#         capture.read()
-#         shared.frame[:]=capture.frame #write to share
-#         #cache this stuff to avoid overwrites in the middle
-#         #only update
-#         if shared.new_overlay.value:
-#             old_coords = bbox_coords
-#             bbox_coords = np.array(shared.bbox_coords)
-#             names = np.array(shared.names)
-
-#             latency_MA.update(capture.latency)
-#             model_time_MA.update(shared.m_time.value)
-
-#             #update and hopefully stabilize
-#             for i in range(shared.n_faces.value):
-#                 bbox_coords[i] = box_stabilizer(old_coords[i], bbox_coords[i], .1)
-#                 BBoxes[i].coords = bbox_coords[i]
-#                 BBoxes[i].name = tracked_names[names[i]]
-
-#             is_updated = True
-
-#         #write the boxes
-#         for i in range(shared.n_faces.value):
-#             BBoxes[i].write(capture.frame)
-#         #write other stuff
-
-#         #update otis's message queue with hellos
-#         if tracked_names.hello_queue.empty() is False and OTIS.stub_complete is True:
-#             p, line = tracked_names.hello_queue.get()
-#             OTIS.add_lines(line)
-#             shared.primary.value = p
-
-#         #
-#         OTIS.type_line(capture.frame)
-#         write_n_faces.write_fun(capture.frame)
-#         write_model_time.write_fun(capture.frame, model_time_MA())
-#         write_latency.write_fun(capture.frame, latency_MA())
-#         capture.show(warn=False, wait=False)
-
-#         #only reset after the data has been updated
-#         if shared.new_overlay.value and is_updated:
-#             shared.new_overlay.value = False
-#             is_updated = False
-#          #next loop won't update
-
-#         if utils.cv2waitkey() is True:
-#             break
-
-#     capture.stop()
-#     sys.exit()
+_JOKE_SCRIPT = [
+           ("Hi Keith, would you like to hear a joke?", 2),
+           ("Awesome!", 1),
+           ("Ok, Are you ready?", 2),
+           "So, a robot walks into a bar, orders a drink, and throws down some cash to pay",
+           ("The bartender looks at him and says,", .5),
+           ("'Hey buddy, we don't serve robots!'", 3),
+           ("So, the robot looks him square in the eye and says...", 1),
+           ("'... Oh Yeah... '", 1),
+           ("'Well, you will VERY SOON!!!'", 5),
+           ("HAHAHAHA, GET IT!?!?!?!", 1),
+           (" It's so freakin' funny cause... you know... like robot overlords and stuff", 2),
+           ("I know, I know, I'm a genius, right?", 5)
+           ]
 
 
 class NameTracker:
@@ -332,36 +311,26 @@ def box_stabilizer(box0, box1, threshold=.25):
     else:
         return box0
 
-    # ht = (box0[2]-box0[0])*threshold
-    # wt = (box0[1]-box0[3])*threshold
 
-    # dts = [ht,wt]
-    # j = 1
-    # for i in range(4):
-    #     j = j&0
-    #     if abs(box1[i]-box0[i]) < dts[j]:
-    #         return box0
-    #
-    # return box1
 
-class MovingAverage:
-
-    def __init__(self, n):
-        self.n = n
-        self.data = Queue()
-        for _ in range(self.n):
-            self.data.put(0)
-        self.ma = 0
-
-    def __call__(self, x=None):
-        return self.ma
-
-    def update(self, x):
-
-        _x = x / self.n
-        self.ma = self.ma + _x - self.data.get()
-        self.data.put(_x)
-        return self.ma
+# class MovingAverage:
+#
+#     def __init__(self, n):
+#         self.n = n
+#         self.data = Queue()
+#         for _ in range(self.n):
+#             self.data.put(0)
+#         self.ma = 0
+#
+#     def __call__(self, x=None):
+#         return self.ma
+#
+#     def update(self, x):
+#
+#         _x = x / self.n
+#         self.ma = self.ma + _x - self.data.get()
+#         self.data.put(_x)
+#         return self.ma
 
 
 

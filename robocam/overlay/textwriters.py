@@ -12,7 +12,6 @@ import robocam.overlay.bases as base
 import robocam.overlay.cv2shapes as shapes
 
 
-
 class TextWriter(base.Writer):
 
     def __init__(self,
@@ -20,7 +19,7 @@ class TextWriter(base.Writer):
                  font = cv2.FONT_HERSHEY_DUPLEX,
                  color='r',  # must be either string in color hash or bgr value
                  scale=1,  # font scale,
-                 ltype=-1,
+                 ltype=1,
                  thickness=1,
                  ref=None,
                  text = None,
@@ -77,7 +76,7 @@ class TextWriter(base.Writer):
         self.line = self.text_fun(*args, **kwargs)
         self.write(frame)
 
-        
+#TODO: clean up differences between TypeWriter and MultiLineTyper
 class TypeWriter(TextWriter):
 
     def __init__(self,
@@ -87,7 +86,7 @@ class TypeWriter(TextWriter):
                  scale=1,  # font scale,
                  ltype=2,
                  dt=None,
-                 key_wait = [.02, .12],
+                 key_wait = [.07, .17],
                  end_pause=1,
                  loop=False,
                  ref = None,
@@ -265,6 +264,7 @@ class MultiTypeWriter(TypeWriter):
         self._stub = ""
         self._stub_iter = utils.BoundIterator(self._stub)
         self._stub_complete = True
+        self.comma_pause_factor = 3
 
     def next_stub(self):
         self._used_stubs.append(self._stub)
@@ -364,8 +364,13 @@ class MultiTypeWriter(TypeWriter):
             _position = utils.abs_point(position, ref, frame.shape)
 
         if self._stub_iter.is_empty is False:
+            #pause for a comma a tad
+            if len(self._output) > 0 and self._output[-1] == ',':
+                cpf = self.comma_pause_factor
+            else:
+                cpf = 1
 
-            if self.ktimer(self.key_wait):
+            if self.ktimer(cpf*self.key_wait):
                 self._output += self._stub_iter()
 
             self.write(frame, self._output, position=_position)
@@ -377,73 +382,7 @@ class MultiTypeWriter(TypeWriter):
 
 
 if __name__=='__main__':
-    from robocam.camera import CameraPlayer
-    DIM = (1920, 1080)
-    #frame = np.zeros((720, 1080, 3), 'uint8')
-    sleeper = timers.SmartSleeper(1/60)
-    _script = [("Hey, wanna hear a joke?", 2),
-               ("Awesome!", .5),
-                "So, a robot walks into a bar, orders a drink, and drops a bill on the bar",
-              "The bartender says, 'Hey, we don't serve robots in here'",
-              ("And the robots replies...", 2),
-               "'Oh Yeah!, well you will VERY SOON!!!'",
-               "HAHAHAHA, GET IT!?!?!?! It's so freakin' funny cause, you know, like robot overlords and stuff",
-               "I know, I know, I'm a genius, right?"
-               ]
-
-    script = Queue()
-    for line in _script:
-        script.put(line)
-
-    mtw = MultiTypeWriter(DIM[0]-550, (450, 900), scale=2, end_pause=3, color='g')
-    mtw.end_pause = 1
-    mtw.key_wait = [.02, .08]
-    capture = CameraPlayer(0, dim=DIM)
-
-
-
-
-    def frame_portion_to_grey(frame):
-        p = mtw.position
-        f = mtw.fheight
-        v = mtw.vspace
-        l = mtw.llength
-        portion = frame[p[1]-f-v:p[1]+2*f+int(3.5*v), p[0]-v:p[0]+l+2*v,:]
-        grey = cv2.cvtColor(portion, cv2.COLOR_BGR2GRAY)
-
-        # grey_new = np.where(grey - 30 < 0, 0, grey-30)
-        new_array = grey[:,:]*.25
-        portion[:,:, 0]=portion[:,:, 1]=portion[:,:, 2]=new_array.astype('uint8')
-
-
-    def frame_portion_to_dark(frame):
-        from robocam.camera import CameraPlayer
-        p = mtw.position
-        f = mtw.fheight
-        v = mtw.vspace
-        l = mtw.llength
-        portion = frame[p[1]-f-v:p[1]+2*f+int(3.5*v), p[0]-v:p[0]+l+v,:]
-        middle = (portion *.25)
-        portion[:, :, :] = middle.astype('uint8')
-
-
-    while True:
-        capture.read()
-        #frame[:,:,:] = 0
-        tick = time.time()
-        frame_portion_to_grey(capture.frame)
-        #print(round(1000*(time.time()-tick), 2))
-
-        if mtw.line_complete is True and script.empty() is False:
-            mtw.add_line(script.get())
-
-        mtw.type_line(capture.frame)
-        shapes.write_bordered_text(capture.frame, "TEST TEST TEST TEST", (0,0), ref="c", jtype='c')
-        capture.show()
-
-        if utils.cv2waitkey():
-            break
-
+    pass
 
 
 

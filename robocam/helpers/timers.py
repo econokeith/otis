@@ -130,17 +130,18 @@ class SinceFirstBool(TimeSinceFirst):
 
 class CallHzLimiter(Timer):
 
-    def __init__(self, wait=1 / 3):
+    def __init__(self, wait=1 / 3, first=True):
         """
         returns true wait is over else returns False
         :param wait: float in seconds
         """
         self.wait = wait
         self._tick = 0
+        self.first = True
 
     def __call__(self, wait=None):
-        _wait = self.wait if wait is None else wait
 
+        _wait = self.wait if wait is None else wait
         if time.time() - self._tick >= _wait:
             self._tick = time.time()
             return True

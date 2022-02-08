@@ -1,12 +1,12 @@
 """
 This is a very simple collision detection class
+can be sped up
 """
 from collections import defaultdict
 
 import numpy as np
 import cv2
 
-from robocam.examples.balls import main
 from robocam.helpers import timers
 
 
@@ -161,7 +161,7 @@ class AssetMover:
         elif self.position[1] > self.y_range[1]:
             self.position[1] = self.y_range[1] - 1
 
-    def collide(self, ball):
+    def collide(self, ball, clean=False):
         v1 = self.velocity
         v2 = ball.velocity
         x1 = self.position
@@ -186,6 +186,8 @@ class AssetMover:
             self.position += v1_new / self.ups
             ball.position += v2_new / self.ups
             self.collision_hash[ball.id] = True
+            if clean is True:
+                remove_overlap(self, ball)
 
         elif dx_norm <= (self.radius + ball.radius):
             self.position += self.velocity / self.ups
@@ -202,7 +204,7 @@ class AssetMover:
         try:
             self.asset.write(frame, position=self.position.astype(int))
         except:
-            self.movers.pop(self.id)
+            self.movers.remove(self)
 
 
 def remove_overlap(ball1, ball2):
@@ -229,7 +231,11 @@ def remove_overlap(ball1, ball2):
         x2[1] += da * m2 / (m1 + m2)
 #
 
-def main2():
+def main():
+    """
+    This tests using radix sort with balls of the same diameter to speeed it.
+    it acheives roughly a 10x performance boost
+    """
     from robocam.overlay.cv2shapes import Circle
     from robocam.helpers.utilities import cv2waitkey
     from itertools import cycle
@@ -237,11 +243,12 @@ def main2():
     from robocam.overlay.colortools import COLOR_HASH
 
     MAX_FPS = 30
-    DIMENSIONS = DX, DY = (1080, 720)
-    RECORD = False
-    MAX_BALLS = 200
-    BALL_FREQUENCY = [1, 3]
-    RADIUS_BOUNDS = [2, 10]
+    DIMENSIONS = DX, DY = (1920, 1080)
+    RECORD = True
+    MAX_BALLS = 500
+    RETIRE = False
+    BALL_FREQUENCY = [.05, .1]
+    RADIUS_BOUNDS = 4
     BALL_V_ANGLE_BOUNDS = [10, 80]
     BALL_V_MAGNI_BOUNDS = [1000, 2000]
     STARTING_LOCATION = [50, DY - 50]
@@ -253,10 +260,12 @@ def main2():
     frame = np.zeros((*DIMENSIONS[::-1], 3), dtype='uint8')
 
     if RECORD is True:
-        recorder = cv2.VideoWriter('outpy.avi',
+        recorder = cv2.VideoWriter('lotta_balls.avi',
                                    cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'),
                                    MAX_FPS,
                                    DIMENSIONS)
+
+        record_toggled = False
 
     fps_limiter = timers.SmartSleeper(1. / MAX_FPS)
     fps_timer = timers.TimeSinceLast(); fps_timer()
@@ -272,8 +281,12 @@ def main2():
     n_writer.text_fun = lambda t: f'{t} balls'
 
     def circle_fun():
+        if isinstance(RADIUS_BOUNDS, (int, float)):
+            radius = RADIUS_BOUNDS
+        else:
+            radius = np.random.randint(*RADIUS_BOUNDS)
         circle = Circle((0, 0),
-                        np.random.randint(*RADIUS_BOUNDS),
+                        radius,
                         color=next(color_cycle),
                         thickness=-1)
 
@@ -291,34 +304,94 @@ def main2():
     new_circle_timer = timers.CallHzLimiter()
     bf = BALL_FREQUENCY
 
+    remove_counter = 0
     while True:
         frame[:, :, :] = 0
 
-        dt = np.random.randn(1) * (bf[1] - bf[0]) + bf[0]
+        dt = np.random.rand() * (bf[1] - bf[0]) + bf[0]
         if new_circle_timer(dt) is True:
-            circle_fun()
-            if len(AssetMover.movers) > MAX_BALLS:
+            if AssetMover.n() > MAX_BALLS and RETIRE is True:
                 AssetMover.movers.pop(0)
 
+            if AssetMover.n() < MAX_BALLS:
+                circle_fun()
+
         collision_timer()  # start
-        for i, circle1 in enumerate(AssetMover.movers):
-            for circle2 in AssetMover.movers[i + 1:]:
-                circle1.collide(circle2)
-                remove_overlap(circle1, circle2)
+        y_zeros = [[] for _ in range(DIMENSIONS[1])]
+        x_zeros = [[] for _ in range(DIMENSIONS[0])]
+
+        for i, mover in enumerate(AssetMover.movers):
+            x, y = mover.position.astype('int')
+            try:
+                x_zeros[x].append(i)
+                y_zeros[y].append(i)
+            except:
+                AssetMover.movers.remove(mover)
+                remove_counter += 1
+                print(f'removed ball at {x},{y} : {remove_counter} total')
+
+        x_array = []
+        for x in x_zeros:
+            if x:
+                for m in x:
+                    x_array.append(m)
+        y_array = []
+        for y in x_zeros:
+            for m in y:
+                y_array.append(m)
+
+        movers = AssetMover.movers
+        smash_hash = defaultdict(int)
+
+        for array in [x_array, y_array]:
+            for _i in range(len(array)-1):
+                j = 1
+                i1 = array[_i]
+                m1 = movers[i1]
+                x1 = m1.position[0]
+                r1 = m1.radius
+                while True:
+                    if j+_i >= len(array):
+                        break
+                    i2 = array[j+_i]
+                    m2 = movers[i2]
+                    x2 = m2.position[0]
+                    r2 = m2.radius
+                    if (x2-x1) < (r1+r2):
+                        idxs = tuple(sorted([i1, i2]))
+                        smash_hash[idxs]+=1
+                        j+=1
+                    else:
+                        break
+
+        for key in smash_hash.keys():
+            if smash_hash[key] >1:
+                i1, i2 = key
+                m1 = movers[i1]
+                m2 = movers[i2]
+                m1.collide(m2, True)
+
+        AssetMover.move_all()
         ct = collision_timer()
 
-        for circle in AssetMover.movers:
-            circle.move()
-            circle.write(frame)
+        AssetMover.write_all(frame)
 
         collision_writer.write_fun(frame, ct)
-        n_writer.write_fun(frame, len(AssetMover.movers))
+        n_writer.write_fun(frame, AssetMover.n())
         fps_writer.write_fun(frame)
         fps_limiter()
+
+        if RECORD is True and record_toggled is True:
+            recorder.write(frame)
+
         cv2.imshow('test', frame)
         # out.write(frame)
+        cv2_wait = cv2.waitKey(1)&0xFF
 
-        if cv2waitkey(1):
+        if cv2_wait == ord('r') and RECORD is True:
+            record_toggled = not record_toggled
+
+        if cv2_wait == ord('q'):
             break
 
     cv2.destroyAllWindows()
