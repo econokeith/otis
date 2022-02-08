@@ -24,6 +24,7 @@ from robocam.overlay import cv2shapes as shapes
 from robocam.overlay import textwriters as writers
 from robocam.overlay import assets as assets
 from robocam.overlay import colortools as ctools
+from robocam.overlay import groups
 
 #TODO: set up args
 parser = argparse.ArgumentParser(description='Test For Camera Capture')
@@ -60,7 +61,7 @@ def main():
     frame = np.zeros((*DIMENSIONS[::-1], 3), dtype='uint8')
     #record
     if RECORD is True:
-        recorder = cv2.VideoWriter('outpy.avi',
+        recorder = cv2.VideoWriter('balls.avi',
                                    cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'),
                                    MAX_FPS,
                                    DIMENSIONS)
@@ -68,7 +69,6 @@ def main():
     fps_limiter = timers.SmartSleeper(1. / MAX_FPS)
     fps_timer = timers.TimeSinceLast(); fps_timer()
     collision_timer = timers.TimeSinceLast()
-
     #set up writers
     fps_writer = writers.TextWriter((10, 40), ltype=1)
     fps_writer.text_fun = lambda: f'fps = {int(1 / fps_timer())}'
@@ -82,9 +82,9 @@ def main():
     def circle_fun():
         # make the circle
         circle = shapes.Circle((0, 0),
-                        np.random.randint(*RADIUS_BOUNDS),
-                        color=next(color_cycle),
-                        thickness=-1)
+                                np.random.randint(*RADIUS_BOUNDS),
+                                color=next(color_cycle),
+                                thickness=-1)
         # random initial velocity
         m = np.random.randint(*BALL_V_MAGNI_BOUNDS)
         a = np.random.randint(*BALL_V_ANGLE_BOUNDS)

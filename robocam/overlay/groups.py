@@ -1,5 +1,6 @@
 """
-overlay groups are made here
+overlay groups are made here still working on this one, but i need some way to moving around and controlling multiple
+writers at once
 """
 import abc
 from robocam.helpers import utilities as utils

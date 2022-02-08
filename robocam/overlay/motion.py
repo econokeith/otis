@@ -1,3 +1,6 @@
+"""
+This is a very simple collision detection class
+"""
 from collections import defaultdict
 
 import numpy as np
@@ -13,12 +16,47 @@ class AssetMover:
 
     #track movers for collisions
     movers = []
-    n_movers= 0
+    _n_movers= 0
 
     @classmethod
     def reset_movers(cls):
         cls.movers = []
-        cls.n_movers = 0
+        cls._n_movers = 0
+
+    @classmethod
+    def check_collisions(cls):
+        for i, m1 in enumerate(cls.movers):
+            for m2 in cls.movers[i + 1:]:
+                m1.collide(m2)
+                remove_overlap(m1, m2)
+
+    @classmethod
+    def move_all(cls):
+        for mover in cls.movers:
+            mover.move()
+
+    @classmethod
+    def write_all(cls, frame):
+        for mover in cls.movers:
+            mover.write(frame)
+
+    @classmethod
+    def move_write_all(cls, frame):
+        for mover in cls.movers:
+            mover.move()
+            mover.write(frame)
+
+    @classmethod
+    def remove_fin(cls):
+        living_movers = []
+        for mover in cls.movers:
+            if mover.finished is False:
+                living_movers.append(mover)
+        cls.movers = living_movers
+
+    @classmethod
+    def n(cls):
+        return len(cls.movers)
 
     def __init__(self,
                  asset,
@@ -43,8 +81,8 @@ class AssetMover:
         :param ups:
         """
         self.movers.append(self)
-        self.n_movers +=1
-        self.n = self.n_movers
+        self._n_movers +=1
+        self.id = self._n_movers
 
         self.collision_hash = defaultdict(lambda: False)
 
@@ -135,7 +173,8 @@ class AssetMover:
         dx_norm_2 = np.sum(dx ** 2)
         dx_norm = np.sqrt(dx_norm_2)
 
-        if dx_norm <= (self.radius + ball.radius) and self.collision_hash[ball.n] is False:
+        #collision hash makes it so that balls don't interact until they have fully seperated
+        if dx_norm <= (self.radius + ball.radius) and self.collision_hash[ball.id] is False:
             dv = v1 - v2
             dot_p1 = np.inner(dv, dx)
             dot_p2 = np.inner(-dv, -dx)
@@ -146,15 +185,14 @@ class AssetMover:
 
             self.position += v1_new / self.ups
             ball.position += v2_new / self.ups
-            self.collision_hash[ball.n] = True
+            self.collision_hash[ball.id] = True
 
         elif dx_norm <= (self.radius + ball.radius):
             self.position += self.velocity / self.ups
             ball.position += ball.velocity / self.ups
 
-
         elif dx_norm > (self.radius + ball.radius):
-            self.collision_hash[ball.n] = False
+            self.collision_hash[ball.id] = False
 
 
     def write(self, frame):
@@ -164,7 +202,7 @@ class AssetMover:
         try:
             self.asset.write(frame, position=self.position.astype(int))
         except:
-            self.movers.pop(self.n)
+            self.movers.pop(self.id)
 
 
 def remove_overlap(ball1, ball2):
@@ -249,10 +287,6 @@ def main2():
                    (0, DX - 1), (0, DY - 1),
                    border_collision=True,
                    ups=MAX_FPS)
-
-
-
-
 
     new_circle_timer = timers.CallHzLimiter()
     bf = BALL_FREQUENCY

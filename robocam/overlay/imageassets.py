@@ -3,7 +3,6 @@ import time
 
 import cv2
 import numpy as np
-
 import robocam.overlay.colortools as ctools
 import robocam.overlay.bases as base
 from robocam.overlay.cv2shapes import Line
@@ -12,12 +11,12 @@ from robocam.overlay import textwriters
 from robocam.overlay.textwriters import TextWriter
 from robocam.helpers import utilities as utils
 
-
 #Todo: make this more easily resizeable
 class ImageAsset(base.Writer):
 
     def __init__(self,
                  src,
+                 position = (100,100),
                  bit=0, #let's you flip the bit-mask 0, 1, or None
                  size = None, #if none stays the same, otherwise change
                  loc = (100, 100) #location of center
@@ -36,13 +35,19 @@ class ImageAsset(base.Writer):
         self.bit = bit
         if bit in [0, 1] and len(files)>1:
             self.mask = cv2.imread(os.path.join(src, files[1]))
+            self.mask[self.mask <128] = 0
+            self.mask[self.mask >=128] = 255
             self.locs = np.asarray(np.nonzero(self.mask == self.bit))
         else:
             self.mask = None
             self.locs = None
 
+        #this might be wrong
         self.center = self.img.shape[0] // 2, self.img.shape[1] // 2
+        self.dim = self.img.shape[:2][::-1]
+        self.position = position
 
+    #TODO THIS IS FLIPPING COORDINATEES
     def _c_to_tl_on_frame(self, f_center):
         """
         find the position of the frame that represents the top corner of hte image asset given
@@ -52,7 +57,7 @@ class ImageAsset(base.Writer):
         img_c = self.center
         return f_center[0] - img_c[1], f_center[1] - img_c[0]
 
-    def write(self, frame, pos, pos_type='c'):
+    def write(self, frame, position=None, pos_type='c'):
         """
         loc type can either be 'c' for center or 'tl' for top right. must be given in absolute frame
         coords
@@ -62,7 +67,8 @@ class ImageAsset(base.Writer):
         :return:
         """
         v, h, _ = self.img.shape
-        t, l = pos_type if pos_type == 'tl' else self._c_to_tl_on_frame(pos)
+        pos = self.position if position is None else position
+        t, l = pos_type if pos_type == 'tl' else self._c_to_tl_on_frame(pos[::-1])
         b = t + v
         r = l + h
 
