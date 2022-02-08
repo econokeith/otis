@@ -1,11 +1,27 @@
+from robocam.helpers import timers
+
+
 class UpDownCounter:
 
-    def __init__(self, mini=0, maxi=255, step=1):
+    def __init__(self, 
+                 mini=0, 
+                 maxi=255, 
+                 step=1, 
+                 start=0, 
+                 forward=True,
+                 Hz = 1
+                 ):
+
         self.mini = mini
         self.maxi = maxi
-        self.i = 0
-        self.forward = True
+        self.i = start
+        self.forward = forward
         self.step = step
+        self.cycle_length = maxi - mini + 1
+        self.last_timer = timers.TimeSinceLast()
+        self.Hz = Hz
+        #self.ips = 
+        self.max_timer = timers.CallHzLimiter()
 
     def __call__(self):
 
