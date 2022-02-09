@@ -2,29 +2,18 @@
 PUT PIES ON EVERYONE'S FACES
 """
 
-import multiprocessing as multi
-import signal
-import ctypes
-import sys
-import time
 import argparse
-import os
-import copy
 from itertools import cycle
 
 import cv2
 import numpy as np
 
-import robocam.camera as camera
-from robocam.helpers import timers
+from robocam.helpers import timers, colortools as ctools
 from robocam.helpers.utilities import cv2waitkey
 
 from robocam.overlay import motion as move
-from robocam.overlay import cv2shapes as shapes
+from robocam.overlay import shapes as shapes
 from robocam.overlay import textwriters as writers
-from robocam.overlay import assets as assets
-from robocam.overlay import colortools as ctools
-from robocam.overlay import groups
 
 #TODO: set up args
 parser = argparse.ArgumentParser(description='Test For Camera Capture')

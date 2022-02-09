@@ -1,9 +1,7 @@
 import cv2
-import numpy as np
 
-from robocam.helpers import utilities as utis
+from robocam.helpers import utilities as utis, colortools as ctools
 from robocam.overlay import bases as base
-from robocam.overlay import colortools as ctools
 from robocam.overlay import bases
 
 def draw_circle(frame, center, radius, color='r', thickness=1, ref=None):
@@ -91,8 +89,20 @@ def draw_pal_line(frame, point, angle, length, color='r', thickness=1, ref=None)
     _pt0, _pt1 = utis.line_from_point_angle_length(point, angle, length, ref=ref, dim=frame.shape)
     cv2.line(frame, _pt0, _pt1, _color, thickness)
 
+#todo combine with bordered
 
-def write_text(frame, text, pos=(10, 50), font=None, color='b', scale=1, ltype=2, ref=None, jtype='l'):
+def write_text(frame,
+               text,
+               pos=(10, 50),
+               font=None,
+               color='b',
+               scale=1,
+               ltype=1,
+               ref=None,
+               jtype='l',
+               thickness=1,
+               bl=False
+               ):
 
         _color = ctools.color_function(color)
         _pos = utis.abs_point(pos, ref, frame.shape)
@@ -102,7 +112,12 @@ def write_text(frame, text, pos=(10, 50), font=None, color='b', scale=1, ltype=2
         cv2.putText(frame,
                     text,
                     _pos,
-                    _font, scale, _color, ltype)
+                    _font,
+                    scale,
+                    _color,
+                    thickness,
+                    ltype,
+                    bl)
 
 def write_bordered_text(frame,
                         text,
@@ -131,9 +146,7 @@ def write_bordered_text(frame,
     t = b - h - 2 * border
 
     cv2.rectangle(frame, (l, t), (r, b), _bcolor, btype)
-    write_text(frame, text, pos=_pos, font=_font, color=_color,
-               scale=scale, ltype=ltype, ref=None, jtype='l')
-
+    write_text(frame, text, pos=_pos, font=_font, color=_color, scale=scale, ltype=ltype, ref=None, jtype='l')
 
 
 class Line(base.Writer):

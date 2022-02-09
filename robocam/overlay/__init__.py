@@ -1,6 +1,4 @@
 import robocam.overlay.textwriters as textwriters
 import robocam.overlay.assets as assets
-import robocam.overlay.cv2shapes as cv2shapes
-import robocam.overlay.colortools as colortools
+import robocam.overlay.shapes as cv2shapes
 #TODO: Fix the thickness versus ltype issue !
-import robocam.overlay.photo_asset_files as photos

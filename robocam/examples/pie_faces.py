@@ -33,7 +33,7 @@ parser.add_argument('--ncpu', type=int, default='4', help='number of cpus')
 args = parser.parse_args()
 
 abs_dir = os.path.dirname((os.path.abspath(__file__)))
-pie_folder = os.path.join(abs_dir, 'pie_asset')
+pie_folder = os.path.join(abs_dir, '../development/pie_asset')
 
 def camera_process(shared_data_object):
     #make sure process closes when ctrl+c

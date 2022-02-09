@@ -236,11 +236,10 @@ def main():
     This tests using radix sort with balls of the same diameter to speeed it.
     it acheives roughly a 10x performance boost
     """
-    from robocam.overlay.cv2shapes import Circle
-    from robocam.helpers.utilities import cv2waitkey
+    from robocam.overlay.shapes import Circle
     from itertools import cycle
     from textwriters import TextWriter
-    from robocam.overlay.colortools import COLOR_HASH
+    from robocam.helpers.colortools import COLOR_HASH
 
     MAX_FPS = 30
     DIMENSIONS = DX, DY = (1920, 1080)

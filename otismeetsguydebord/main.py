@@ -9,7 +9,9 @@ import argparse
 import numpy as np
 
 import robocam.helpers.multitools as mtools
-from robocam.otismeetsguydebord import servo_process, cv_model_process, camera_process2
+from otismeetsguydebord import servo_process
+from otismeetsguydebord import cv_model_process
+from otismeetsguydebord import camera_process
 
 
 def make_parser():
@@ -54,14 +56,13 @@ def main():
     shared_data_object.add_array('error', ctypes.c_double, 2)
     shared_data_object.add_array('names', ctypes.c_uint8, args.faces)
     #define Processes with shared data
-    process_modules = [camera_process2, cv_model_process, servo_process]
+    process_modules = [camera_process, cv_model_process, servo_process]
     processes = []
     #each process module should have a primary function called 'target'
     for module in process_modules:
         processes.append(multi.Process(target=module.target,
                                        args=(shared_data_object, args)
-                                       )
-                         )
+                                       ))
     #start
     for process in processes:
         process.start()

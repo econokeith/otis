@@ -3,9 +3,8 @@ Writer is basically just a fancy mixin to add the class method
 cls().make_list which instantiates a list of identical Writer/subclass
 objects
 """
-from collections.abc import Iterable
 import copy
-import robocam.overlay.colortools as ctools
+import robocam.helpers.colortools as ctools
 
 class Writer:
 

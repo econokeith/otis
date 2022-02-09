@@ -4,9 +4,6 @@ test the camera
 import argparse
 
 import robocam.camera as camera
-import robocam.helpers.timers as timers
-import robocam.overlay.colortools as ctools
-import robocam.overlay.textwriters as writers
 
 parser = argparse.ArgumentParser(description='Test For Camera Capture')
 parser.add_argument('-d','--dim',type=tuple, default=(1280, 720),

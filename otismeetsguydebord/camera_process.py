@@ -8,10 +8,10 @@ from collections import defaultdict, deque
 import cv2
 import numpy as np
 
-import robocam.helpers.math
+
 from robocam import camera as camera
-from robocam.helpers import multitools as mtools, timers as timers, utilities as utils
-from robocam.overlay import textwriters as writers, assets as assets, colortools as ctools
+from robocam.helpers import multitools as mtools, timers as timers, utilities as utils, colortools as ctools
+from robocam.overlay import textwriters as writers, assets as assets, screenevents as events
 
 
 def target(shared, args):
@@ -22,12 +22,14 @@ def target(shared, args):
     time.sleep(3)
     while True:
 
-        if shared.scene.value == 1: 
+        if shared.scene.value == 2:
             manager.hello_fr_loop()
-        elif shared.scene.value == 0:
+        elif shared.scene.value == 1:
             manager.otis_tells_a_joke_loop()
-        else:
-            break
+        elif shared.scene.value == 0:
+            manager.countdown_loop()
+            if manager.countdown == 0:
+                shared.scene.value = 1
 
         if utils.cv2waitkey() is True:
             break
@@ -38,14 +40,14 @@ def target(shared, args):
 
 class SceneManager:
 
-    def __init__(self, shared, args): 
+    def __init__(self, shared, args):
 
         self.shared = shared
         self.args = args
+        self.name = 'otis'
 
-        self.capture = camera.ThreadedCameraPlayer(dim=args.dim).start()
-        time.sleep(2)
-
+        self.capture = camera.ThreadedCameraPlayer(dim=args.dim, name=self.name).start()
+        self.countdown = events.CountDown(args.dim, name=self.name)
         ### writers for info info writer section
         self.info_writers = []
         for i in range(3):
@@ -54,7 +56,7 @@ class SceneManager:
             self.info_writers.append(new_writer)
 
         self.info_writers[0].text_fun = lambda mt : f'model compute time = {int(1000 * mt)} ms'
-        self.info_writers[1].text_fun = lambda l : f'camera fps = {int(l)}'
+        self.info_writers[1].text_fun = lambda l : f'camera fps = {int(1/l)}'
         self.info_writers[2].text_fun = lambda n: f'{n} face(s) detected'
 
         MA_N = 10
@@ -71,16 +73,16 @@ class SceneManager:
                                     key_wait=(.02, .08),
                                     end_pause=1.5, color='g')
 
-        mtw = writers.MultiTypeWriter(args.dim[0] - 550, (450, 900), scale=2, end_pause=3, color='g')
-        mtw.end_pause = 3
-        mtw.key_wait = [.05, .12]
+        otis = writers.MultiTypeWriter(args.dim[0] - 550, (450, 900), scale=2, end_pause=3, color='g')
+        otis.end_pause = 3
+        otis.key_wait = [.05, .12]
 
-        self.mtw = mtw
+        self.otis = otis
 
-        p = mtw.position
-        f = mtw.fheight
-        v = mtw.vspace
-        l = mtw.llength
+        p = otis.position
+        f = otis.fheight
+        v = otis.vspace
+        l = otis.llength
         ### portions to grey out
         self.gls = (
             p[1] - f - v,
@@ -107,10 +109,18 @@ class SceneManager:
 
 
     ####################################################################################################################
-
-        self.countdown_writer = writers.TextWriter(ref='c', scale=10)
-        self.countdown_timer = timers.CallHzLimiter(1)
-        self.countdown = 10
+    #countdown stuff
+        # self.countdown_writer = writers.TextWriter(ref='c', scale=20, ltype=-1,
+        #                                       thickness=30, color='b',
+        #                                       position=(0, -200), jtype='c')
+        # self.countdown_timer = timers.CallHzLimiter(1)
+        # self.countdown = 10
+        # self.color_counter = ctools.UpDownCounterT(start=255, maxi=255,
+        #                                            dir=-1, mini=0,
+        #                                            cycle_t=1, repeat=True)
+        #
+        # self.constant_frame =  np.zeros((*args.dim[::-1], 3), dtype='uint8')
+        # self.no_camera_sleeper = timers.SmartSleeper(1/60)
 
 
     ####################################################################################################################
@@ -169,26 +179,44 @@ class SceneManager:
             self.is_updated = False
          #next loop won't update
 
-    def otis_tells_a_joke_loop(self):
+    def otis_speaks(self, box=True):
         gls = self.gls
-        _, frame = self.capture.read()
-        frame = np.array(frame)
-        mtw = self.mtw
+        frame = self.capture.frame
+        if box is True:
+            portion = frame[gls[0]:gls[1], gls[2]:gls[3]]
+            grey = cv2.cvtColor(portion, cv2.COLOR_BGR2GRAY) * .25
+            portion[:, :, 0] = portion[:, :, 1] = portion[:, :, 2] = grey.astype('uint8')
+            ctools.frame_portion_to_grey(portion)
+        self.otis.type_line(frame)
+
+
+    def otis_tells_a_joke_loop(self):
         script = self.joke_script
-        portion = frame[gls[0]:gls[1], gls[2]:gls[3]]
-        grey = cv2.cvtColor(portion, cv2.COLOR_BGR2GRAY)*.25
-        portion[:, :, 0] = portion[:, :, 1] = portion[:, :, 2] = grey.astype('uint8')
-        ctools.frame_portion_to_grey(portion)
+        self.capture.read()
+
+        mtw = self.otis
+        self.otis_speaks()
+
         if mtw.line_complete is True and script.empty() is False:
             mtw.add_line(script.get())
 
-        mtw.type_line(frame)
-        self.write_info()
-        cv2.imshow('jokes', frame)
+        self.capture.show()
 
     def countdown_loop(self):
-        pass
 
+        frame = self.constant_frame
+        if self.countdown >= 1:
+            frame[:, :, :] = self.color_counter()
+
+            self.countdown_writer.write(frame, text=str(self.countdown))
+            if self.countdown_timer() is True:
+                self.countdown -= 1
+
+        else:
+            frame[:, :, :] = 0
+
+        self.no_camera_sleeper()
+        cv2.imshow(self.capture.name, frame)
 
 
 _JOKE_SCRIPT = [
@@ -229,7 +257,7 @@ class NameTracker:
     def loads_names(self):
         # this  might have to change
         abs_dir = os.path.dirname(os.path.abspath(__file__))
-        face_folder = os.path.join(abs_dir, 'faces')
+        face_folder = os.path.join(abs_dir, 'photo_assets/faces')
         face_files = os.listdir(face_folder)
 
         for file in face_files:
@@ -305,7 +333,7 @@ def box_stabilizer(box0, box1, threshold=.25):
         centers.append(c)
         radii.append(r)
 
-    distance = robocam.helpers.math.linear_distance(*centers)
+    distance = utils.linear_distance(*centers)
     if distance > threshold * radii[0]:
         return box1
     else:
@@ -313,24 +341,6 @@ def box_stabilizer(box0, box1, threshold=.25):
 
 
 
-# class MovingAverage:
-#
-#     def __init__(self, n):
-#         self.n = n
-#         self.data = Queue()
-#         for _ in range(self.n):
-#             self.data.put(0)
-#         self.ma = 0
-#
-#     def __call__(self, x=None):
-#         return self.ma
-#
-#     def update(self, x):
-#
-#         _x = x / self.n
-#         self.ma = self.ma + _x - self.data.get()
-#         self.data.put(_x)
-#         return self.ma
 
 
 

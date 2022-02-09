@@ -7,6 +7,7 @@ from collections import defaultdict
 import numpy as np
 
 import robocam.helpers.math
+import robocam.helpers.utilities
 from robocam import camera as camera
 from robocam.helpers import multitools as mtools, timers as timers, utilities as utils
 from robocam.helpers.utilities import MovingAverage
@@ -128,7 +129,7 @@ class NameTracker:
     def loads_names(self):
         # this  might have to change
         abs_dir = os.path.dirname(os.path.abspath(__file__))
-        face_folder = os.path.join(abs_dir, 'faces')
+        face_folder = os.path.join(abs_dir, '../../otismeetsguydebord/photo_assets/faces')
         face_files = os.listdir(face_folder)
 
         for file in face_files:
@@ -204,7 +205,7 @@ def box_stabilizer(box0, box1, threshold=.25):
         centers.append(c)
         radii.append(r)
 
-    distance = robocam.helpers.math.linear_distance(*centers)
+    distance = robocam.helpers.utilities.linear_distance(*centers)
     if distance > threshold * radii[0]:
         return box1
     else:

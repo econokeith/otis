@@ -2,15 +2,9 @@
 PUT PIES ON EVERYONE'S FACES
 """
 
-import multiprocessing as multi
-import signal
-import ctypes
 import sys
-import time
 import argparse
 import os
-import copy
-from itertools import cycle
 
 import cv2
 import numpy as np
@@ -20,12 +14,8 @@ from robocam.helpers import timers
 from robocam.helpers.utilities import cv2waitkey
 
 from robocam.overlay import motion as move
-from robocam.overlay import cv2shapes as shapes
 from robocam.overlay import textwriters as writers
-from robocam.overlay import assets as assets
-from robocam.overlay import colortools as ctools
 from robocam.overlay import imageassets as imga
-from robocam.overlay import groups
 
 #TODO: set up args
 parser = argparse.ArgumentParser(description='Test For Camera Capture')
@@ -64,13 +54,17 @@ def main():
     fps_writer = writers.TextWriter((10, 40), ltype=1)
     fps_writer.text_fun = lambda: f'fps = {int(1 / fps_timer())}'
 
-    pie_render_writer = writers.TextWriter((10, 80), ltype=1)
+    pie_render_writer = writers.TextWriter((10, 80))
     pie_render_writer.text_fun = lambda t: f'comp time = {int(t * 1000)} ms'
 
     n_writer = writers.TextWriter((10, 120), ltype=1)
     n_writer.text_fun = lambda t: f'{t} pies'
     # circle fun makes moving circle objects things
-    Pie0 = imga.ImageAsset('./pie_asset2')
+
+    abs_dir = os.path.dirname((os.path.abspath(__file__)))
+    pie_folder = os.path.join(abs_dir, 'pie_asset')
+
+    Pie0 = imga.ImageAsset(pie_folder)
 
     def pie_maker_fun():
         # random initial velocity
@@ -91,10 +85,10 @@ def main():
     bf = BALL_FREQUENCY
     # the WHILE loop
 
-    capture = camera.ThreadedCameraPlayer(0,
+    capture = camera.CameraPlayer(0,
                                           max_fps=MAX_FPS,
                                           dim=DIMENSIONS
-                                          ).start()
+                                          )
 
     #record
     if RECORD is True:
@@ -132,9 +126,9 @@ def main():
         pie_render_timer()
         move.AssetMover.write_all(frame)
 
-        pie_render_writer.write_fun(frame, pie_render_timer())
-        n_writer.write_fun(frame, len(move.AssetMover.movers))
-        fps_writer.write_fun(frame)
+        # pie_render_writer.write_fun(frame, pie_render_timer())
+        # n_writer.write_fun(frame, len(move.AssetMover.movers))
+        # fps_writer.write_fun(frame)
         # wait to show until it's been 1/MAX_DPS
         fps_limiter()
         cv2.imshow('test', frame)
@@ -151,27 +145,6 @@ def main():
         print('video_recorded')
     sys.exit()
 
-# class StatsWriters(groups.OverlayGroup):
-#
-#     def __init__(self, position,
-#                  *args,
-#                  **kwargs
-#                  ):
-#         super().__init__(position, *args, **kwargs)
-#
-#         self.sleeper = timers.SmartSleeper(1. / self.ohash['fps'])
-#         self.fps_timer = timers.TimeSinceLast();
-#         self.fps_timer()
-#         self.pie_render_timer = timers.TimeSinceLast()
-#         # set up writers
-#         self.fps_writer = writers.TextWriter((10, 40), ltype=1)
-#         self.fps_writer.text_fun = lambda: f'fps = {int(1 / self.fps_timer())}'
-#
-#         self.pie_render_writer = writers.TextWriter((10, 80), ltype=1)
-#         self.pie_render_writer.text_fun = lambda t: f'comp time = {int(t * 1000)} ms'
-#
-#         n_writer = writers.TextWriter((10, 120), ltype=1)
-#         n_writer.text_fun = lambda t: f'{t} pies'
 
 
 if __name__=="__main__":

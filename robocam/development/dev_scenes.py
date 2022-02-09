@@ -1,12 +1,11 @@
 import argparse
-import os
 
 import cv2
 import numpy as np
 
 import robocam.camera as camera
 import robocam.helpers.timers as timers
-import robocam.overlay.colortools as ctools
+import robocam.helpers.colortools as ctools
 import robocam.overlay.textwriters as writers
 
 from queue import Queue

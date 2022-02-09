@@ -1,11 +1,7 @@
 import time
 from queue import Queue
 
-import numpy as np
-import cv2
-
-from robocam.helpers import timers as timers, utilities as utils
-from robocam.overlay import colortools as ctools
+from robocam.helpers import utilities as utils, colortools as ctools
 from robocam.overlay.textwriters import MultiTypeWriter
 from robocam import camera
 

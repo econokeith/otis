@@ -7,7 +7,7 @@ import numpy as np
 
 import robocam.camera as camera
 import robocam.helpers.timers as timers
-import robocam.overlay.colortools as ctools
+import robocam.helpers.colortools as ctools
 import robocam.overlay.textwriters as writers
 
 parser = argparse.ArgumentParser(description='Example of the TypeWriter screen object')

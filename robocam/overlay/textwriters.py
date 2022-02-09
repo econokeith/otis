@@ -7,9 +7,9 @@ import numpy as np
 
 import robocam.helpers.utilities as utils
 import robocam.helpers.timers as timers
-import robocam.overlay.colortools as ctools
+import robocam.helpers.colortools as ctools
 import robocam.overlay.bases as base
-import robocam.overlay.cv2shapes as shapes
+import robocam.overlay.shapes as shapes
 
 
 class TextWriter(base.Writer):
@@ -23,7 +23,8 @@ class TextWriter(base.Writer):
                  thickness=1,
                  ref=None,
                  text = None,
-                 vspace = .5 # % of fheight for vertical space around
+                 vspace = .5, # % of fheight for vertical space around
+                 jtype = 'l'
                  ):
 
         self.font = font
@@ -36,6 +37,8 @@ class TextWriter(base.Writer):
         self.text_fun = None
         self.fheight = self.get_text_size("T")[0][1]
         self.vspace = int(self.fheight * vspace)
+        self.thickness = thickness
+        self.jtype = jtype
 
     @property
     def line(self):
@@ -70,7 +73,17 @@ class TextWriter(base.Writer):
         _position = position if position is not None else self.position
         _ref = ref if ref is not None else self.ref
 
-        shapes.write_text(frame, _text, _position, self.font, _color, self.scale, self.ltype, _ref)
+        shapes.write_text(frame,
+                          _text,
+                          pos = _position,
+                          font=self.font,
+                          color=_color,
+                          scale=self.scale,
+                          thickness=self.thickness,
+                          ltype=self.ltype,
+                          ref=_ref,
+                          jtype=self.jtype
+                          )
 
     def write_fun(self, frame, *args, **kwargs):
         self.line = self.text_fun(*args, **kwargs)
@@ -86,7 +99,7 @@ class TypeWriter(TextWriter):
                  scale=1,  # font scale,
                  ltype=2,
                  dt=None,
-                 key_wait = [.07, .17],
+                 key_wait = [.04, .14],
                  end_pause=1,
                  loop=False,
                  ref = None,
@@ -377,7 +390,10 @@ class MultiTypeWriter(TypeWriter):
 
         #if the line is done, but the end pause is still going. write whole line with cursor
         else:
-            self.write(frame, self._output + self.cursor(), position=_position)
+            self.write(frame,
+                       text=self._output + self.cursor(),
+                       position=_position)
+
             self._stub_complete = True
 
 

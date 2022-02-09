@@ -14,6 +14,7 @@ import numpy as np
 import robocam.camera as camera
 import robocam.helpers.math
 import robocam.helpers.multitools as mtools
+import robocam.helpers.utilities
 import robocam.overlay.textwriters as writers
 import robocam.helpers.timers as timers
 import robocam.helpers.utilities as utils
@@ -82,7 +83,7 @@ def camera_process(shared_data_object):
             BBoxes[i].write(capture.frame)
 
         #if the center of the box is within teh inner xhair cirlce change colors
-        if robocam.helpers.math.linear_distance(video_center, BBoxes[0].center) > CROSSHAIR_RADIUS/2:
+        if robocam.helpers.utilities.linear_distance(video_center, BBoxes[0].center) > CROSSHAIR_RADIUS/2:
             BBoxes[0].color = 'g'
             crosshair.color = 'r'
 
