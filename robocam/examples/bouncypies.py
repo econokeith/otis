@@ -62,7 +62,7 @@ def main():
     # circle fun makes moving circle objects things
 
     abs_dir = os.path.dirname((os.path.abspath(__file__)))
-    pie_folder = os.path.join(abs_dir, 'pie_asset')
+    pie_folder = os.path.join(abs_dir, '../overlay/photo_asset_files/pie_asset')
 
     Pie0 = imga.ImageAsset(pie_folder)
 
@@ -79,29 +79,20 @@ def main():
                        border_collision=BORDER,
                        ups=MAX_FPS
                        )
-
     # for controlling the frequency of new balls
     new_circle_timer = timers.CallHzLimiter()
     bf = BALL_FREQUENCY
-    # the WHILE loop
 
     capture = camera.CameraPlayer(0,
-                                          max_fps=MAX_FPS,
-                                          dim=DIMENSIONS
-                                          )
-
+                                  max_fps=MAX_FPS,
+                                  dim=DIMENSIONS
+                                  )
     #record
     if RECORD is True:
-        #cf_dims = int(DX*RECORD_SCALE), int(DY*RECORD_SCALE)
         recorder = cv2.VideoWriter('pies.avi',
                                    cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'),
-                                   #cv2.VideoWriter_fourcc(*'XVID'),
                                    MAX_FPS,
                                    DIMENSIONS)
-    while True:
-        ok, frame = capture.read()
-        if ok is True:
-            break
 
     while True:
         #reset color
@@ -126,10 +117,6 @@ def main():
         pie_render_timer()
         move.AssetMover.write_all(frame)
 
-        # pie_render_writer.write_fun(frame, pie_render_timer())
-        # n_writer.write_fun(frame, len(move.AssetMover.movers))
-        # fps_writer.write_fun(frame)
-        # wait to show until it's been 1/MAX_DPS
         fps_limiter()
         cv2.imshow('test', frame)
         #write_output
@@ -144,7 +131,6 @@ def main():
         recorder.release()
         print('video_recorded')
     sys.exit()
-
 
 
 if __name__=="__main__":
