@@ -14,6 +14,18 @@ DEBUG = False
 if DEBUG:
     logging.basicConfig(filename='text_files/logs/log.log', filemode='w', level=logging.INFO)
 
+
+def _target(shared, args):
+    import face_recognition
+
+    signal.signal(signal.SIGTERM, mtools.close_gracefully)
+    signal.signal(signal.SIGINT, mtools.close_gracefully)
+
+    # if utils.cv2waitkey() is True:
+    #     break
+
+    
+        
 def target(shared_data_object, args):
     # import locally to avoid GPU conflicts
     import face_recognition
@@ -55,24 +67,14 @@ def target(shared_data_object, args):
 
             np.copyto(shared.bbox_coords[i,:], observed_boxes[i])
             face_distances = face_recognition.face_distance(known_encodings, observed_encodings[i])
-            # print(known_names)
-            # print(face_distances)
             best_match_index = np.argmin(face_distances)
             shared.names[i] = name_dict[known_names[best_match_index]]
-            # if matches[best_match_index]:
-            #     shared.names[i] = best_match_index
-            #     print(known_names[best_match_index])
-            # else:
-            #     #known_encodings.append(observed_encodings[i])
-            #     shared.names[i] = len(known_names)
-            #     print('unkown')
 
-        # if DEBUG is True:
-        #     log = '%i'
-        #     for distance in face_distances:
-        #         log += (','+str(distance))
-        #     logging.info(f'log', best_match_index)
-        #     #logging.info('%i,%f,%f,%f', best_match_index, *fd)
+        if DEBUG is True:
+            log = '%i'
+            for distance in face_distances:
+                log += (','+str(distance))
+            logging.info(f'log', best_match_index)
 
         if utils.cv2waitkey() is True:
             break
