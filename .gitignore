@@ -1,7 +1,5 @@
 *.ipynb*
 *.avi
-*.jpg
-*.jpeg
 *.idea*
 /shelf/
 /workspace.xml

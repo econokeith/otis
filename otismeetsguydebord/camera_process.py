@@ -47,7 +47,7 @@ class SceneManager:
         self.name = 'otis'
 
         self.capture = camera.ThreadedCameraPlayer(dim=args.dim, name=self.name).start()
-        self.countdown = events.CountDown(args.dim, name=self.name)
+        self.event_countdown = events.CountDown(args.dim, name=self.name)
         ### writers for info info writer section
         self.info_writers = []
         for i in range(3):
@@ -109,18 +109,18 @@ class SceneManager:
 
 
     ####################################################################################################################
-    #countdown stuff
-        # self.countdown_writer = writers.TextWriter(ref='c', scale=20, ltype=-1,
-        #                                       thickness=30, color='b',
-        #                                       position=(0, -200), jtype='c')
-        # self.countdown_timer = timers.CallHzLimiter(1)
-        # self.countdown = 10
-        # self.color_counter = ctools.UpDownCounterT(start=255, maxi=255,
-        #                                            dir=-1, mini=0,
-        #                                            cycle_t=1, repeat=True)
-        #
-        # self.constant_frame =  np.zeros((*args.dim[::-1], 3), dtype='uint8')
-        # self.no_camera_sleeper = timers.SmartSleeper(1/60)
+
+        self.countdown_writer = writers.TextWriter(ref='c', scale=20, ltype=-1,
+                                              thickness=30, color='b',
+                                              position=(0, -200), jtype='c')
+        self.countdown_timer = timers.CallHzLimiter(1)
+        self.countdown = 10
+        self.color_counter = ctools.UpDownCounterT(start=255, maxi=255,
+                                                   dir=-1, mini=0,
+                                                   cycle_t=1, repeat=True)
+
+        self.constant_frame =  np.zeros((*args.dim[::-1], 3), dtype='uint8')
+        self.no_camera_sleeper = timers.SmartSleeper(1/60)
 
 
     ####################################################################################################################
