@@ -65,9 +65,9 @@ def main():
     processes = []
     #each process module should have a primary function called 'target'
     for module in process_modules:
-        processes.append(multi.Process(target=module.target,
-                                       args=(shared_data_object, args)
-                                       ))
+        process = multi.Process(target=module.target,
+                                args=(shared_data_object, args))
+        processes.append(process)
     #start
     for process in processes:
         process.start()
