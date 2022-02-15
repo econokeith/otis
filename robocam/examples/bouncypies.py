@@ -1,10 +1,11 @@
 """
-PUT PIES ON EVERYONE'S FACES
+Pies bouncing around on the screen
 """
 
 import sys
 import argparse
 import os
+import time
 
 import cv2
 import numpy as np
@@ -41,9 +42,9 @@ def main():
     #RADIUS_BOUNDS = [5, 30]
     BALL_V_ANGLE_BOUNDS = [10, 80]
     BALL_V_MAGNI_BOUNDS = [300, 1000]
-    STARTING_LOCATION = [100, DY - 100]
+    STARTING_LOCATION = [200, DY - 200]
     #NEG_MASS = False
-    COLLISIONS = True
+    COLLISIONS = False
     BORDER = True
 
     #set up timers
@@ -87,6 +88,7 @@ def main():
                                   max_fps=MAX_FPS,
                                   dim=DIMENSIONS
                                   )
+    time.sleep(2)
     #record
     if RECORD is True:
         recorder = cv2.VideoWriter('pies.avi',
@@ -96,7 +98,7 @@ def main():
 
     while True:
         #reset color
-        ok, frame = capture.read()
+        capture.read()
 
         if BORDER is False:
             #get rid of movers that are out of bounds if False
@@ -104,10 +106,12 @@ def main():
         #shoot a new ball
         dt = np.random.randn(1) * (bf[1] - bf[0]) + bf[0]
         if new_circle_timer(dt) is True and move.AssetMover.n() < MAX_BALLS:
+            
             pie_maker_fun() # balls
             #kill off the oldest ball
             # if move.AssetMover.n() > MAX_BALLS:
             #     move.AssetMover.movers.pop(0)
+            print(move.AssetMover.n())
 
         if COLLISIONS is True:
             # start calculating collisions
@@ -115,13 +119,14 @@ def main():
         #move with new velocities and write on frame
         move.AssetMover.move_all()
         pie_render_timer()
-        move.AssetMover.write_all(frame)
+        move.AssetMover.write_all(capture.frame)
 
-        fps_limiter()
-        cv2.imshow('test', frame)
+        #fps_limiter()
+        #cv2.imshow('test', frame)
+        capture.show()
         #write_output
         if RECORD is True:
-            recorder.write(frame.astype('uint8'))
+            recorder.write(capture.frame.astype('uint8'))
 
         if cv2waitkey(1):
             break
@@ -135,3 +140,4 @@ def main():
 
 if __name__=="__main__":
     main()
+    
