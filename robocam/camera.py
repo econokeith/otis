@@ -2,6 +2,7 @@
 #todo: add waitKey() break condition to CamperPlayer Method
 import time
 from threading import Thread
+import platform
 
 import cv2
 import numpy as np
@@ -17,8 +18,12 @@ class CameraPlayer:
                  max_fps=30,
                  **kwargs):
 
-        self.capture = cv2.VideoCapture(src, cv2.CAP_V4L2)
-        self.capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
+        #do necessary Linux stuff 
+        if platform.system() == 'Linux':
+            self.capture = cv2.VideoCapture(src, cv2.CAP_V4L2)
+            self.capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
+        else:
+            self.capture = cv2.VideoCapture(src)
 
         if dim is not None:
             self.dim = dim
