@@ -63,22 +63,24 @@ class UpDownCounterT:
         self.ups_timer = timers.CallHzLimiter(1/max_ups)
         self.repeat = repeat
 
-
     def __call__(self):
+
         if self.ups_timer() is True:
+
             tp = self.last_timer()
             self.i = self.i + self.speed * tp * self.dir
+
             if self.i > self.maxi and self.repeat is True:
                 self.i = self.mini
 
-            elif self.i > self.maxi:
-                    self.i = self.maxi
-                    self.dir *=-1
+            elif self.i > self.maxi and self.repeat is False:
+                self.i = self.maxi
+                self.dir *=-1
 
             elif self.i < self.mini and self.repeat is True:
                 self.i = self.maxi
 
-            elif self.i < self.mini:
+            elif self.i < self.mini and self.repeat is False:
                 self.i = self.mini
                 self.dir *= -1
 
