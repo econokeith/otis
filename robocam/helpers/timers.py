@@ -186,3 +186,90 @@ class Blinker(Timer):
                 self.on = True
 
             return False
+
+#todo 
+class TimedCycle:
+
+    def __init__(self,
+                 mini=0,
+                 maxi=255,
+                 start=0,
+                 dir = 1,
+                 cycle_t = 1,
+                 max_ups = 60,
+                 repeat = True,
+                 updown = False, 
+                 end_value = None
+                 ):
+
+        self.mini = mini
+        self.maxi = maxi
+        self._i = start
+        self.dir = dir
+        self.start = start
+        self.max_ups = max_ups
+        self.updown = updown
+        self.end_value = end_value
+
+        self.length = (maxi - mini + 1)
+        self.cycle_t = cycle_t
+        self.speed =  self.length/ self.cycle_t
+        self.repeat = repeat
+        self.complete = False
+
+        self.ups_timer = CallHzLimiter(1/max_ups)
+        self.last_timer = TimeSinceLast()
+        self.total_steps = 0
+
+    @property
+    def i(self):
+        return int(self._i)
+
+    def reset(self):
+        self.ups_timer = CallHzLimiter(1/self.max_ups)
+        self.last_timer = TimeSinceLast()
+        self.complete = False
+        self._i = self.start
+        self.total_steps = 0
+
+    def __call__(self):
+
+        if self.ups_timer() is True:
+
+            tp = self.last_timer()
+            self._i = self._i + self.speed * tp * self.dir
+            self.last_step = self.speed * tp   
+            self.total_steps += self.last_step
+
+            if self.updown is False:
+                self._one_direction_counter()
+            else:
+                self._up_down_counter()
+
+        return self.i
+
+    def _one_direction_counter(self):
+
+        if self.repeat is True and self._i >= self.maxi:
+            self._i = self.mini
+
+        elif self.repeat is True and self._i <= self.mini:
+            self._i = self.maxi
+
+        elif self.repeat is False and self._i >= self.maxi:
+            self._i = self.maxi
+            self.complete = True
+
+        elif self.repeat is False and self._i <= self.mini:
+            self._i = self.mini
+            self.complete = True
+
+    def _up_down_counter(self):
+
+        if self._i > self.maxi:# and self.repeat is False:
+            self._i = self.maxi
+            self.dir *=-1
+
+        elif self._i < self.mini:# and self.repeat is False:
+            self._i = self.mini
+            self.dir *= -1
