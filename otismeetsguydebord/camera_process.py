@@ -11,7 +11,7 @@ import numpy as np
 
 from robocam import camera as camera
 from robocam.helpers import multitools as mtools, timers as timers, utilities as utils, colortools as ctools
-from robocam.overlay import screenevent as events, textwriters as writers, assets as assets
+from robocam.overlay import screenevents as events, textwriters as writers, assets as assets
 
 
 def target(shared, args):

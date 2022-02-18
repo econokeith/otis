@@ -2,10 +2,11 @@
 screens events like flashes or countdowns or pulses
 """
 import abc
+import queue
 
 import numpy as np
 import cv2
-from sympy import cycle_length
+
 
 from robocam.helpers import colortools as ctools, timers as timers
 from robocam.overlay import textwriters as writers
@@ -96,21 +97,51 @@ class ColorFlash(ScreenInterrupt):
                                              dir=dir,
                                              cycle_t=cycle_t,
                                              max_ups=max_ups,
-                                             repeat = repeat
+                                             repeat = True
                                              )
         self.complete = False
 
     def loop(self, frame):
 
-        dt = self.counter()
-        if dt > 255 - int(self.counter.speed) + 1:
-            self.complete = True
+        i = self.counter()
 
-        _frame = frame[:,:,self.pixel]
-        
-        _frame = np.where(_frame <= 255-dt, _frame + dt, 255)
+        if self.complete is True:
+            return
+
+        F = frame[:, :, self.pixel]
+        F[:,:] = np.where(F.astype('uint16')+ i  >= 255, 255, F+ i )
+
+    def reset(self):
+        self.counter.i = 0
+        self.complete = False
 
 
+def main():
+    from robocam import camera
+    import time
+    from robocam.helpers import utilities as utils
 
+    capture = camera.CameraPlayer(dim=(1920, 1080))
+    time.sleep(2)
+    # time.sleep(3)
+    event_queue = queue.Queue()
+    color_flash = ColorFlash()
+    event_queue.put(color_flash)
+    # new_flash_timer = timers.CallHzLimiter(5)
+    while True:
+        capture.read()
+        # if new_flash_timer is True:
+        #     color_flash = ColorFlash(3)
+        color_flash.loop(capture.frame)
+        capture.show()
+
+        if utils.cv2waitkey(1) is True:
+            break
+
+    capture.stop()
+
+
+if __name__=='__main__':
+    main()
 
 

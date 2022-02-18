@@ -69,6 +69,7 @@ class UpDownCounterT:
 
             tp = self.last_timer()
             self.i = self.i + self.speed * tp * self.dir
+            self.last_step = self.speed * tp
 
             if self.i > self.maxi and self.repeat is True:
                 self.i = self.mini
