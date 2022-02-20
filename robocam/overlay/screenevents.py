@@ -7,11 +7,10 @@ import queue
 import numpy as np
 import cv2
 
-
 from robocam.helpers import colortools as ctools, timers as timers
 from robocam.overlay import textwriters as writers
 
-class ScreenInterrupt(abc.ABC):
+class ScreenEvent(abc.ABC):
 
     @abc.abstractmethod
     def __init__(self, *args, **kwargs):
@@ -26,7 +25,7 @@ class ScreenInterrupt(abc.ABC):
         pass
 
 
-class CountDown(ScreenInterrupt):
+class CountDown(ScreenEvent):
 
     def __init__(self, dim, start=10, name='tracker'):
         self.countdown_writer = writers.TextWriter(ref='c', scale=20, ltype=-1,
@@ -74,32 +73,43 @@ class CountDown(ScreenInterrupt):
         self.i = self.start
 
 
-class ColorFlash(ScreenInterrupt):
+class ColorFlash(ScreenEvent):
 
     def __init__(self,
-                 pixel=2, 
+                 pixel=2,
+                 show=True,
                  mini=0,
                  maxi=255,
                  start=0,
-                 dir=1,
-                 cycle_t=1,
-                 max_ups=30,
-                 repeat=False
+                 dir = 1,
+                 cycle_t = 1,
+                 max_ups = 60,
+                 repeat = True,
+                 updown = False, 
+                 end_value = None
                  ):
         """
         currently just GBR column fix
         """
         
         self.pixel = pixel
-        self.counter = ctools.UpDownCounterT(mini=mini,
-                                             maxi=maxi,
-                                             start=start,
-                                             dir=dir,
-                                             cycle_t=cycle_t,
-                                             max_ups=max_ups,
-                                             repeat = True
-                                             )
-        self.complete = False
+        self.show = show
+        self.counter = timers.TimedCycle(
+                                        mini=mini,
+                                        maxi=maxi,
+                                        start=start,
+                                        dir = dir,
+                                        cycle_t = cycle_t,
+                                        max_ups = max_ups,
+                                        repeat = repeat,
+                                        updown = updown , 
+                                        end_value = end_value
+                                        )
+
+
+    @property
+    def complete(self):
+        return self.counter.complete
 
     def loop(self, frame):
 
@@ -109,11 +119,10 @@ class ColorFlash(ScreenInterrupt):
             return
 
         F = frame[:, :, self.pixel]
-        F[:,:] = np.where(F.astype('uint16')+ i  >= 255, 255, F+ i )
+        frame[:, :, self.pixel] = np.where(F.astype('uint16')+ i  >= 255, 255, F+ i )
 
     def reset(self):
-        self.counter.i = 0
-        self.complete = False
+        self.counter.reset()
 
 
 def main():
