@@ -1,7 +1,11 @@
 import platform
 import gc
-import serial
 import time
+
+try:
+    import serial
+except:
+    print("Arduino Servo Dependency, pyserial, Not Found")
 
 
 class ArduinoSerialPort:

@@ -1,2 +1,2 @@
 
-from robocam.servos.controller import ArduinoServo
+from robocam.servos.servos import ArduinoServo

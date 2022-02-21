@@ -124,7 +124,7 @@ class ColorFlash(ScreenEvent):
 
         i = self.counter()
         F = frame[:, :, self.pixel]
-        frame[:, :, self.pixel] = np.where(F.astype('uint16')+ i  >= 255, 255, F+ i )
+        frame[:, :, self.pixel] = np.where(F.astype('uint16')+ i  >= 255, 255, F+i )
 
     def reset(self):
         self.counter.reset()
