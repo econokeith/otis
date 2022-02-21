@@ -28,9 +28,14 @@ class ScreenEvent(abc.ABC):
 class CountDown(ScreenEvent):
 
     def __init__(self, dim, start=10, name='tracker'):
-        self.countdown_writer = writers.TextWriter(ref='c', scale=20, ltype=-1,
-                                              thickness=30, color='b',
-                                              position=(0, -200), jtype='c')
+        self.countdown_writer = writers.TextWriter(ref='c', 
+                                                   scale=20, 
+                                                   ltype=-1,
+                                                   thickness=30, 
+                                                   color='b',
+                                                   position=(0, -200), 
+                                                   jtype='c'
+                                                   )
 
         self.countdown_timer = timers.CallHzLimiter(1)
         self.start = start
@@ -49,10 +54,11 @@ class CountDown(ScreenEvent):
             self.reset(reset)
 
         frame = self.frame
+        
         if self.i >= 1:
             frame[:, :, :] = self.color_counter()
-
             self.countdown_writer.write(frame, text=str(self.i))
+
             if self.countdown_timer() is True:
                 self.i -= 1
 
@@ -113,11 +119,10 @@ class ColorFlash(ScreenEvent):
 
     def loop(self, frame):
 
-        i = self.counter()
-
         if self.complete is True:
             return
 
+        i = self.counter()
         F = frame[:, :, self.pixel]
         frame[:, :, self.pixel] = np.where(F.astype('uint16')+ i  >= 255, 255, F+ i )
 
