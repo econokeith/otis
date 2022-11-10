@@ -170,8 +170,9 @@ class RPiServo(ServoController):
 
     def __init__(self,
                  address=None,
-                 pins=(17,22),
+                 pins=(17, 22),
                  connect=True,
+                 m_range = (500, 2500),
                  **kwargs):
 
         if isinstance(pins, int):
@@ -179,7 +180,7 @@ class RPiServo(ServoController):
         else:
             n = len(pins)
 
-        super().__init__(n=n, **kwargs)
+        super().__init__(n=n, m_range=m_range, **kwargs)
         self.factory = PiGPIOFactory(host=address)
         self.servos = []
         self.pins = pins

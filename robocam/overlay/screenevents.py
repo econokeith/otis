@@ -139,7 +139,7 @@ def main():
     time.sleep(2)
     # time.sleep(3)
     event_queue = queue.Queue()
-    color_flash = ColorFlash()
+    color_flash = CountDown((1920, 1080))
     event_queue.put(color_flash)
     # new_flash_timer = timers.CallHzLimiter(5)
     while True:
@@ -147,7 +147,9 @@ def main():
         # if new_flash_timer is True:
         #     color_flash = ColorFlash(3)
         color_flash.loop(capture.frame)
-        capture.show()
+
+        if color_flash.finished is True:
+            break
 
         if utils.cv2waitkey(1) is True:
             break

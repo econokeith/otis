@@ -18,7 +18,8 @@ import robocam.overlay.textwriters as writers
 import robocam.helpers.timers as timers
 import robocam.overlay.assets as assets
 import robocam.servos.pid as pid
-from robocam.servos import ArduinoServo, RPiServo
+import _piardservo as servo
+
 
 
 parser = argparse.ArgumentParser(description='Test For Camera Capture')
@@ -30,6 +31,7 @@ parser.add_argument('-cf', type=float, default=2, help='shrink the frame by a fa
 parser.add_argument('--faces', type=int, default=5, help='max number of bboxs to render. default =5')
 parser.add_argument('--device', type=str, default='gpu', help='runs a hog if cpu and cnn if gpu')
 parser.add_argument('--ncpu', type=int, default='1', help='number of cpus')
+parser.add_argument('-scale', type=float, default=2., help='scale output')
 
 args = parser.parse_args()
 
@@ -42,7 +44,7 @@ def camera_process(shared_data_object):
     signal.signal(signal.SIGTERM, mtools.close_gracefully)
     signal.signal(signal.SIGINT, mtools.close_gracefully)
     #start camera
-    capture = camera.CameraPlayer(dim=args.dim)
+    capture = camera.CameraPlayer(dim=args.dim, )
     #shorten shared name
     shared = shared_data_object
     #set up writers
@@ -71,7 +73,7 @@ def camera_process(shared_data_object):
         fps_writer.write(capture.frame)
         m_time_write.write_fun(capture.frame)
         #render
-        capture.show(warn=True)
+        capture.show(warn=True, scale=1.8)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
@@ -114,12 +116,15 @@ def servo_process(shared_data_object):
     signal.signal(signal.SIGTERM, mtools.close_gracefully)
     signal.signal(signal.SIGINT, mtools.close_gracefully)
     shared = shared_data_object
-    Servo = RPiServo('192.168.1.28')
-    Servo.angles = [70,60]
-    Servo.write()
 
-    xPID = pid.PIDController(.02, 0, .0000000001)
-    yPID = pid.PIDController(.01, 0, 0)
+    rpi = servo.RPiWifi(address='192.168.1.28', pins=(22, 17))
+    Servos = servo.ServoContainer(n=2, microcontroller=rpi).connect()
+
+    Servos[0].value = -.1
+    Servos[1].value = -.5
+
+    xPID = pid.PIDController(.001, 0, .00001)
+    yPID = pid.PIDController(.001, 0, .00001)
     servo_update_timer = timers.CallHzLimiter(1 / 5)
     target = np.array(video_center)
     last_coords = np.array(shared.bbox_coords[0,:])
@@ -133,15 +138,19 @@ def servo_process(shared_data_object):
             t, r, b, l = shared.bbox_coords[0,:]
             target[0], target[1] = (r+l)//2, (b+t)//2
             error = target - video_center
-            move_x = xPID.update(error[0], sleep=0)
-            move_y = yPID.update(error[1], sleep=0)
-            Servo.move([move_y, -move_x])
+            x_move = -xPID.update(error[0], sleep=0)
+            y_move = yPID.update(error[1], sleep=0)
+
+            Servos[0].value += x_move
+            Servos[1].value += y_move
+
+
             last_coords = np.array(shared.bbox_coords[0,:])
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-    Servo.close()
+    Servos.close()
 
 
 def main():

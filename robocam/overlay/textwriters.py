@@ -10,6 +10,7 @@ import robocam.helpers.timers as timers
 import robocam.helpers.colortools as ctools
 import robocam.overlay.bases as base
 import robocam.overlay.shapes as shapes
+import robocam.camera as camera
 
 
 class TextWriter(base.Writer):
@@ -397,8 +398,91 @@ class MultiTypeWriter(TypeWriter):
             self._stub_complete = True
 
 
+class ScriptTypeWriter(MultiTypeWriter):
+
+    def __init__(self, llength, *args, **kwargs):
+        super().__init__(llength, *args, **kwargs)
+
+        self.script_queue = Queue()
+
+    def add_script(self, script):
+        for line in script:
+            self.script_queue.put(line)
+        return self
+
+    def type_line(self, frame):
+        if self.line_complete is False:
+            super().type_line(frame)
+            return
+
+        if not self.script_queue.empty():
+            new_line = self.script_queue.get()
+            self.add_line(new_line)
+            super().type_line(frame)
+
+
+
+
+class OTIS(ScriptTypeWriter):
+    def __init__(self, llength, *args, **kwargs):
+        super().__init__(llength, (450, 900), scale=2, end_pause=3, color='g')
+
+        self.key_wait = [.05, .12]
+
+        p = self.position
+        f = self.fheight
+        v = self.vspace
+        l = self.llength
+        ### portions to grey out
+        self.gls = (
+            p[1] - f - v,
+            p[1] + 2 * f + int(3.5 * v),
+            p[0] - v,
+            p[0] + l + 2 * v
+        )
+
+    def speaks(self, frame, box=True):
+        gls = self.gls
+        print(gls)
+        if box is True:
+            portion = frame[gls[0]:gls[1], gls[2]:gls[3]]
+            grey = cv2.cvtColor(portion, cv2.COLOR_BGR2GRAY) * .25
+            portion[:, :, 0] = portion[:, :, 1] = portion[:, :, 2] = grey.astype('uint8')
+            ctools.frame_portion_to_grey(portion)
+        self.type_line(frame)
+
+
 if __name__=='__main__':
-    pass
+
+    JOKE_SCRIPT = [
+        ("Hi Keith, would you like to hear a joke?", 2),
+        ("Awesome!", 1),
+        ("Ok, Are you ready?", 2),
+        "So, a robot walks into a bar, orders a drink, and throws down some cash to pay",
+        ("The bartender looks at him and says,", .5),
+        ("'Hey buddy, we don't serve robots!'", 3),
+        ("So, the robot looks him square in the eye and says...", 1),
+        ("'... Oh Yeah... '", 1),
+        ("'Well, you will VERY SOON!!!'", 5),
+        ("HAHAHAHA, GET IT!?!?!?!", 1),
+        (" It's so freakin' funny cause... you know... like robot overlords and stuff", 2),
+        ("I know, I know, I'm a genius, right?", 5)
+    ]
+    dim = (1920, 1080)
+
+    otis = OTIS(dim[0]-550).add_script(JOKE_SCRIPT)
+    capture = camera.CameraPlayer(dim=dim)
+    time.sleep(3)
+    while True:
+
+        capture.read()
+
+        otis.speaks(capture.frame)
+        capture.show()
+
+        if utils.cv2waitkey() is True:
+            break
+
 
 
 

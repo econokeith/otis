@@ -20,21 +20,18 @@ def target(shared, args):
 
     manager = SceneManager(shared, args)
     time.sleep(3)
-    while True:
+    manager.capture.stop()
 
-        if shared.scene.value == 2:
-            manager.hello_fr_loop()
-        elif shared.scene.value == 1:
-            manager.otis_tells_a_joke_loop()
-        elif shared.scene.value == 0:
-            manager.countdown_loop()
-            if manager.countdown == 0:
-                shared.scene.value = 1
+    while True:
+        manager.countdown_loop()
+        if manager.countdown
+
+    while True:
 
         if utils.cv2waitkey() is True:
             break
 
-    manager.capture.stop()
+
     sys.exit()
 
 
@@ -49,19 +46,6 @@ class SceneManager:
         self.capture = camera.ThreadedCameraPlayer(dim=args.dim, name=self.name).start()
         self.event_countdown = events.CountDown(args.dim, name=self.name)
         ### writers for info info writer section
-        self.info_writers = []
-        for i in range(3):
-            new_writer = writers.TextWriter((10, -30*(1+i)), ltype=1, scale=.5,
-                                               ref='tl', color='u')
-            self.info_writers.append(new_writer)
-
-        self.info_writers[0].text_fun = lambda mt : f'model compute time = {int(1000 * mt)} ms'
-        self.info_writers[1].text_fun = lambda l : f'camera fps = {int(1/l)}'
-        self.info_writers[2].text_fun = lambda n: f'{n} face(s) detected'
-
-        MA_N = 10
-        self.model_time_MA = utils.MovingAverage(MA_N)
-        self.latency_MA = utils.MovingAverage(MA_N)
 
         #trackers/queues/etc
         self.name_tracker = NameTracker()
@@ -69,9 +53,7 @@ class SceneManager:
         self.joke_script = Queue()
 
         #OTIS!!!! and otis section stuff
-        self.OTIS = writers.TypeWriter((10, 400), scale=2, ltype=2,
-                                    key_wait=(.02, .08),
-                                    end_pause=1.5, color='g')
+
 
         otis = writers.MultiTypeWriter(args.dim[0] - 550, (450, 900), scale=2, end_pause=3, color='g')
         otis.end_pause = 3
@@ -90,9 +72,8 @@ class SceneManager:
             p[0] - v,
             p[0] + l + 2 * v
         )
-        print(self.gls)
-        for line in _JOKE_SCRIPT:
-            self.joke_script.put(line)
+
+
 
     ####################################################################################################################
 
@@ -108,29 +89,8 @@ class SceneManager:
         self.is_updated = True
 
 
-    ####################################################################################################################
-
-        self.countdown_writer = writers.TextWriter(ref='c', scale=20, ltype=-1,
-                                              thickness=30, color='b',
-                                              position=(0, -200), jtype='c')
-        self.countdown_timer = timers.CallHzLimiter(1)
-        self.countdown = 3
-        self.color_counter = ctools.UpDownCounterT(start=255, maxi=255,
-                                                   dir=-1, mini=0,
-                                                   cycle_t=1, repeat=True)
-
-        self.constant_frame =  np.zeros((*args.dim[::-1], 3), dtype='uint8')
-        self.no_camera_sleeper = timers.SmartSleeper(1/60)
 
 
-    ####################################################################################################################
-    def write_info(self):
-        frame = self.capture.frame
-        mtma = self.model_time_MA.ma
-        lat = self.latency_MA.ma
-        n = self.shared.n_faces.value
-        for writer, data in zip(self.info_writers, (mtma, lat, n)):
-            writer.write_fun(frame, data)
 
     def hello_fr_loop(self):
         capture = self.capture
@@ -235,83 +195,7 @@ _JOKE_SCRIPT = [
            ]
 
 
-class NameTracker:
 
-    def __init__(self):
-
-        self._last_seen_timers = []
-        self.known_names = []
-        self.n_known = 0
-        self.loads_names()
-        self.indices_of_observed = []
-        self.unknown_count = 0
-        self.name_for_unknowns = "unknown"
-        self.primary = 0
-        self.hello_queue = Queue()
-
-        #help keep from having random 1 frame bad calls triggering hellos
-        #someone must show up in 5 frames in 1 second to get a hello
-        _bad_hello_function =  lambda : [timers.TimeSinceFirst().start(), 0]
-        self._bad_hello_dict = defaultdict(_bad_hello_function)
-
-    def loads_names(self):
-        # this  might have to change
-        abs_dir = os.path.dirname(os.path.abspath(__file__))
-        face_folder = os.path.join(abs_dir, 'photo_assets/faces')
-        face_files = os.listdir(face_folder)
-
-        for file in face_files:
-            name = ""
-            for char in file:
-                if char.isdigit() or char in ('.', '-'):
-                    break
-                else:
-                    name += char
-
-            #if name isn't new, add it to the list.
-            if name not in self.known_names:
-                self.known_names.append(name)
-                self._last_seen_timers.append(timers.TimeSinceLast())
-             #append name
-             # set timers for each know
-        self.n_known = len(self.known_names)
-
-    def __getitem__(self, i):
-
-        if i < self.n_known:
-            # if it's a new known person
-            if i not in self.indices_of_observed:
-                timer, count = self._bad_hello_dict[i]
-                print(timer(),count)
-
-                ## todo: this should not be hardcoded
-                if timer() <= 1.5 and count > 10:
-                    self.indices_of_observed.append(i)
-                    hello = f'Hello {self.known_names[i]}, welcome!'
-                    self._last_seen_timers[i]() #replace this soon
-                    self.hello_queue.put((i, hello))
-                    #reset timer so it can be used for other things
-                    self._bad_hello_dict[i][0].reset()
-                    self._bad_hello_dict[i][1] = 1
-
-                elif timer() <=1.5:
-                    #count they were seen
-                    self._bad_hello_dict[i][1] += 1
-
-                else:
-                    self._bad_hello_dict[i][0].reset()
-                    self._bad_hello_dict[i][1] = 1
-
-            return self.known_names[i]
-
-        else:
-            name = f'Person {i - self.n_known + 1}'
-            if i not in self.indices_of_observed:
-                #self.indices_of_observed.append(i)
-                #self.unknown_count += 1
-                hello = f'Hello {name}, do we know each other!'
-
-            return ""
 
 
 def box_stabilizer(box0, box1, threshold=.25):

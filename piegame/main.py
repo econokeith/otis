@@ -19,7 +19,7 @@ def make_parser():
     parser.add_argument('-d','--dim',type=tuple, default=(1920, 1080),
                         help='set video dimensions. default is (1920, 1080)')
     parser.add_argument('-m','--max_fps', type=int, default=30,
-                        help='set max fps Default is 30')
+                        help='set max fps Default is 60')
     parser.add_argument('-p', '--port', type=int, default=0,
                         help='camera port default is 0')
     parser.add_argument('-cf', type=float, default=2,
@@ -57,7 +57,7 @@ def main():
     shared_data_object.add_array('error', ctypes.c_double, 2)
     shared_data_object.add_array('names', ctypes.c_uint8, args.faces)
     #define Processes with shared data
-    process_modules = [camera_process, cv_model_process]
+    process_modules = [camera_process, cv_model_process, servo_process]
     #if servos are true, add it to the process list
     if args.servo is True:
         process_modules.append(servo_process)

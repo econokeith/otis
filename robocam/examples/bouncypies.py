@@ -136,7 +136,7 @@ def main():
         recorder.release()
         print('video_recorded')
     sys.exit()
-
+6
 
 if __name__=="__main__":
     main()

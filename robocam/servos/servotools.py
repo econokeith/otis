@@ -32,7 +32,7 @@ class AnglesList(list):
 
         super().__init__(data)
 
-        assert issubclass(controller, servos.ServoController)
+        #assert issubclass(controller, servos.ServoController)
         self.controller = controller
         for i, v in enumerate(self):
             self[i] = v
