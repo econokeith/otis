@@ -5,12 +5,15 @@ can be sped up
 from collections import defaultdict
 import os
 import types
+import time
 
 import numpy as np
 import cv2
 
 from robocam.helpers import timers
+from robocam.helpers.utilities import cv2waitkey
 from robocam.overlay import imageassets as imga
+import robocam.camera as camera
 
 
 # add vector form types
@@ -232,10 +235,10 @@ def remove_overlap(ball1, ball2):
         x2[1] += da * m2 / (m1 + m2)
 #
 
-class BouncyAssets:
+class BouncingAssetManager:
 
     def __init__(self,
-                 asset_fun = '../robocam/overlay/photo_asset_files/pie_asset', #function or string path
+                 asset_fun = None, #function or string path
                  dim = (1920, 1080),
                  max_balls = 2,
                  ball_frequency = (3,3),
@@ -264,7 +267,7 @@ class BouncyAssets:
             self.asset_fun = asset_fun
         elif isinstance(asset_fun, str):
             abs_dir = os.path.dirname((os.path.abspath(__file__)))
-            asset_path = os.path.join(abs_dir, self.asset_fun)
+            asset_path = os.path.join(abs_dir, asset_fun)
             self.asset_fun = lambda: imga.ImageAsset(asset_path) #might want to do it slightly different adn not open
                                                                  #it from file each time.
         else:
@@ -292,7 +295,7 @@ class BouncyAssets:
                      85,
                      self.staring_location,
                      v,
-                     (0, self.dim[0] - 1), (0, self.dim - 1),
+                     (0, self.dim[0] - 1), (0, self.dim[1] - 1),
                      border_collision=self.border_collision,
                      ups=self.max_fps
                      )
@@ -303,7 +306,7 @@ class BouncyAssets:
             AssetMover.remove_fin()
 
         if self.new_asset_timer(self.dt_next) is True and AssetMover.n() < self.max_balls:
-            self.asset_fun() # balls
+            self.make_new() # balls
             bf = self.ball_frequency
             self.dt_next = np.random.uniform(1) * (bf[1] - bf[0]) + bf[0]
 
@@ -313,181 +316,50 @@ class BouncyAssets:
         AssetMover.move_all()
         AssetMover.write_all(frame)
 
-def main_old():
-    """
-    This tests using radix sort with balls of the same diameter to speeed it.
-    it acheives roughly a 10x performance boost
-    """
-    from robocam.overlay.shapes import Circle
-    from itertools import cycle
-    from textwriters import TextWriter
-    from robocam.helpers.colortools import COLOR_HASH
 
-    MAX_FPS = 30
-    DIMENSIONS = DX, DY = (1920, 1080)
-    RECORD = True
-    MAX_BALLS = 500
-    RETIRE = False
-    BALL_FREQUENCY = [.05, .1]
-    RADIUS_BOUNDS = 4
-    BALL_V_ANGLE_BOUNDS = [10, 80]
-    BALL_V_MAGNI_BOUNDS = [1000, 2000]
-    STARTING_LOCATION = [50, DY - 50]
+def main():
+    MAX_FPS = 60
+    DIMENSIONS = (1920, 1080)
+    pie_path = './photo_asset_files/pie_asset'
 
-    colors = list(COLOR_HASH.keys())
-    colors.remove('b')
-    color_cycle = cycle(colors)
+    capture = camera.CameraPlayer(0,
+                                  max_fps=MAX_FPS,
+                                  dim=DIMENSIONS
+                                  )
 
-    frame = np.zeros((*DIMENSIONS[::-1], 3), dtype='uint8')
+    bouncy_pies = BouncingAssetManager(asset_fun = pie_path,
+                                       max_fps=60,
+                                       dim=DIMENSIONS
+                                       )
 
-    if RECORD is True:
-        recorder = cv2.VideoWriter('lotta_balls.avi',
-                                   cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'),
-                                   MAX_FPS,
-                                   DIMENSIONS)
-
-        record_toggled = False
-
-    fps_limiter = timers.SmartSleeper(1. / MAX_FPS)
-    fps_timer = timers.TimeSinceLast(); fps_timer()
-
-    fps_writer = TextWriter((10, 40), ltype=1)
-    fps_writer.text_fun = lambda: f'fps = {int(1 / fps_timer())}'
-
-    collision_timer = timers.TimeSinceLast()
-    collision_writer = TextWriter((10, 80), ltype=1)
-    collision_writer.text_fun = lambda t: f'comp time = {int(t * 1000)} ms'
-
-    n_writer = TextWriter((10, 120), ltype=1)
-    n_writer.text_fun = lambda t: f'{t} balls'
-
-    def circle_fun():
-        if isinstance(RADIUS_BOUNDS, (int, float)):
-            radius = RADIUS_BOUNDS
-        else:
-            radius = np.random.randint(*RADIUS_BOUNDS)
-        circle = Circle((0, 0),
-                        radius,
-                        color=next(color_cycle),
-                        thickness=-1)
-
-        m = np.random.randint(*BALL_V_MAGNI_BOUNDS)
-        a = np.random.randint(*BALL_V_ANGLE_BOUNDS)
-        v = np.array([np.cos(a / 180 * np.pi) * m, -np.sin(a / 180 * np.pi) * m])
-
-        AssetMover(circle, circle.radius,
-                   STARTING_LOCATION,
-                   v,
-                   (0, DX - 1), (0, DY - 1),
-                   border_collision=True,
-                   ups=MAX_FPS)
-
-    new_circle_timer = timers.CallHzLimiter()
-    bf = BALL_FREQUENCY
-
-    remove_counter = 0
+    time.sleep(1)
     while True:
-        frame[:, :, :] = 0
-
-        dt = np.random.rand() * (bf[1] - bf[0]) + bf[0]
-        if new_circle_timer(dt) is True:
-            if AssetMover.n() > MAX_BALLS and RETIRE is True:
-                AssetMover.movers.pop(0)
-
-            if AssetMover.n() < MAX_BALLS:
-                circle_fun()
-
-        collision_timer()  # start
-        y_zeros = [[] for _ in range(DIMENSIONS[1])]
-        x_zeros = [[] for _ in range(DIMENSIONS[0])]
-
-        for i, mover in enumerate(AssetMover.movers):
-            x, y = mover.position.astype('int')
-            try:
-                x_zeros[x].append(i)
-                y_zeros[y].append(i)
-            except:
-                AssetMover.movers.remove(mover)
-                remove_counter += 1
-                print(f'removed ball at {x},{y} : {remove_counter} total')
-
-        x_array = []
-        for x in x_zeros:
-            if x:
-                for m in x:
-                    x_array.append(m)
-        y_array = []
-        for y in x_zeros:
-            for m in y:
-                y_array.append(m)
-
-        movers = AssetMover.movers
-        smash_hash = defaultdict(int)
-
-        for array in [x_array, y_array]:
-            for _i in range(len(array)-1):
-                j = 1
-                i1 = array[_i]
-                m1 = movers[i1]
-                x1 = m1.position[0]
-                r1 = m1.radius
-                while True:
-                    if j+_i >= len(array):
-                        break
-                    i2 = array[j+_i]
-                    m2 = movers[i2]
-                    x2 = m2.position[0]
-                    r2 = m2.radius
-                    if (x2-x1) < (r1+r2):
-                        idxs = tuple(sorted([i1, i2]))
-                        smash_hash[idxs]+=1
-                        j+=1
-                    else:
-                        break
-
-        for key in smash_hash.keys():
-            if smash_hash[key] >1:
-                i1, i2 = key
-                m1 = movers[i1]
-                m2 = movers[i2]
-                m1.collide(m2, True)
-
-        AssetMover.move_all()
-        ct = collision_timer()
-
-        AssetMover.write_all(frame)
-
-        collision_writer.write_fun(frame, ct)
-        n_writer.write_fun(frame, AssetMover.n())
-        fps_writer.write_fun(frame)
-        fps_limiter()
-
-        if RECORD is True and record_toggled is True:
-            recorder.write(frame)
-
-        cv2.imshow('test', frame)
-        # out.write(frame)
-        cv2_wait = cv2.waitKey(1)&0xFF
-
-        if cv2_wait == ord('r') and RECORD is True:
-            record_toggled = not record_toggled
-
-        if cv2_wait == ord('q'):
+        capture.read()
+        bouncy_pies.move(capture.frame)
+        print(bouncy_pies.n_movers)
+        capture.show()
+        if cv2waitkey(1):
             break
-
-    cv2.destroyAllWindows()
-    if RECORD is True:
-        recorder.release()
-
 
 #TODO Add Collision Detection Class
 class CollisionDetector:
 
-    def __init__(self):
+    def __init__(self, overlap=.25):
+        self.overlap = overlap
+
+    def check(self, a0, a1):
         pass
+
+    def _circle_to_circle_check(self, a0, a1):
+        total_radius = a0.radius + a1.radius
+        centers_distance = np.sqrt(np.square(a0.center-a1.center).sum())
+        if total_radius*self.overlap < centers_distance:
+            return True
+        else:
+            return False
 
 if __name__=='__main__':
 
-    pass
+    main()
 
 

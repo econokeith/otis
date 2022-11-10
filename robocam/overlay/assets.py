@@ -8,7 +8,7 @@ from robocam.overlay.textwriters import TextWriter
 
 
 class BoundingBox(base.Writer):
-
+    shape = "box"
     name_writer: TextWriter
 
     def __init__(self,
@@ -62,11 +62,11 @@ class BoundingBox(base.Writer):
 
 
 class BoundingCircle(BoundingBox):
-
+    shape = 'circle'
     def __init__(self,
                  color='r',  # must be either string in color hash or bgr value
                  thickness=2,
-                 bbox_coords = True
+                 bbox_coords = True # what does this mean?
                  ):
 
         super().__init__(color=color, thickness=thickness)
