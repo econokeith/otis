@@ -9,9 +9,9 @@ import argparse
 import numpy as np
 
 import robocam.helpers.multitools as mtools
-from otismeetsguydebord import servo_process
-from otismeetsguydebord import cv_model_process
-from otismeetsguydebord import camera_process
+from piegame import servo_process
+from piegame import cv_model_process
+from piegame import camera_process
 
 
 def make_parser():
@@ -57,7 +57,7 @@ def main():
     shared_data_object.add_array('error', ctypes.c_double, 2)
     shared_data_object.add_array('names', ctypes.c_uint8, args.faces)
     #define Processes with shared data
-    process_modules = [camera_process, cv_model_process, servo_process]
+    process_modules = [camera_process]
     #if servos are true, add it to the process list
     if args.servo is True:
         process_modules.append(servo_process)

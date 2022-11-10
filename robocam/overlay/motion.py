@@ -3,12 +3,14 @@ This is a very simple collision detection class
 can be sped up
 """
 from collections import defaultdict
+import os
+import types
 
 import numpy as np
 import cv2
 
 from robocam.helpers import timers
-
+from robocam.overlay import imageassets as imga
 
 
 # add vector form types
@@ -65,7 +67,7 @@ class AssetMover:
                  velocity0,
                  x_range,
                  y_range,
-                 border_collision=False,
+                 border_collision=True,
                  ups=30,
                  mass=None # updates per second
                  ):
@@ -196,7 +198,6 @@ class AssetMover:
         elif dx_norm > (self.radius + ball.radius):
             self.collision_hash[ball.id] = False
 
-
     def write(self, frame):
         if self.finished is True:
             return
@@ -231,7 +232,88 @@ def remove_overlap(ball1, ball2):
         x2[1] += da * m2 / (m1 + m2)
 #
 
-def main():
+class BouncyAssets:
+
+    def __init__(self,
+                 asset_fun = '../robocam/overlay/photo_asset_files/pie_asset', #function or string path
+                 dim = (1920, 1080),
+                 max_balls = 2,
+                 ball_frequency = (3,3),
+                 velocity_magnitude_range = (300, 1000),
+                 velocity_angle_range = (10, 80),
+                 starting_location = (200, -200),## TODO this relative thing will need to be fixed
+                 collisions = False,
+                 max_fps = 30,
+                 border_collision = True
+                 ):
+
+        assert asset_fun is not None
+
+        self.dim = list(dim)
+        self.max_balls = max_balls
+        self.ball_frequency = list(ball_frequency)
+        self.velocity_magnitude_range = list(velocity_magnitude_range)
+        self.velocity_angle_range = list(velocity_angle_range)
+        self.staring_location = list(starting_location)
+        self.staring_location[1] += self.dim[1] # NEED TO NORMALIZE THIS LATER
+        self.collision = collisions
+        self.max_fps = max_fps
+        self.border_collision = border_collision
+
+        if isinstance(asset_fun, types.FunctionType): #check to see if asset fun is a function
+            self.asset_fun = asset_fun
+        elif isinstance(asset_fun, str):
+            abs_dir = os.path.dirname((os.path.abspath(__file__)))
+            asset_path = os.path.join(abs_dir, self.asset_fun)
+            self.asset_fun = lambda: imga.ImageAsset(asset_path) #might want to do it slightly different adn not open
+                                                                 #it from file each time.
+        else:
+            raise ValueError("asset_fun is not the proper type. it must be either function or string path")
+
+        self.new_asset_timer = timers.CallHzLimiter()
+        self.dt_next = 0
+
+
+    @property
+    def n_movers(self):
+        return AssetMover.n()
+
+    @property
+    def movers(self):
+        return AssetMover.movers
+
+    def make_new(self):
+        # random initial velocity
+        m = np.random.randint(*self.velocity_magnitude_range)
+        a = np.random.randint(*self.velocity_angle_range) / 180 * np.pi
+        v = np.array([np.cos(a) * m, -np.sin(a) * m])
+        # put circle in a mover
+        AssetMover(self.asset_fun(),
+                     85,
+                     self.staring_location,
+                     v,
+                     (0, self.dim[0] - 1), (0, self.dim - 1),
+                     border_collision=self.border_collision,
+                     ups=self.max_fps
+                     )
+
+
+    def move(self, frame):
+        if self.border_collision is True:
+            AssetMover.remove_fin()
+
+        if self.new_asset_timer(self.dt_next) is True and AssetMover.n() < self.max_balls:
+            self.asset_fun() # balls
+            bf = self.ball_frequency
+            self.dt_next = np.random.uniform(1) * (bf[1] - bf[0]) + bf[0]
+
+        if self.collision is True:
+            AssetMover.check_collisions()
+
+        AssetMover.move_all()
+        AssetMover.write_all(frame)
+
+def main_old():
     """
     This tests using radix sort with balls of the same diameter to speeed it.
     it acheives roughly a 10x performance boost
@@ -397,8 +479,15 @@ def main():
     if RECORD is True:
         recorder.release()
 
+
+#TODO Add Collision Detection Class
+class CollisionDetector:
+
+    def __init__(self):
+        pass
+
 if __name__=='__main__':
 
-    main()
+    pass
 
 

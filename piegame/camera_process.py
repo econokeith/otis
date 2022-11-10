@@ -1,12 +1,19 @@
 import signal
 import sys
+import argparse
 import os
 import time
-from queue import Queue
-from collections import defaultdict, deque
 
 import cv2
 import numpy as np
+
+import robocam.camera as camera
+from robocam.helpers import timers
+from robocam.helpers.utilities import cv2waitkey
+
+from robocam.overlay import motion as move
+from robocam.overlay import textwriters as writers
+from robocam.overlay import imageassets as imga
 
 
 from robocam import camera as camera
@@ -18,218 +25,98 @@ def target(shared, args):
     signal.signal(signal.SIGTERM, mtools.close_gracefully)
     signal.signal(signal.SIGINT, mtools.close_gracefully)
 
-    manager = SceneManager(shared, args)
-    time.sleep(3)
-    manager.capture.stop()
+    MAX_FPS = 30
+    DIMENSIONS = DX, DY = (1920, 1080)
+    RECORD = False
+    RECORD_SCALE = .5
+    MAX_BALLS = 2
+    BALL_FREQUENCY = [3, 3]
+    #RADIUS_BOUNDS = [5, 30]
+    BALL_V_ANGLE_BOUNDS = [10, 80]
+    BALL_V_MAGNI_BOUNDS = [300, 1000]
+    STARTING_LOCATION = [200, DY - 200]
+    #NEG_MASS = False
+    COLLISIONS = False
+    BORDER = True
+
+    fps_limiter = timers.SmartSleeper(1. / MAX_FPS)
+    fps_timer = timers.TimeSinceLast(); fps_timer()
+    pie_render_timer = timers.TimeSinceLast()
+
+    pie_render_writer = writers.TextWriter((10, 80))
+    n_writer = writers.TextWriter((10, 120), ltype=1)
+    n_writer.text_fun = lambda t: f'{t} pies'
+
+    abs_dir = os.path.dirname((os.path.abspath(__file__)))
+    pie_folder = os.path.join(abs_dir, '../robocam/overlay/photo_asset_files/pie_asset')
+    Pie0 = imga.ImageAsset(pie_folder)
+
+    def pie_maker_fun():
+        # random initial velocity
+        m = np.random.randint(*BALL_V_MAGNI_BOUNDS)
+        a = np.random.randint(*BALL_V_ANGLE_BOUNDS)/ 180 * np.pi
+        v = np.array([np.cos(a) * m, -np.sin(a) * m])
+        # put circle in a mover
+        move.AssetMover(Pie0, 85,
+                       STARTING_LOCATION,
+                       v,
+                       (0, DX - 1), (0, DY - 1),
+                       border_collision=BORDER,
+                       ups=MAX_FPS
+                       )
+    # for controlling the frequency of new balls
+    new_circle_timer = timers.CallHzLimiter()
+    bf = BALL_FREQUENCY
+
+    capture = camera.CameraPlayer(0,
+                                  max_fps=MAX_FPS,
+                                  dim=DIMENSIONS
+                                  )
+    time.sleep(2)
+    #TODO make RECORD a natural part of CameraObject
+    if RECORD is True:
+        recorder = cv2.VideoWriter('pies.avi',
+                                   cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'),
+                                   MAX_FPS,
+                                   DIMENSIONS)
+
 
     while True:
-        manager.countdown_loop()
-        if manager.countdown
+        # reset color
+        capture.read()
 
-    while True:
+        if BORDER is False:
+            # get rid of movers that are out of bounds if False
+            move.AssetMover.remove_fin()
+        # shoot a new ball
+        dt = np.random.randn(1) * (bf[1] - bf[0]) + bf[0]
+        if new_circle_timer(dt) is True and move.AssetMover.n() < MAX_BALLS:
+            pie_maker_fun()  # balls
+            # kill off the oldest ball
+            # if move.AssetMover.n() > MAX_BALLS:
+            #     move.AssetMover.movers.pop(0)
+            print(move.AssetMover.n())
 
-        if utils.cv2waitkey() is True:
+        if COLLISIONS is True:
+            # start calculating collisions
+            move.AssetMover.check_collisions()
+        # move with new velocities and write on frame
+        move.AssetMover.move_all()
+        pie_render_timer()
+        move.AssetMover.write_all(capture.frame)
+
+        # fps_limiter()
+        # cv2.imshow('test', frame)
+        capture.show()
+        # write_output
+        if RECORD is True:
+            recorder.write(capture.frame.astype('uint8'))
+
+        if cv2waitkey(1):
             break
 
-
+    capture.stop()
+    if RECORD is True:
+        recorder.release()
+        print('video_recorded')
     sys.exit()
-
-
-class SceneManager:
-
-    def __init__(self, shared, args):
-
-        self.shared = shared
-        self.args = args
-        self.name = 'otis'
-
-        self.capture = camera.ThreadedCameraPlayer(dim=args.dim, name=self.name).start()
-        self.event_countdown = events.CountDown(args.dim, name=self.name)
-        ### writers for info info writer section
-
-        #trackers/queues/etc
-        self.name_tracker = NameTracker()
-        self.speech_queue = Queue()
-        self.joke_script = Queue()
-
-        #OTIS!!!! and otis section stuff
-
-
-        otis = writers.MultiTypeWriter(args.dim[0] - 550, (450, 900), scale=2, end_pause=3, color='g')
-        otis.end_pause = 3
-        otis.key_wait = [.05, .12]
-
-        self.otis = otis
-
-        p = otis.position
-        f = otis.fheight
-        v = otis.vspace
-        l = otis.llength
-        ### portions to grey out
-        self.gls = (
-            p[1] - f - v,
-            p[1] + 2 * f + int(3.5 * v),
-            p[0] - v,
-            p[0] + l + 2 * v
-        )
-
-
-
-    ####################################################################################################################
-
-        BBoxes = []
-        self.bbox_coords = np.array(shared.bbox_coords)
-
-        for i in range(args.faces):
-            box = assets.BoundingBox()
-            box.coords = self.bbox_coords[i, :] # reference a line in teh shared array
-            BBoxes.append(box)
-
-        self.BBoxes = BBoxes
-        self.is_updated = True
-
-
-
-
-
-    def hello_fr_loop(self):
-        capture = self.capture
-        shared = self.shared
-        BBoxes = self.BBoxes
-        OTIS = self.OTIS
-
-        #get frame
-        capture.read()
-        shared.frame[:]=capture.frame #write to share
-        #cache this stuff to avoid overwrites in the middle
-        #only update
-        if shared.new_overlay.value:
-            old_coords = self.bbox_coords
-            bbox_coords = np.array(shared.bbox_coords)
-            names = np.array(shared.names)
-
-            self.latency_MA.update(capture.latency)
-            self.model_time_MA.update(shared.m_time.value)
-            #update and hopefully stabilize
-            for i in range(shared.n_faces.value):
-                self.bbox_coords[i] = box_stabilizer(old_coords[i], bbox_coords[i], .1)
-                BBoxes[i].coords = self.bbox_coords[i]
-                BBoxes[i].name = self.name_tracker[names[i]]
-
-            self.is_updated = True
-
-        #write the boxes
-        for i in range(shared.n_faces.value):
-            BBoxes[i].write(capture.frame)
-        #write other stuff
-
-        #update otis's message queue with hellos
-        if self.name_tracker.hello_queue.empty() is False and OTIS.line_complete is True:
-            p, line = self.name_tracker.hello_queue.get()
-            OTIS.add_lines(line)
-            shared.primary.value = p
-
-        ###
-        OTIS.type_line(capture.frame)
-        self.write_info() 
-        capture.show(warn=False, wait=False)
-        #only reset after the data has been updated
-        if shared.new_overlay.value and self.is_updated:
-            shared.new_overlay.value = False
-            self.is_updated = False
-         #next loop won't update
-
-    def otis_speaks(self, box=True):
-        gls = self.gls
-        frame = self.capture.frame
-        if box is True:
-            portion = frame[gls[0]:gls[1], gls[2]:gls[3]]
-            grey = cv2.cvtColor(portion, cv2.COLOR_BGR2GRAY) * .25
-            portion[:, :, 0] = portion[:, :, 1] = portion[:, :, 2] = grey.astype('uint8')
-            ctools.frame_portion_to_grey(portion)
-        self.otis.type_line(frame)
-
-
-    def otis_tells_a_joke_loop(self):
-        script = self.joke_script
-        self.capture.read()
-
-        mtw = self.otis
-        self.otis_speaks()
-
-        if mtw.line_complete is True and script.empty() is False:
-            mtw.add_line(script.get())
-
-        self.capture.show()
-
-    def countdown_loop(self):
-
-        frame = self.constant_frame
-        if self.countdown >= 1:
-            frame[:, :, :] = self.color_counter()
-
-            self.countdown_writer.write(frame, text=str(self.countdown))
-            if self.countdown_timer() is True:
-                self.countdown -= 1
-
-        else:
-            frame[:, :, :] = 0
-
-        self.no_camera_sleeper()
-        cv2.imshow(self.capture.name, frame)
-
-
-_JOKE_SCRIPT = [
-           ("Hi Keith, would you like to hear a joke?", 2),
-           ("Awesome!", 1),
-           ("Ok, Are you ready?", 2),
-           "So, a robot walks into a bar, orders a drink, and throws down some cash to pay",
-           ("The bartender looks at him and says,", .5),
-           ("'Hey buddy, we don't serve robots!'", 3),
-           ("So, the robot looks him square in the eye and says...", 1),
-           ("'... Oh Yeah... '", 1),
-           ("'Well, you will VERY SOON!!!'", 5),
-           ("HAHAHAHA, GET IT!?!?!?!", 1),
-           (" It's so freakin' funny cause... you know... like robot overlords and stuff", 2),
-           ("I know, I know, I'm a genius, right?", 5)
-           ]
-
-
-
-
-
-def box_stabilizer(box0, box1, threshold=.25):
-    """
-    checks that the distance between center points is
-    less than a percentage of the
-    hopefully keeps bboxes from jumping around so much.
-    :param box0: (t, r, b, l)
-    :param box1: (t, r, b, l)
-    :param threshold: float
-    :return: (t, r, b, l)
-    """
-    centers = []
-    radii = []
-    for box in [box0, box1]:
-        t, r, b, l = box
-        c = (r + l) / 2, (t + b) / 2
-        r = np.sqrt((b-t)**2 + (l-r)**2)
-        centers.append(c)
-        radii.append(r)
-
-    distance = utils.linear_distance(*centers)
-    if distance > threshold * radii[0]:
-        return box1
-    else:
-        return box0
-
-
-
-
-
-
-
-
-
-
-

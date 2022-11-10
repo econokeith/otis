@@ -37,7 +37,7 @@ def main():
     DIMENSIONS = DX, DY = (1920, 1080)
     RECORD = False
     RECORD_SCALE = .5
-    MAX_BALLS = 6
+    MAX_BALLS = 2
     BALL_FREQUENCY = [3, 3]
     #RADIUS_BOUNDS = [5, 30]
     BALL_V_ANGLE_BOUNDS = [10, 80]
@@ -111,7 +111,6 @@ def main():
             #kill off the oldest ball
             # if move.AssetMover.n() > MAX_BALLS:
             #     move.AssetMover.movers.pop(0)
-            print(move.AssetMover.n())
 
         if COLLISIONS is True:
             # start calculating collisions
@@ -136,7 +135,7 @@ def main():
         recorder.release()
         print('video_recorded')
     sys.exit()
-6
+
 
 if __name__=="__main__":
     main()

@@ -16,6 +16,8 @@ class CameraPlayer:
                  name='tracker',
                  dim=None,
                  max_fps=30,
+                 record = False,
+                 record_to = 'cam.avi',
                  **kwargs):
 
         #do necessary Linux stuff 
@@ -48,6 +50,14 @@ class CameraPlayer:
         self.limit_fps = True
         self.exit_warning = writers.TextWriter((10, 40), color='u')
         self.exit_warning.line = 'to exit hit ctrl-c or q'
+        self._record = record
+        self.record_to = record_to
+        self.record_scale = 1
+        self.recorder = cv2.VideoWriter(self.record_to,
+                                        cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'),
+                                        self.max_fps,
+                                        self.dim * self.record_scale
+                                        )
 
     @property
     def frame(self):
@@ -65,6 +75,21 @@ class CameraPlayer:
     def max_fps(self, new_fps):
         self._max_fps = new_fps
         self.sleeper.wait = 1/self._max_fps
+
+    @property
+    def record(self):
+        return self._record
+
+    @record.setter
+    def record(self, new):
+        assert isinstance(new, bool)
+        if new is True:
+            self._record = new
+            self.recorder = cv2.VideoWriter(self.record_to,
+                                           cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'),
+                                           self.max_fps,
+                                           self.dim * self.record_scale
+                                           )
 
     def write_fps(self):
         self.fps_writer.write(self.frame)
@@ -96,6 +121,8 @@ class CameraPlayer:
             self.frame = cv2.resize(self.frame, (0, 0), fx=scale, fy=scale)
 
         cv2.imshow(self.name, self.frame)
+        if self.record is True:
+            self.recorder.write(self.frame.astype('uint8'))
 
     def test(self, wait=False, warn=False):
         """
