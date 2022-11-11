@@ -30,37 +30,40 @@ def target(shared, args):
     DIMENSIONS = DX, DY = (1920, 1080)
     RECORD = False
     RECORD_SCALE = .5
-    MAX_BALLS = 2
+    MAX_BALLS = 4
     BALL_FREQUENCY = [3, 3]
     #RADIUS_BOUNDS = [5, 30]
     BALL_V_ANGLE_BOUNDS = [10, 80]
     BALL_V_MAGNI_BOUNDS = [300, 1000]
     STARTING_LOCATION = [200, DY - 200]
     #NEG_MASS = False
-    COLLISIONS = False
+    COLLISIONS = True
     BORDER = True
-    MAX_FPS = 60
+    MAX_FPS = 30
     DIMENSIONS = (1920, 1080)
     pie_path = './photo_asset_files/pie_asset'
 
-    capture = camera.CameraPlayer(0,
+    capture = camera.ThreadedCameraPlayer(0,
                                   max_fps=MAX_FPS,
-                                  dim=DIMENSIONS
-                                  )
+                                  dim=DIMENSIONS,
+                                  ).start()
 
     bouncy_pies = motion.BouncingAssetManager(asset_fun = pie_path,
-                                               max_fps=60,
-                                               dim=DIMENSIONS
-                                               )
+                                              max_fps = MAX_FPS,
+                                              dim = DIMENSIONS,
+                                              max_balls = MAX_BALLS,
+                                              collisions=COLLISIONS
+                                              )
 
-    time.sleep(1)
+    time.sleep(3)
 
-    collision_detector = motion.CollisionDetector(.1)
-    screen_flash = events.ColorFlash()
+    collision_detector = motion.CollisionDetector(.3)
+    screen_flash = events.ColorFlash(max_ups=MAX_FPS,
+                                     cycle_t=.5,
+                                     direction=-1)
 
-    circle = shapes.Circle((0,0),
+    circle = shapes.Circle((990,540),
                            80,
-                           ref='c',
                            dim=DIMENSIONS,
                            thickness=2)
     flash_event = False
@@ -71,7 +74,6 @@ def target(shared, args):
         if flash_event is True:
             screen_flash.loop(capture.frame)
             if screen_flash.complete:
-                print(screen_flash.complete)
                 screen_flash.reset()
                 flash_event = False
 
@@ -83,10 +85,8 @@ def target(shared, args):
             break
 
         for i, pie in enumerate(bouncy_pies.movers):
-            collision_q = collision_detector.check(circle, pie)
-            print(collision_q)
+
             if collision_detector.check(circle, pie) is True and flash_event is False:
-                print(collision_q)
                 flash_event = True
                 break
 

@@ -326,19 +326,20 @@ class CollisionDetector:
     currently only supports, currently not optimized for searches faster than O(n^2)
     """
 
-    def __init__(self, overlap=.25):
+    def __init__(self, overlap=None):
         self.overlap = overlap
 
-    def check(self, a0, a1, overlap=None):
+    def check(self, a0, a1, overlap=0):
         _overlap = overlap if overlap is not None else self.overlap
 
         #if a0.shape == "circle" and a1.shape == 'circle':
         return self._circle_to_circle_check(a0, a1, _overlap)
 
     def _circle_to_circle_check(self, a0, a1, overlap=None):
-        total_radius = a0.radius + a1.radius
+        r0 = a0.radius
+        r1 = a1.radius
         centers_distance = np.sqrt(np.square(a0.center-a1.center).sum())
-        if total_radius * (1-overlap) >= centers_distance:
+        if (r1+r0) * (1-overlap) >= centers_distance:
             return True
         else:
             return False
@@ -355,7 +356,8 @@ def main():
 
     bouncy_pies = BouncingAssetManager(asset_fun = pie_path,
                                        max_fps=60,
-                                       dim=DIMENSIONS
+                                       dim=DIMENSIONS,
+                                       collisions=True
                                        )
 
 
@@ -364,7 +366,6 @@ def main():
     while True:
         capture.read()
         bouncy_pies.move(capture.frame)
-        print(bouncy_pies.n_movers)
         capture.show()
         if cv2waitkey(1):
             break

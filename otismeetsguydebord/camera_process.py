@@ -23,9 +23,10 @@ def target(shared, args):
     while True:
 
         if shared.scene.value == 2:
-            manager.hello_fr_loop()
-        elif shared.scene.value == 1:
             manager.otis_tells_a_joke_loop()
+        elif shared.scene.value == 1:
+            manager.hello_fr_loop()
+
         elif shared.scene.value == 0:
             manager.countdown_loop()
             if manager.countdown == 0:

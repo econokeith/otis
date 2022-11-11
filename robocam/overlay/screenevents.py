@@ -87,11 +87,11 @@ class ColorFlash(ScreenEvent):
                  mini=0,
                  maxi=255,
                  start=0,
-                 dir = 1,
+                 direction = 1,
                  cycle_t = 1,
                  max_ups = 60,
-                 repeat = True,
-                 updown = False, 
+                 repeat = False,
+                 updown = False,
                  end_value = None
                  ):
         """
@@ -104,7 +104,7 @@ class ColorFlash(ScreenEvent):
                                         mini=mini,
                                         maxi=maxi,
                                         start=start,
-                                        dir = dir,
+                                        direction= direction,
                                         cycle_t = cycle_t,
                                         max_ups = max_ups,
                                         repeat = repeat,
@@ -121,8 +121,9 @@ class ColorFlash(ScreenEvent):
 
         if self.complete is True:
             return
-
+        # i comes after complete check so that we get to the last value
         i = self.counter()
+
         F = frame[:, :, self.pixel]
         frame[:, :, self.pixel] = np.where(F.astype('uint16')+ i  >= 255, 255, F+i )
 
@@ -138,18 +139,23 @@ def main():
     capture = camera.CameraPlayer(dim=(1920, 1080))
     time.sleep(2)
     # time.sleep(3)
-    event_queue = queue.Queue()
-    color_flash = CountDown((1920, 1080))
-    event_queue.put(color_flash)
-    # new_flash_timer = timers.CallHzLimiter(5)
+
+    color_flash = ColorFlash(2)
+    waiter = timers.SinceFirstBool(2)
+
+    # while waiter() is False:
+    #     capture.read()
+    #     capture.show()
+
+
     while True:
         capture.read()
         # if new_flash_timer is True:
         #     color_flash = ColorFlash(3)
         color_flash.loop(capture.frame)
-
-        if color_flash.finished is True:
-            break
+        capture.show()
+        # if color_flash.finished is True:
+        #     break
 
         if utils.cv2waitkey(1) is True:
             break

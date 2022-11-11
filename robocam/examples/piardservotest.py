@@ -19,8 +19,7 @@ import robocam.helpers.timers as timers
 import robocam.overlay.assets as assets
 import robocam.servos.pid as pid
 import _piardservo as servo
-
-
+import robocam.helpers.cvtools as cvtools
 
 parser = argparse.ArgumentParser(description='Test For Camera Capture')
 parser.add_argument('-d','--dim',type=tuple, default=(1280, 720),
@@ -29,9 +28,9 @@ parser.add_argument('-m','--max_fps', type=int, default=300, help='set max fps D
 parser.add_argument('-p', '--port', type=int, default=0, help='camera port default is 0')
 parser.add_argument('-cf', type=float, default=2, help='shrink the frame by a factor of cf before running algo')
 parser.add_argument('--faces', type=int, default=5, help='max number of bboxs to render. default =5')
-parser.add_argument('--device', type=str, default='gpu', help='runs a hog if cpu and cnn if gpu')
+parser.add_argument('--device', type=str, default='cpu', help='runs a hog if cpu and cnn if gpu')
 parser.add_argument('--ncpu', type=int, default='1', help='number of cpus')
-parser.add_argument('-scale', type=float, default=2., help='scale output')
+parser.add_argument('-scale', type=float, default=1, help='scale output')
 
 args = parser.parse_args()
 

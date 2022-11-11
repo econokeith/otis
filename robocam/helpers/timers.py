@@ -193,27 +193,34 @@ class TimedCycle:
     def __init__(self,
                  mini=0,
                  maxi=255,
-                 start=0,
-                 dir = 1,
+                 start=0, #only matters is repeat is true otherwise defaults to min or max accordingly
+                 direction = 1,
                  cycle_t = 1,
                  max_ups = 60,
                  repeat = True,
-                 updown = False, 
+                 updown = False,
                  end_value = None
                  ):
 
         self.mini = mini
         self.maxi = maxi
         self._i = start
-        self.dir = dir
-        self.start = start
+        self.direction = direction
+
+        if repeat is False and direction == 1:
+            self.start = self.mini
+        elif repeat is False and direction == -1:
+            self.start = self.maxi
+        else:
+            self.start = start
+
         self.max_ups = max_ups
         self.updown = updown
         self.end_value = end_value
 
         self.length = (maxi - mini + 1)
         self.cycle_t = cycle_t
-        self.speed =  self.length/ self.cycle_t
+        self.speed =  self.length / self.cycle_t
         self.repeat = repeat
         self.complete = False
 
@@ -237,7 +244,7 @@ class TimedCycle:
         if self.ups_timer() is True:
 
             tp = self.last_timer()
-            self._i = self._i + self.speed * tp * self.dir
+            self._i = self._i + self.speed * tp * self.direction
             self.last_step = self.speed * tp   
             self.total_steps += self.last_step
 
@@ -250,26 +257,27 @@ class TimedCycle:
 
     def _one_direction_counter(self):
 
-        if self.repeat is True and self._i >= self.maxi:
+        if self.repeat is True and self._i >= self.maxi and self.direction == 1:
             self._i = self.mini
 
-        elif self.repeat is True and self._i <= self.mini:
+        elif self.repeat is True and self._i <= self.mini and self.direction == -1:
             self._i = self.maxi
 
-        elif self.repeat is False and self._i >= self.maxi:
+        elif self.repeat is False and self._i >= self.maxi and self.direction == 1:
             self._i = self.maxi
             self.complete = True
 
-        elif self.repeat is False and self._i <= self.mini:
+        elif self.repeat is False and self._i <= self.mini and self.direction == -1:
             self._i = self.mini
             self.complete = True
 
+    #todo: fix updowncounter
     def _up_down_counter(self):
 
         if self._i > self.maxi:# and self.repeat is False:
             self._i = self.maxi
-            self.dir *=-1
+            self.direction *=-1
 
         elif self._i < self.mini:# and self.repeat is False:
             self._i = self.mini
-            self.dir *= -1
+            self.direction *= -1

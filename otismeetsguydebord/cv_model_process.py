@@ -84,7 +84,7 @@ def target(shared_data_object, args):
 
     sys.exit()
 
-#this is like this to preserve the local import
+#this is like this to preserve the local import because two processes can't connect ot the gpu
 def load_face_data(face_recognition):
     #this  might have to change
     abs_dir = os.path.dirname(os.path.abspath(__file__))
@@ -101,7 +101,6 @@ def load_face_data(face_recognition):
                 break
             else:
                 name += char
-
 
         image_path = os.path.join(face_folder, file)
         image = face_recognition.load_image_file(image_path)
