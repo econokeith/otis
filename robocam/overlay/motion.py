@@ -114,6 +114,10 @@ class AssetMover:
         self.x_collision = False
         self.y_collision = False
 
+    @property
+    def center(self):
+        return self.position
+
     def move(self):
         # don't update if it's not time
 
@@ -317,6 +321,28 @@ class BouncingAssetManager:
         AssetMover.write_all(frame)
 
 
+class CollisionDetector:
+    """
+    currently only supports, currently not optimized for searches faster than O(n^2)
+    """
+
+    def __init__(self, overlap=.25):
+        self.overlap = overlap
+
+    def check(self, a0, a1, overlap=None):
+        _overlap = overlap if overlap is not None else self.overlap
+
+        #if a0.shape == "circle" and a1.shape == 'circle':
+        return self._circle_to_circle_check(a0, a1, _overlap)
+
+    def _circle_to_circle_check(self, a0, a1, overlap=None):
+        total_radius = a0.radius + a1.radius
+        centers_distance = np.sqrt(np.square(a0.center-a1.center).sum())
+        if total_radius * (1-overlap) >= centers_distance:
+            return True
+        else:
+            return False
+
 def main():
     MAX_FPS = 60
     DIMENSIONS = (1920, 1080)
@@ -332,7 +358,9 @@ def main():
                                        dim=DIMENSIONS
                                        )
 
+
     time.sleep(1)
+
     while True:
         capture.read()
         bouncy_pies.move(capture.frame)
@@ -340,23 +368,11 @@ def main():
         capture.show()
         if cv2waitkey(1):
             break
+    capture.stop()
 
-#TODO Add Collision Detection Class
-class CollisionDetector:
+#
 
-    def __init__(self, overlap=.25):
-        self.overlap = overlap
 
-    def check(self, a0, a1):
-        pass
-
-    def _circle_to_circle_check(self, a0, a1):
-        total_radius = a0.radius + a1.radius
-        centers_distance = np.sqrt(np.square(a0.center-a1.center).sum())
-        if total_radius*self.overlap < centers_distance:
-            return True
-        else:
-            return False
 
 if __name__=='__main__':
 

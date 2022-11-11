@@ -8,20 +8,22 @@ def draw_circle(frame, center, radius, color='r', thickness=1, ref=None):
 
     _color = ctools.color_function(color)
 
-    c = utis.abs_point(center, ref)
+    c = utis.abs_point(center, ref, dim=frame.shape)
     r = int(radius)
     t = int(thickness)
 
     cv2.circle(frame, c, r, _color, t)
 
 class Circle(bases.Writer):
+    shape = "circle"
 
     def __init__(self,
                  position,
                  radius,
                  color='r',
                  thickness=1,
-                 ref=None):
+                 ref=None,
+                 dim=None):
 
         super().__init__()
         self.position = position
@@ -29,6 +31,11 @@ class Circle(bases.Writer):
         self.color = color
         self.thickness = thickness
         self.ref = ref
+        self.dim = dim
+
+    @property
+    def center(self):
+        return self.position
 
     def write(self, frame, position=None):
         _center = self.position if position is None else position
@@ -37,7 +44,8 @@ class Circle(bases.Writer):
                     self.radius,
                     color=self.color,
                     thickness=self.thickness,
-                    ref=self.ref)
+                    ref=self.ref,
+                    )
 
 def draw_line(frame, pt1, pt2, color='r', thickness=1, ref=None):
     """

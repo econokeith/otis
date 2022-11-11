@@ -8,8 +8,9 @@ from robocam.overlay.textwriters import TextWriter
 
 
 class BoundingBox(base.Writer):
-    shape = "box"
+    shape = "rectangle"
     name_writer: TextWriter
+    name: str
 
     def __init__(self,
                  color='r',  # must be either string in color hash or bgr value
@@ -18,12 +19,13 @@ class BoundingBox(base.Writer):
                  ):
 
         super().__init__()
-        self.coords = np.zeros(4, dtype='uint8')
+        self.coords = np.zeros(4, dtype='uint8') ### stored as top, right, bottom, left
         self.color = color
         self.thickness = thickness
         self.name_writer = textwriters.TextWriter(scale=.75, ltype=1)
-        self.name = ""
+        self.name = None
         self.show_name = True
+        self.name_line = True
 
     @property
     def center(self):
@@ -50,18 +52,23 @@ class BoundingBox(base.Writer):
         c = self.center
         return np.sqrt((c[0]-point[0])**2 + (c[1]-point[1])**2)
 
-
     def write(self, frame, name=None):
         t, r, b, l = self.coords
         cv2.rectangle(frame, (l, t), (r, b), self.color, self.thickness)
 
-        if self.show_name is True or name is not None:
-            _name = self.name if name is None else name
-            self.name_writer.write(frame, position=(0, 20), text=_name, ref=(l, t))
-            shapes.draw_line(frame,(0,0), (0, 15),self.color, 1,  ref=(l+15, t))
+        if self.show_name is True and (name is not None or self.name is not None):
+            self.name_tag(frame, name)
+
+    def name_tag(self, frame, name=None):
+        t, r, b, l = self.coords
+        _name = self.name if name is None else name
+        self.name_writer.write(frame, position=(0, 20), text=_name, ref=(l, t))
+        if self.name_line is True:
+            shapes.draw_line(frame, (0, 0), (0, 15), self.color, 1, ref=(l + 15, t))
 
 
 class BoundingCircle(BoundingBox):
+
     shape = 'circle'
     def __init__(self,
                  color='r',  # must be either string in color hash or bgr value
@@ -91,7 +98,7 @@ class BoundingCircle(BoundingBox):
         else:
             return self.coords[2]
 
-    def write(self, frame):
+    def write(self, frame, name=None):
         shapes.draw_circle(frame, self.center, self.radius, self.color, self.thickness)
 
 
@@ -122,7 +129,7 @@ class CrossHair(BoundingCircle):
         self._radius= new_radius
         self.constant_size = True
 
-    def write(self, frame):
+    def write(self, frame, name=None):
         center = self.center
         radius = self.radius
         r75 = radius*.75

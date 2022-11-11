@@ -45,7 +45,7 @@ _FRAME_HASH['b'] = lambda s: (int(s[1] / 2), s[0])
 def abs_point(relative_point, reference=None, dim=None):
 
     """
-    returns the absolute pixel location when given a cartesian relative point to the
+    returns the absolute pixel location when given a cartesian relative point to there
     reference that is considered the origin
     :param reference:origin
     :param relative_point: relative location
@@ -54,9 +54,10 @@ def abs_point(relative_point, reference=None, dim=None):
     if reference is None:
         return int(relative_point[0]), int(relative_point[1])
 
-    if isinstance(reference, str):
+    if isinstance(reference, str) and dim is not None:
         ref = _FRAME_HASH[reference](dim)
-
+    elif isinstance(reference, str) and dim is None:
+        raise ValueError("abs_point will not accept string reference without dimensions of frame")
     else:
         ref = reference
 

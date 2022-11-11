@@ -10,7 +10,9 @@ import numpy as np
 import robocam.helpers.timers as timers
 import robocam.overlay.textwriters as writers
 
+
 class CameraPlayer:
+    recorder: cv2.VideoWriter
 
     def __init__(self, src=0,
                  name='tracker',
@@ -50,14 +52,12 @@ class CameraPlayer:
         self.limit_fps = True
         self.exit_warning = writers.TextWriter((10, 40), color='u')
         self.exit_warning.line = 'to exit hit ctrl-c or q'
-        self._record = record
+        self.recorder = None
+        self._record = False
+        self.record = record
         self.record_to = record_to
         self.record_scale = 1
-        self.recorder = cv2.VideoWriter(self.record_to,
-                                        cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'),
-                                        self.max_fps,
-                                        self.dim * self.record_scale
-                                        )
+
 
     @property
     def frame(self):
@@ -90,6 +90,8 @@ class CameraPlayer:
                                            self.max_fps,
                                            self.dim * self.record_scale
                                            )
+        else:
+            self._record = new
 
     def write_fps(self):
         self.fps_writer.write(self.frame)
@@ -121,6 +123,7 @@ class CameraPlayer:
             self.frame = cv2.resize(self.frame, (0, 0), fx=scale, fy=scale)
 
         cv2.imshow(self.name, self.frame)
+
         if self.record is True:
             self.recorder.write(self.frame.astype('uint8'))
 
@@ -150,6 +153,9 @@ class CameraPlayer:
         self.capture.release()
         cv2.destroyAllWindows()
         self.stopped = True
+        if self.record is True:
+            self.recorder.release()
+            print(f'video_recorded to {self.record_to}')
 
 #TODO maybe put in a wait until next frame option
 class ThreadedCameraPlayer(CameraPlayer):
