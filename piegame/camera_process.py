@@ -21,74 +21,114 @@ from robocam import camera as camera
 from robocam.helpers import multitools as mtools, timers as timers, utilities as utils, colortools as ctools
 from robocam.overlay import screenevents as events, textwriters as writers, assets as assets
 
+MAX_FPS = 30
+DIMENSIONS = DX, DY = (1920, 1080)
+RECORD = False
+RECORD_SCALE = .5
+MAX_BALLS = 4
+BALL_FREQUENCY = [3, 3]
+# RADIUS_BOUNDS = [5, 30]
+BALL_V_ANGLE_BOUNDS = [10, 80]
+BALL_V_MAGNI_BOUNDS = [300, 1000]
+STARTING_LOCATION = [200, DY - 200]
+# NEG_MASS = False
+COLLISIONS = True
+BORDER = True
+MAX_FPS = 30
+DIMENSIONS = (1920, 1080)
+pie_path = './photo_asset_files/pie_asset'
 
 def target(shared, args):
     signal.signal(signal.SIGTERM, mtools.close_gracefully)
     signal.signal(signal.SIGINT, mtools.close_gracefully)
 
-    MAX_FPS = 30
-    DIMENSIONS = DX, DY = (1920, 1080)
-    RECORD = False
-    RECORD_SCALE = .5
-    MAX_BALLS = 4
-    BALL_FREQUENCY = [3, 3]
-    #RADIUS_BOUNDS = [5, 30]
-    BALL_V_ANGLE_BOUNDS = [10, 80]
-    BALL_V_MAGNI_BOUNDS = [300, 1000]
-    STARTING_LOCATION = [200, DY - 200]
-    #NEG_MASS = False
-    COLLISIONS = True
-    BORDER = True
-    MAX_FPS = 30
-    DIMENSIONS = (1920, 1080)
-    pie_path = './photo_asset_files/pie_asset'
-
     capture = camera.ThreadedCameraPlayer(0,
-                                  max_fps=MAX_FPS,
-                                  dim=DIMENSIONS,
+                                  max_fps=args.max_fps,
+                                  dim=args.dim,
                                   ).start()
 
-    bouncy_pies = motion.BouncingAssetManager(asset_fun = pie_path,
-                                              max_fps = MAX_FPS,
-                                              dim = DIMENSIONS,
-                                              max_balls = MAX_BALLS,
-                                              collisions=COLLISIONS
-                                              )
-
-    time.sleep(3)
-
-    collision_detector = motion.CollisionDetector(.3)
-    screen_flash = events.ColorFlash(max_ups=MAX_FPS,
-                                     cycle_t=.5,
-                                     direction=-1)
-
-    circle = shapes.Circle((990,540),
-                           80,
-                           dim=DIMENSIONS,
-                           thickness=2)
-    flash_event = False
+    manager = SceneManager(shared, args, capture)
+    bouncy_scene = BouncyScene(manager, shared, args)
 
     while True:
+
         capture.read()
-
-        if flash_event is True:
-            screen_flash.loop(capture.frame)
-            if screen_flash.complete:
-                screen_flash.reset()
-                flash_event = False
-
-        bouncy_pies.move(capture.frame)
-        circle.write(capture.frame)
+        bouncy_scene.loop(capture.frame)
         capture.show()
-
-        if cv2waitkey(1):
+        if utils.cv2waitkey() is True:
             break
-
-        for i, pie in enumerate(bouncy_pies.movers):
-
-            if collision_detector.check(circle, pie) is True and flash_event is False:
-                flash_event = True
-                break
 
     capture.stop()
     sys.exit()
+
+
+#######################################################################################################################
+#######################################################################################################################
+#######################################################################################################################
+
+class SceneManager:
+
+    def __init__(self, shared, args, capture=None):
+
+        self.shared = shared
+        self.args = args
+        if capture is None:
+            self.capture = camera.ThreadedCameraPlayer(0,
+                                                      max_fps=args.max_fps,
+                                                      dim=args.dim,
+                                                      ).start()
+        else:
+            self.capture = capture
+
+        self.scene_number = 0
+
+
+
+
+class BouncyScene:
+
+    def __init__(self, manager, shared, args):
+        self.manager = manager
+        self.shared = manager.shared
+        self.args = manager.args
+
+        self.bouncy_pies = motion.BouncingAssetManager(asset_fun=pie_path,
+                                                  max_fps=args.max_fps,
+                                                  dim=args.dim,
+                                                  max_balls=MAX_BALLS,
+                                                  collisions=COLLISIONS
+                                                  )
+
+        time.sleep(3)
+
+        self.collision_detector = motion.CollisionDetector(.3)
+        self.screen_flash = events.ColorFlash(max_ups=args.max_fps,
+                                              cycle_t=.5,
+                                              direction=-1)
+
+        self.circle = shapes.Circle((990, 540),
+                               80,
+                               dim=args.dim,
+                               thickness=2)
+        self.flash_event = False
+
+
+    def loop(self, frame):
+
+        if self.flash_event is True:
+            self.screen_flash.loop(frame)
+            if self.screen_flash.complete:
+                self.screen_flash.reset()
+                self.flash_event = False
+
+        self.bouncy_pies.move(frame)
+        self.circle.write(frame)
+
+        for i, pie in enumerate(self.bouncy_pies.movers):
+
+            if self.collision_detector.check(self.circle, pie) is True and self.flash_event is False:
+                self.flash_event = True
+                break
+
+
+
