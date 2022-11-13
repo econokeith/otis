@@ -39,3 +39,4 @@ class Writer:
             for _ in range(make_list_of-1):
                 list_of_copies.append(self.copy())
             return list_of_copies
+

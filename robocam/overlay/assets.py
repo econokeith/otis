@@ -1,10 +1,98 @@
+import copy
+import abc
+from collections import deque
+
 import cv2
 import numpy as np
 
 import robocam.overlay.bases as base
 from robocam.overlay import shapes as shapes
 from robocam.overlay import textwriters
-from robocam.overlay.textwriters import TextWriter
+from robocam.overlay.textwriters import TextWriter, NameTag
+
+
+class AssetBase(abc.ABC):
+    name_tagger: NameTag
+    shape = None
+
+    def __init__(self,
+                 coords=None,
+                 name=None,
+                 name_tagger = None,
+                 use_name_tag = False,
+                 use_bbox_coords = True, #t, r, b, l  or cy, cx, r/h. w
+                 ):
+
+    ############################## DEFINING COORD SYSTEM #######################################
+        if coords == None:
+            self.coords = np.zeros(4, dtype=int)
+
+        elif isinstance(coords, (list, tuple, np.ndarray)) & len(coords) == 4:
+            self.coords = np.array(coords)
+
+        else:
+            raise ValueError("box_coords must be list, tuple, nparray of length 4")
+
+        self.use_bbox_coords = use_bbox_coords
+
+        self._center = (100, 100)
+
+        if use_bbox_coords:
+            self._set_center_from_coords()
+        else:
+            self._center = self.coords[:2]
+
+
+
+    ################################ NAME TAGGING ############################################
+
+        self.name = name
+        self.use_name_tag = use_name_tag
+
+        if name_tagger is None:
+            self.name_tagger = NameTag(name=name)
+        else:
+            assert isinstance(name_tagger, NameTag)
+            self.name_tagger = copy.deepcopy(name_tagger)
+
+    ##########################################################################################
+    @property
+    def center(self):
+
+        if self.use_bbox_coords is True:
+            self._set_center_from_coords()
+
+        return self._center
+
+    @center.setter
+    def center(self, new_center):
+
+        if self.use_bbox_coords is True:
+            dif = np.array(new_center) - self.center
+            self.coords[0] += dif[0]
+            self.coords[2] += dif[0]
+            self.coords[1] += dif[1]
+            self.coords[3] += dif[1]
+
+        else:
+            self.coords[:2] = new_center
+
+    @property
+    def diagonal(self):
+        return np.sqrt(self.height**2 + self.width**2)
+
+    @property
+    def height(self):
+        return self.coords[2] - self.coords[0]
+
+    @property
+    def width(self):
+        return self.coords[1] - self.coords[3]
+
+
+    def _set_center_from_coords(self):
+        t, r, b, l = self.coords
+        return (r + l) // 2, (t + b) // 2
 
 
 class BoundingBox(base.Writer):
@@ -32,6 +120,8 @@ class BoundingBox(base.Writer):
         t, r, b, l = self.coords
         return int((r+l)/2), int((t+b)/2)
 
+
+
     @property
     def diagonal(self):
         return np.sqrt(self.height**2 + self.width**2)
@@ -42,7 +132,7 @@ class BoundingBox(base.Writer):
 
     @property
     def width(self):
-        return self.coords[1]-self.coords[3]
+        return self.coords[1] - self.coords[3]
 
     def distance_from_center(self, point):
         """
@@ -97,6 +187,7 @@ class BoundingCircle(BoundingBox):
             return self.diagonal/2
         else:
             return self.coords[2]
+
 
     def write(self, frame, name=None):
         shapes.draw_circle(frame, self.center, self.radius, self.color, self.thickness)

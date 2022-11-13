@@ -22,7 +22,7 @@ def make_parser():
                         help='set max fps Default is 30')
     parser.add_argument('-p', '--port', type=int, default=0,
                         help='camera port default is 0')
-    parser.add_argument('-cf', type=float, default=2,
+    parser.add_argument('-cf', type=float, default=4,
                         help='shrink the frame by a factor of cf before running algo')
     parser.add_argument('--faces', type=int, default=5,
                         help='max number of bboxs to render. default =5')
@@ -30,7 +30,7 @@ def make_parser():
                         help='runs a hog if cpu and cnn if gpu')
     parser.add_argument('--ncpu', type=int, default='1',
                         help='number of cpus')
-    parser.add_argument('--servo', type=bool, default=False,
+    parser.add_argument('--servo', type=bool, default=True,
                         help='use servos')
     parser.add_argument('-s', '--scale', type=float, default=1)
     parser.add_argument('-cv', type=bool, default=False)

@@ -16,9 +16,9 @@ from piegame import camera_process
 
 def make_parser():
     parser = argparse.ArgumentParser(description='Try to avoid the Camera Bot Shooting You')
-    parser.add_argument('-d','--dim',type=tuple, default=(1920, 1080),
+    parser.add_argument('-d', '--dim',type=tuple, default=(1920, 1080),
                         help='set video dimensions. default is (1920, 1080)')
-    parser.add_argument('-m','--max_fps', type=int, default=30,
+    parser.add_argument('-m', '--max_fps', type=int, default=30,
                         help='set max fps Default is 60')
     parser.add_argument('-p', '--port', type=int, default=0,
                         help='camera port default is 0')
@@ -43,9 +43,9 @@ args.video_center = np.array(args.dim)//2
 
 
 def main():
-    #set up shared data
+    # set up shared data
     shared_data_object = mtools.SharedDataObject()
-    #add shared values
+    # add shared values
     shared_data_object.add_value('m_time', 'd', 0.0)
     shared_data_object.add_value('n_faces', 'i', 0)
     shared_data_object.add_value('primary', 'i', 0)

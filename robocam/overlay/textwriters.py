@@ -10,6 +10,7 @@ import robocam.helpers.timers as timers
 import robocam.helpers.colortools as ctools
 import robocam.overlay.bases as base
 import robocam.overlay.shapes as shapes
+import robocam.helpers.utilities as utilities
 import robocam.camera as camera
 
 
@@ -91,6 +92,46 @@ class TextWriter(base.Writer):
         self.write(frame)
 
 #TODO: clean up differences between TypeWriter and MultiLineTyper
+class NameTag(TextWriter):
+
+    def __init__(self,
+                 name=None,
+                 underline = False,
+                 distance_above = 20,
+                 name_padding = 5,
+                 *args,
+                 **kwargs
+                 ):
+
+        super().__init__(*args, **kwargs)
+        self.name = name
+        self.underline = underline
+        self.distance_above = distance_above
+        self.name_padding = name_padding
+
+    def write(self, frame, text=None, color=None, position=None, ref=None):
+
+        _name = self.name if text is None else text
+
+        super().write(frame,
+                       position=(0, self.distance_above+self.name_padding),
+                       text=_name,
+                       ref=ref,
+
+                       )
+
+        if self.underline is True:
+            pass
+            # shapes.draw_line(frame,
+            #                  (0, 0),
+            #                  (0, da),
+            #                  self.color,
+            #                  1,
+            #                  ref=(l + da, t)
+            #                  )
+
+
+
 class TypeWriter(TextWriter):
 
     def __init__(self,
