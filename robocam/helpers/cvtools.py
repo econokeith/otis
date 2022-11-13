@@ -63,6 +63,7 @@ class BBoxStabilizer:
 
 
     def update_boxes(self, boxes, target_count=None):
+
         ll = boxes.shape[0] if target_count is None else target_count
         for i in range(ll):
             self.last[i] = self.compare_boxes(self.last[i],

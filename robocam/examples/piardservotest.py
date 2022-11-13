@@ -26,9 +26,9 @@ parser.add_argument('-d','--dim',type=tuple, default=(1280, 720),
                     help='set video dimensions. default is (1280, 720)')
 parser.add_argument('-m','--max_fps', type=int, default=300, help='set max fps Default is 300')
 parser.add_argument('-p', '--port', type=int, default=0, help='camera port default is 0')
-parser.add_argument('-cf', type=float, default=2, help='shrink the frame by a factor of cf before running algo')
+parser.add_argument('-cf', type=float, default=1, help='shrink the frame by a factor of cf before running algo')
 parser.add_argument('--faces', type=int, default=5, help='max number of bboxs to render. default =5')
-parser.add_argument('--device', type=str, default='cpu', help='runs a hog if cpu and cnn if gpu')
+parser.add_argument('--device', type=str, default='gpu', help='runs a hog if cpu and cnn if gpu')
 parser.add_argument('--ncpu', type=int, default='1', help='number of cpus')
 parser.add_argument('-scale', type=float, default=1, help='scale output')
 
@@ -64,6 +64,7 @@ def camera_process(shared_data_object):
         #get frame
         capture.read()
         shared.frame[:]=capture.frame #write to share
+        print(shared.frame.shape)
         #make bbox
         for i in range(shared.n_faces.value):
             CrossHairs[i].write(capture.frame)
@@ -81,7 +82,7 @@ def camera_process(shared_data_object):
     sys.exit()
 
 def cv_model_process(shared_data_object):
-    #import locally to avoid GPU conflicts
+    # import locally to avoid GPU conflicts
     import face_recognition
 
     signal.signal(signal.SIGTERM, mtools.close_gracefully)
@@ -97,7 +98,7 @@ def cv_model_process(shared_data_object):
         small_frame = cv2.resize(shared.frame, (0, 0), fx=1/args.cf, fy=1/args.cf)[:, :, ::-1]
         new_boxes = face_recognition.face_locations(small_frame, model=model)
         shared.m_time.value = int(1000*(time.time() - tick))
-        #write new bbox lcoations to shared array
+        # write new bbox locations to shared array
         shared.n_faces.value = len(new_boxes)
 
         if shared.n_faces.value > 0:

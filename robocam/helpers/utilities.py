@@ -41,7 +41,7 @@ _FRAME_HASH['r'] = lambda s: (s[1], int(s[0] / 2))
 _FRAME_HASH['t'] = lambda s: (int(s[1] / 2), 0)
 _FRAME_HASH['b'] = lambda s: (int(s[1] / 2), s[0])
 
-#todo: clean up the dim variable to make it consistent between np.shape and regular dims
+# todo: clean up the dim variable to make it consistent between np.shape and regular dims
 def abs_point(relative_point, reference=None, dim=None):
 
     """
@@ -63,6 +63,7 @@ def abs_point(relative_point, reference=None, dim=None):
 
     return int(relative_point[0] + ref[0]), int(ref[1] - relative_point[1])
 
+
 def find_justified_start(text, pos, font, scale, ltype, jtype='l'):
     assert jtype in ['l', 'c', 'r']
 
@@ -74,7 +75,6 @@ def find_justified_start(text, pos, font, scale, ltype, jtype='l'):
         return (int(pos[0]-w/2), pos[1])
     else:
         return (int(pos[0]-w), pos[1])
-
 
 
 def line_from_point_angle_length(point, angle, length, ref=None, dim=None):
@@ -157,3 +157,7 @@ class MovingAverage:
 
 def linear_distance(p0, p1):
     return np.sqrt((p0[0]-p1[0])**2+(p0[1]-p1[1])**2)
+
+def bbox_to_center(bbox_coords):
+    t, r, b, l = bbox_coords
+    return int((r + l) / 2), int((t + b) / 2)

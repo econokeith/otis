@@ -82,6 +82,7 @@ if __name__=='__main__':
     import robocam.camera as camera
     Capture = camera.ThreadedCameraPlayer(0, dim=(1920, 1080)).start()
     Pie = ImageAsset('./photo_asset_files/pie_asset')
+    time.sleep(3)
 
     while True:
         Capture.read()

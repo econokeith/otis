@@ -93,6 +93,7 @@ class AssetMover:
 
         self.asset = asset
         self.radius = mover_radius
+        self._coords = np.array([50, 50, 50, 50])
         self.position = np.array(position0, dtype=float)
         self.velocity = np.array(velocity0, dtype=float)
         self.x_range = np.array([x_range[0] + self.radius,
@@ -115,13 +116,21 @@ class AssetMover:
         self.y_collision = False
 
     @property
+    def coords(self):
+        return self._coords
+
+    @coords.setter
+    def coords(self, new_coords):
+        self._coords[:] = new_coords
+        t, r, b, l = self.coords
+        self.position = int((r + l) / 2), int((t + b) / 2)
+
+    @property
     def center(self):
         return self.position
 
     def move(self):
         # don't update if it's not time
-
-
         if self.timer() is False or self.finished is True:
             return
 

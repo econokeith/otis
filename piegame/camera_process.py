@@ -93,11 +93,11 @@ class BouncyScene:
         self.args = manager.args
 
         self.bouncy_pies = motion.BouncingAssetManager(asset_fun=pie_path,
-                                                  max_fps=args.max_fps,
-                                                  dim=args.dim,
-                                                  max_balls=MAX_BALLS,
-                                                  collisions=COLLISIONS
-                                                  )
+                                                      max_fps=args.max_fps,
+                                                      dim=args.dim,
+                                                      max_balls=MAX_BALLS,
+                                                      collisions=COLLISIONS
+                                                      )
 
         time.sleep(3)
 

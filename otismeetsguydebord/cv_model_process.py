@@ -104,7 +104,7 @@ def load_face_data(face_recognition):
 
         image_path = os.path.join(face_folder, file)
         image = face_recognition.load_image_file(image_path)
-        image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWIS)
+        #image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWIS)
         try:
             encoding = face_recognition.face_encodings(image)[0]
             encodings.append(encoding)
