@@ -56,7 +56,7 @@ def camera_process(shared_data_object):
 
     CrossHairs = []
     for i in range(args.faces):
-        crosshair = assets.CrossHair()
+        crosshair = assets.BoundingCircle()
         crosshair.coords = shared.bbox_coords[i, :] # reference a line in teh shared array
         CrossHairs.append(crosshair)
 

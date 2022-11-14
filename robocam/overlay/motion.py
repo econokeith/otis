@@ -276,13 +276,13 @@ class BouncingAssetManager:
         self.max_fps = max_fps
         self.border_collision = border_collision
 
-        if isinstance(asset_fun, types.FunctionType): #check to see if asset fun is a function
+        if isinstance(asset_fun, types.FunctionType): # check to see if asset fun is a function
             self.asset_fun = asset_fun
         elif isinstance(asset_fun, str):
             abs_dir = os.path.dirname((os.path.abspath(__file__)))
             asset_path = os.path.join(abs_dir, asset_fun)
-            self.asset_fun = lambda: imga.ImageAsset(asset_path) #might want to do it slightly different adn not open
-                                                                 #it from file each time.
+            self.asset_fun = lambda: imga.ImageAsset(asset_path) # might want to do it slightly different adn not open
+                                                                 # it from file each time.
         else:
             raise ValueError("asset_fun is not the proper type. it must be either function or string path")
 
@@ -305,13 +305,13 @@ class BouncingAssetManager:
         v = np.array([np.cos(a) * m, -np.sin(a) * m])
         # put circle in a mover
         AssetMover(self.asset_fun(),
-                     85,
-                     self.staring_location,
-                     v,
-                     (0, self.dim[0] - 1), (0, self.dim[1] - 1),
-                     border_collision=self.border_collision,
-                     ups=self.max_fps
-                     )
+                 85,
+                 self.staring_location,
+                 v,
+                 (0, self.dim[0] - 1), (0, self.dim[1] - 1),
+                 border_collision=self.border_collision,
+                 ups=self.max_fps
+                 )
 
 
     def move(self, frame):

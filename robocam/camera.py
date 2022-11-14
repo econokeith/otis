@@ -17,9 +17,11 @@ class CameraPlayer:
     def __init__(self, src=0,
                  name='tracker',
                  dim=None,
-                 max_fps=30,
+                 max_fps=None,
                  record = False,
                  record_to = 'cam.avi',
+                 flip = True,
+                 scale = 1,
                  **kwargs):
 
         #do necessary Linux stuff 
@@ -46,7 +48,12 @@ class CameraPlayer:
         self.stopped = False
         self._max_fps = max_fps
         self.capture.set(cv2.CAP_PROP_FPS, max_fps)
-        self.sleeper = timers.SmartSleeper(1 / self._max_fps)
+
+        if self.max_fps is not None:
+            self.sleeper = timers.SmartSleeper(1 / self._max_fps)
+        else:
+            self.sleeper = None
+
         self.fps_writer = writers.FPSWriter((10, int(self.dim[1] - 40)))
         self.latency = 0.001
         self.limit_fps = True
@@ -57,6 +64,8 @@ class CameraPlayer:
         self.record = record
         self.record_to = record_to
         self.record_scale = 1
+        self.flip = flip
+        self.scale = scale
 
 
     @property
@@ -105,24 +114,31 @@ class CameraPlayer:
         """
         tick = time.time()
         self.grabbed, self.frame = self.capture.read()
+        if self.flip is True:
+            self.frame = self.frame[:, ::-1, :]
+
         self.latency = int(1000*(time.time()-tick))
         if silent is False:
             return self.grabbed, self.frame
 
-    def show(self, scale=1, width=None, wait=False, fps=False, warn=False):
-        if wait is True:
+    def show(self, frame=None, scale=None, width=None, wait=False, fps=False, warn=False):
+        _frame = self.frame if frame is None else frame
+        _scale = self.scale if scale is None else scale
+        if self.max_fps is not None:
             self.sleeper()
-        w = self.dim[0]*scale if width is None else width
+        w = self.dim[0]*_scale if width is None else width
         if fps is True:
             self.write_fps()
 
         if warn is True:
-            self.exit_warning.write(self.frame)
+            self.exit_warning.write(_frame)
 
-        if scale != 1:
-            self.frame = cv2.resize(self.frame, (0, 0), fx=scale, fy=scale)
 
-        cv2.imshow(self.name, self.frame)
+        if _scale != 1:
+            _frame = cv2.resize(_frame, (0, 0), fx=_scale, fy=_scale)
+
+
+        cv2.imshow(self.name, _frame)
 
         if self.record is True:
             self.recorder.write(self.frame.astype('uint8'))

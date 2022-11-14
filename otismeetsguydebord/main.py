@@ -46,7 +46,7 @@ def main():
     #set up shared data
     shared_data_object = mtools.SharedDataObject()
     #add shared values
-    shared_data_object.add_value('m_time', 'd', 0.0)
+    shared_data_object.add_value('m_time', 'd', .11)
     shared_data_object.add_value('n_faces', 'i', 0)
     shared_data_object.add_value('primary', 'i', 0)
     shared_data_object.add_value('new_overlay', ctypes.c_bool, True)

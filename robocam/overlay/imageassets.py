@@ -7,7 +7,9 @@ import robocam.overlay.bases as base
 from robocam.overlay import shapes as shapes
 from robocam.helpers import utilities as utils
 
-#Todo: make this more easily resizeable
+# Todo: make this more easily resizeable
+# Todo: need to better define ImageAsset BoundingShape
+
 class ImageAsset(base.Writer):
 
     def __init__(self,
@@ -27,8 +29,10 @@ class ImageAsset(base.Writer):
         files = os.listdir(src)
         files.sort(key=len)
         self.img = cv2.imread(os.path.join(src, files[0]))
-
         self.bit = bit
+        self.coords = None
+
+
         if bit in [0, 1] and len(files)>1:
             self.mask = cv2.imread(os.path.join(src, files[1]))
             self.mask[self.mask <128] = 0
@@ -41,7 +45,14 @@ class ImageAsset(base.Writer):
         #this might be wrong
         self.center = self.img.shape[0] // 2, self.img.shape[1] // 2
         self.dim = self.img.shape[:2][::-1]
-        self.position = position
+        self._position = position
+
+    @property
+    def position(self):
+        if self.coords is not None:
+            return bbox_to_center(self.coords)
+        else:
+            return self.position
 
     #TODO THIS IS FLIPPING COORDINATEES
     def _c_to_tl_on_frame(self, f_center):
@@ -77,6 +88,9 @@ class ImageAsset(base.Writer):
 
             frame[t + loc_y, l + loc_x] = self.img[loc_y, loc_x]
 
+def bbox_to_center(coords):
+    t, r, b, l = coords
+    return int((r+l)/2), int((t+b)/2)
 
 if __name__=='__main__':
     import robocam.camera as camera

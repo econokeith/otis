@@ -8,7 +8,6 @@ from collections import defaultdict, deque
 import cv2
 import numpy as np
 
-
 from robocam import camera as camera
 from robocam.helpers import multitools as mtools, timers as timers, utilities as utils, colortools as ctools
 from robocam.overlay import screenevents as events, textwriters as writers, assets as assets
@@ -101,7 +100,7 @@ class SceneManager:
         self.bbox_coords = np.array(shared.bbox_coords)
 
         for i in range(args.faces):
-            box = assets.BoundingBox()
+            box = assets.BoundingCircle(which_radius='inside_min')
             box.coords = self.bbox_coords[i, :] # reference a line in teh shared array
             BBoxes.append(box)
 

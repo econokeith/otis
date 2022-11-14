@@ -1,11 +1,12 @@
 """
 tools for using the multiprocessing python package
 """
-
 import sys
 import multiprocessing as multi
+
 import numpy as np
 import ctypes
+
 
 def close_gracefully(sig, frame):
     """
@@ -79,3 +80,5 @@ class LibraryImportProcess(multi.Process):
         ### add imports here
         if self._target:
             self._target(*self._args, **self._kwargs)
+
+

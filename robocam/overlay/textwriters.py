@@ -1,6 +1,7 @@
 import time
 from queue import Queue
 import copy
+import types
 
 import cv2
 import numpy as np
@@ -15,7 +16,7 @@ import robocam.camera as camera
 
 
 class TextWriter(base.Writer):
-
+    text_fun: types.FunctionType
     def __init__(self,
                  position = (0,0),  #position
                  font = cv2.FONT_HERSHEY_DUPLEX,
@@ -129,6 +130,72 @@ class NameTag(TextWriter):
             #                  1,
             #                  ref=(l + da, t)
             #                  )
+
+
+class InfoWriter(TextWriter):
+
+    def __init__(self,
+                 text_fun=lambda: "",
+                 *args,
+                 **kwargs
+                 ):
+        super().__init__(*args, **kwargs)
+        self.text_fun = text_fun
+
+    def write(self, frame, *args, **kwargs):
+        self.line = self.text_fun(*args, **kwargs)
+        super().write(frame)
+
+
+class TimerWriter(InfoWriter):
+
+    timer_hash = {"first": timers.TimeSinceFirst,
+                  "last" : timers.TimeSinceLast}
+
+    def __init__(self,
+                 title="timer",
+                 timer_type="last",
+                 per_second=False,
+                 roundw=1,
+                 moving_average=10,
+                 *args,
+                 **kwargs
+                 ):
+
+        super().__init__(*args, **kwargs)
+
+        self._timer = self.timer_hash[timer_type]()
+        self.per_second=per_second
+        if per_second is True:
+            self._timer()
+
+        self.title = title
+        self.roundw = roundw
+        if moving_average is not None:
+            self.moving_average = utils.MovingAverage(moving_average)
+        else:
+            self.moving_average = None
+
+    @property
+    def timer(self):
+        t = self._timer()
+        if self.per_second is True:
+            t = 1/t
+
+        if self.moving_average is not None:
+            t = self.moving_average.update(t)
+
+        if self.roundw == 0:
+            t = int(t)
+        else:
+            t = round(t, self.roundw)
+
+        return t
+
+
+    def write(self, frame, *args, **kwargs):
+        self.line = f'{self.title} : {self.timer}'
+        super(InfoWriter, self).write(frame)
 
 
 

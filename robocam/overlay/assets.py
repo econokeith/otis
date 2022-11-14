@@ -89,7 +89,6 @@ class AssetBase(abc.ABC):
     def width(self):
         return self.coords[1] - self.coords[3]
 
-
     def _set_center_from_coords(self):
         t, r, b, l = self.coords
         return (r + l) // 2, (t + b) // 2
@@ -103,23 +102,24 @@ class BoundingBox(base.Writer):
     def __init__(self,
                  color='r',  # must be either string in color hash or bgr value
                  scale=1,  # font scale,
-                 thickness=2,  # line type
+                 thickness=2, # line type
+                 show_me = True
                  ):
 
         super().__init__()
-        self.coords = np.zeros(4, dtype='uint8') ### stored as top, right, bottom, left
+        self.coords = np.zeros(4, dtype=int) ### stored as top, right, bottom, left
         self.color = color
         self.thickness = thickness
-        self.name_writer = textwriters.TextWriter(scale=.75, ltype=1)
+        self.name_writer = textwriters.TextWriter(scale=1, ltype=1)
         self.name = None
         self.show_name = True
         self.name_line = True
+        self.show_me = show_me
 
     @property
     def center(self):
         t, r, b, l = self.coords
         return int((r+l)/2), int((t+b)/2)
-
 
 
     @property
@@ -143,10 +143,13 @@ class BoundingBox(base.Writer):
         return np.sqrt((c[0]-point[0])**2 + (c[1]-point[1])**2)
 
     def write(self, frame, name=None):
+        if self.show_me is False:
+            return
+
         t, r, b, l = self.coords
         cv2.rectangle(frame, (l, t), (r, b), self.color, self.thickness)
-
-        if self.show_name is True and (name is not None or self.name is not None):
+        _name = name if name is not None else self.name
+        if self.show_name is True and (_name is not None):
             self.name_tag(frame, name)
 
     def name_tag(self, frame, name=None):
@@ -163,16 +166,22 @@ class BoundingCircle(BoundingBox):
     def __init__(self,
                  color='r',  # must be either string in color hash or bgr value
                  thickness=2,
-                 bbox_coords = True # what does this mean?
+                 bbox_coords = True,
+                 which_radius = 'diag', # options are 'diag', 'inside_min', inside_max
+                 *args, **kwargs# what does this mean?
                  ):
 
-        super().__init__(color=color, thickness=thickness)
+        super().__init__(color=color, thickness=thickness, **kwargs)
         if bbox_coords is True:
             self.coords = np.zeros(4, dtype='uint8')
         else:
             self.coords = np.zeros(3, dtype='uint16')
 
         self.bbox_coords = bbox_coords
+
+        self.which_radius = which_radius
+
+        self.name_writer.jtype = 'c'
 
     @property
     def center(self):
@@ -183,18 +192,35 @@ class BoundingCircle(BoundingBox):
 
     @property
     def radius(self):
-        if self.bbox_coords is True:
+        if self.bbox_coords is True and self.which_radius == 'diag':
             return self.diagonal/2
+        elif self.bbox_coords is True and self.which_radius == 'inside_max':
+            return max(self.height, self.width)/2
+        elif self.bbox_coords is True and self.which_radius == 'inside_min':
+            return max(self.height, self.width)/2
         else:
             return self.coords[2]
 
 
     def write(self, frame, name=None):
+        if self.show_me is False:
+            return
+
+        _name = self.name if name is None else name
         shapes.draw_circle(frame, self.center, self.radius, self.color, self.thickness)
+        if self.show_name is True and (name is not None or self.name is not None):
+            self.name_tag(frame, name)
+
+    def name_tag(self, frame, name=None):
+        [x, y]  = list(self.center)
+
+        _name = name if name is not None else self.name
+        self.name_writer.write(frame, position=(0, self.radius+20), text=_name, ref=(x,y))
+        # if self.name_line is True:
+        #     shapes.draw_line(frame, (0, 0), (0, 15), self.color, 1, ref=(position[0], position[1]-5))
 
 
 class CrossHair(BoundingCircle):
-
 
     def __init__(self, *args, radius=None, **kwargs):
         super().__init__(*args, **kwargs)

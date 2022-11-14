@@ -281,3 +281,12 @@ class TimedCycle:
         elif self._i < self.mini:# and self.repeat is False:
             self._i = self.mini
             self.direction *= -1
+
+if __name__=="__main__":
+    sleeper = SmartSleeper()
+    tick = time.time()
+    for i in range(400):
+        sleeper()
+        tock = time.time()
+        print(int((tock-tick)*1000))
+        tick = tock

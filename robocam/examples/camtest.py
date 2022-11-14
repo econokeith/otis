@@ -2,6 +2,7 @@
 test the camera
 """
 import argparse
+import time
 
 import robocam.camera as camera
 
@@ -15,6 +16,7 @@ args = parser.parse_args()
 
 def main(port=0, dim=(1280, 720), max_fps=60):
     capture = camera.CameraPlayer(src=port, dim=dim, max_fps=max_fps)
+    time.sleep(3)
     capture.test(wait=True, warn=True)
 
 if __name__=='__main__':

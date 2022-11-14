@@ -154,7 +154,7 @@ def write_bordered_text(frame,
     t = b - h - 2 * border
 
     cv2.rectangle(frame, (l, t), (r, b), _bcolor, btype)
-    write_text(frame, text, pos=_pos, font=_font, color=_color, scale=scale, ltype=ltype, ref=None, jtype='l')
+    write_text(frame, text, pos=_pos, font=_font, color=_color, scale=scale, ltype=ltype, ref=ref, jtype='l')
 
 
 class Line(base.Writer):
