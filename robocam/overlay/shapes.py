@@ -187,5 +187,39 @@ class Line(base.Writer):
 
             cv2.line(frame, point0, point1, _color, _thickness)
 
+def transparent_background(frame, top_right, bottom_left, transparency=.25, ref=None):
+
+    h, w, _ = frame.shape
+
+    r, t = utis.abs_point(top_right, ref, dim=frame.shape)
+    l, b = utis.abs_point(bottom_left, ref, dim=frame.shape)
+
+
+    portion = frame[t:b, l:r]
+    print(portion.shape)
+    grey = cv2.cvtColor(portion, cv2.COLOR_BGR2GRAY) * transparency
+    portion[:, :, 0] = portion[:, :, 1] = portion[:, :, 2] = grey.astype('uint8')
+    ctools.frame_portion_to_grey(portion)
+
+
+class TransparentBackground(base.Writer):
+
+    def __init__(self, top_right, bottom_left, transparency=.25, ref=None):
+        self.top_right = top_right
+        self.bottom_left = bottom_left
+        self.transparency = transparency
+        self.ref = ref
+
+    def write(self, frame):
+        transparent_background(frame,
+                               top_right=self.top_right,
+                               bottom_left=self.bottom_left,
+                               transparency=self.transparency,
+                               ref=self.ref
+                               )
+
+
+
+
 
 

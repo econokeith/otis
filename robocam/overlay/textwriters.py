@@ -150,7 +150,8 @@ class InfoWriter(TextWriter):
 class TimerWriter(InfoWriter):
 
     timer_hash = {"first": timers.TimeSinceFirst,
-                  "last" : timers.TimeSinceLast}
+                  "last" : timers.TimeSinceLast,
+                  "countdown" : timers.CountDownTimer}
 
     def __init__(self,
                  title="timer",
@@ -158,28 +159,52 @@ class TimerWriter(InfoWriter):
                  per_second=False,
                  roundw=1,
                  moving_average=10,
+                 count_from = 10,
                  *args,
                  **kwargs
                  ):
 
         super().__init__(*args, **kwargs)
 
-        self._timer = self.timer_hash[timer_type]()
         self.per_second=per_second
-        if per_second is True:
-            self._timer()
-
         self.title = title
         self.roundw = roundw
-        if moving_average is not None:
-            self.moving_average = utils.MovingAverage(moving_average)
-        else:
+        self.moving_average = moving_average
+        self.count_from = count_from
+        self.timer_type = timer_type
+        self._timer_complete = False
+
+        if timer_type == "last":
+            self._timer = timers.TimeSinceLast()
+
+            if per_second is True:
+                self._timer()
+
+            if moving_average is not None:
+                self.moving_average = utils.MovingAverage(moving_average)
+
+        elif timer_type == 'countdown':
+            self._timer = timers.CountDownTimer(self.count_from)
+            self.per_second = False
             self.moving_average = None
 
+
+        elif timer_type == "first":
+            self._timer = timers.TimeSinceFirst()
+            self.per_second = False
+            self.moving_average = None
+
+        else:
+            raise ValueError("invalid timer_type selection")
+
     @property
+    def timer_finished(self):
+        if self.timer_type == 'countdown':
+            return self._timer.finished
+
     def timer(self):
         t = self._timer()
-        if self.per_second is True:
+        if self.per_second is True and (t != 0 or t != 0.0):
             t = 1/t
 
         if self.moving_average is not None:
@@ -194,7 +219,7 @@ class TimerWriter(InfoWriter):
 
 
     def write(self, frame, *args, **kwargs):
-        self.line = f'{self.title} : {self.timer}'
+        self.line = f'{self.title} : {self.timer()}'
         super(InfoWriter, self).write(frame)
 
 
@@ -529,8 +554,6 @@ class ScriptTypeWriter(MultiTypeWriter):
             super().type_line(frame)
 
 
-
-
 class OTIS(ScriptTypeWriter):
     def __init__(self, llength, *args, **kwargs):
         super().__init__(llength, (450, 900), scale=2, end_pause=3, color='g')
@@ -590,13 +613,3 @@ if __name__=='__main__':
 
         if utils.cv2waitkey() is True:
             break
-
-
-
-
-
-
-
-
-
-

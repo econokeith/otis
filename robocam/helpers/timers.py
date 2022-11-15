@@ -4,6 +4,8 @@ import abc
 
 class Timer(abc.ABC):
 
+
+
     @abc.abstractmethod
     def __init__(self, *args, **kwargs):
         """
@@ -35,8 +37,8 @@ class SmartSleeper(Timer):
         if self.tick is None:
             self.tick = time.time()
         else:
-            if time.time() - self.tick < _wait:
-                time.sleep(_wait - time.time() + self.tick)
+            if time.time() - self.tick < _wait: #todo double check the sleep math on SmartSleeper
+                time.sleep(max(_wait - time.time() + self.tick, 0))
             self.tick = time.time()
 
 
@@ -48,6 +50,7 @@ class TimeSinceLast(Timer):
         """
         self._tick = time.time()
         self.on = False
+        self.finished = False
 
     def __call__(self):
         if self.on is False:
@@ -70,6 +73,7 @@ class TimeSinceFirst(Timer):
         self._tick = None
         self.chop = chop
         self.rnd = rnd
+        self.finished = False
 
     def reset(self):
         self._tick = None
@@ -90,6 +94,30 @@ class TimeSinceFirst(Timer):
             return int(t_elapsed)
         else:
             return round(t_elapsed, self.rnd)
+
+class CountDownTimer(TimeSinceFirst):
+
+    def __init__(self, time_to_stop):
+        super().__init__()
+        self.time_to_stop = time_to_stop
+        self.finished = False
+
+    def __call__(self):
+        if self.finished is True:
+            return 0
+
+        t = self.time_to_stop - super().__call__()
+
+        if t > 0:
+            return t
+
+        else:
+            self.finished = True
+            return 0
+
+
+
+
 
 
 class FunctionTimer(Timer):

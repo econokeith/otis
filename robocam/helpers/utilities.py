@@ -42,14 +42,17 @@ _FRAME_HASH['t'] = lambda s: (int(s[1] / 2), 0)
 _FRAME_HASH['b'] = lambda s: (int(s[1] / 2), s[0])
 
 # todo: clean up the dim variable to make it consistent between np.shape and regular dims
-def abs_point(relative_point, reference=None, dim=None):
+def abs_point(relative_point, reference=None, dim=None, array_form=False):
 
     """
     returns the absolute pixel location when given a cartesian relative point to there
     reference that is considered the origin
-    :param reference:origin
-    :param relative_point: relative location
-    :return: tuple
+    :param reference:origin (x, y)
+    :param relative_point: relative location actual location
+    :return:  (x, y)
+
+
+
     """
     if reference is None:
         return int(relative_point[0]), int(relative_point[1])

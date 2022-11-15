@@ -216,7 +216,14 @@ class ThreadedCameraPlayer(CameraPlayer):
             # if self.new_frame is True and self.cache is True:
             #     self._c_frame = np.array(self._frame)
             #     self.new_frame = False
-            self._c_frame = np.array(self._frame)
+
+
+            self._c_frame = np.array(self._frame[:, ::-1, :], copy=True)
+            if self.flip is True:
+                self._c_frame = self._c_frame[:, ::-1, :]
+
+
+
 
             return self.grabbed, self.frame
 

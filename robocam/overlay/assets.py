@@ -197,7 +197,7 @@ class BoundingCircle(BoundingBox):
         elif self.bbox_coords is True and self.which_radius == 'inside_max':
             return max(self.height, self.width)/2
         elif self.bbox_coords is True and self.which_radius == 'inside_min':
-            return max(self.height, self.width)/2
+            return min(self.height, self.width)/2
         else:
             return self.coords[2]
 
