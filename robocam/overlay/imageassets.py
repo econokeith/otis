@@ -15,7 +15,9 @@ class ImageAsset(base.Writer):
     def __init__(self,
                  src,
                  position = (100,100),
-                 bit=0, #let's you flip the bit-mask 0, 1, or None
+                 bit=0,
+                 scale = 1,
+                 #let's you flip the bit-mask 0, 1, or None
                  size = None, #if none stays the same, otherwise change
                  loc = (100, 100) #location of center
                  ):
@@ -29,12 +31,20 @@ class ImageAsset(base.Writer):
         files = os.listdir(src)
         files.sort(key=len)
         self.img = cv2.imread(os.path.join(src, files[0]))
+        if scale != 1:
+            self.img = cv2.resize(self.img, (0, 0), fx=scale, fy=scale)
+
         self.bit = bit
         self.coords = None
 
-
         if bit in [0, 1] and len(files)>1:
             self.mask = cv2.imread(os.path.join(src, files[1]))
+
+            if scale != 1:
+                # triple_mask = np.stack([self.mask]*3, axix=-1)
+
+                self.mask = cv2.resize(self.mask, (0, 0), fx=scale, fy=scale)
+
             self.mask[self.mask <128] = 0
             self.mask[self.mask >=128] = 255
             self.locs = np.asarray(np.nonzero(self.mask == self.bit))

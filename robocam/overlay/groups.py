@@ -2,10 +2,17 @@ import numpy as np
 
 class AssetGroup:
 
-    def __init__(self, position=(50, 50)):
+    def __init__(self,
+                 position=(50, 50),
+                 color='r',
+                 scale=1,
+                 ):
+        super().__init__()
 
         self.assets = []
         self._position = np.array(position) ## Top Left
+        self.color = color
+        self.scale = scale
 
     def __index__(self, i):
         return self.assets[i]

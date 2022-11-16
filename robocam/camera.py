@@ -21,7 +21,8 @@ class CameraPlayer:
                  record = False,
                  record_to = 'cam.avi',
                  flip = True,
-                 scale = 1,
+                 output_scale = 1,
+                 record_scale = .5,
                  **kwargs):
 
         #do necessary Linux stuff 
@@ -61,11 +62,12 @@ class CameraPlayer:
         self.exit_warning.line = 'to exit hit ctrl-c or q'
         self.recorder = None
         self._record = False
-        self.record = record
+
         self.record_to = record_to
-        self.record_scale = 1
+        self.record_scale = record_scale
+        self.record = record
         self.flip = flip
-        self.scale = scale
+        self.output_scale = output_scale
 
 
     @property
@@ -123,7 +125,7 @@ class CameraPlayer:
 
     def show(self, frame=None, scale=None, width=None, wait=False, fps=False, warn=False):
         _frame = self.frame if frame is None else frame
-        _scale = self.scale if scale is None else scale
+        _scale = self.output_scale if scale is None else scale
         if self.max_fps is not None:
             self.sleeper()
         w = self.dim[0]*_scale if width is None else width
@@ -135,13 +137,15 @@ class CameraPlayer:
 
 
         if _scale != 1:
-            _frame = cv2.resize(_frame, (0, 0), fx=_scale, fy=_scale)
+            out_frame = cv2.resize(_frame, (0, 0), fx=_scale, fy=_scale)
+        else:
+            out_frame = _frame
 
 
-        cv2.imshow(self.name, _frame)
+        cv2.imshow(self.name, out_frame)
 
         if self.record is True:
-            self.recorder.write(self.frame.astype('uint8'))
+            self.recorder.write(_frame.astype('uint8'))
 
     def test(self, wait=False, warn=False):
         """

@@ -10,22 +10,25 @@ import numpy as np
 from robocam.helpers.cvtools import box_stabilizer
 
 from robocam import camera
-from robocam.helpers import multitools as mtools, utilities as utils, timers
+from robocam.helpers import multitools as mtools, utilities as utils, timers, cvtools
 from robocam.overlay import screenevents as events, textwriters as writers, assets, groups, motion, shapes
 
 MAX_FPS = 30
 DIMENSIONS = DX, DY = (1920, 1080)
-RECORD = False
+RECORD = True
 RECORD_SCALE = .5
-MAX_BALLS = 4
-BALL_FREQUENCY = [3, 3]
+MAX_BALLS = 6
+BALL_FREQUENCY = [0, 5]
 # RADIUS_BOUNDS = [5, 30]
 BALL_V_ANGLE_BOUNDS = [10, 80]
-BALL_V_MAGNI_BOUNDS = [300, 1000]
+BALL_V_MAGNI_BOUNDS = [400, 1000]
 STARTING_LOCATION = [200, DY - 200]
+COLLISION_OVERLAP = .1
 # NEG_MASS = False
 COLLISIONS = True
 BORDER = True
+PIE_SCALE = .8
+GAME_TIME = 20
 # pie_path= '/home/keith/Projects/robocam/robocam/overlay/photo_assets/pie_asset'
 pie_path = 'photo_asset_files/pie_asset'
 face_path = 'faces'
@@ -44,21 +47,35 @@ def target(shared, pargs):
                                           max_fps=pargs.max_fps,
                                           dim=pargs.dim,
                                           flip=False,
-                                          record=RECORD
+                                          record=RECORD,
+                                          record_to='pie.avi',
+                                          output_scale=1.8,
                                           ).start()
-
+    time.sleep(3)
     manager = SceneManager(shared, pargs, capture=capture)
     bouncy_scene = BouncyScene(manager, shared, pargs)
 
     info_group = InfoGroup((10, 40), shared, pargs)
-    #score_keeper = ScoreKeeper((10, 200), shared, args)
+
+    count_down = events.CountDown(pargs.dim, 3)
 
     while True:
+        count_down.loop(show=False)
+        capture.show(count_down.frame)
 
-        capture.read()
+        if count_down.finished is True:
+            break
 
-        shared.frame[:] = frame = capture.frame  # latest frame to shared frame
-        bouncy_scene.loop(frame)
+        if utils.cv2waitkey(1) is True:
+            break
+
+    stopped = False
+    while stopped is False:
+
+        check, frame = capture.read()
+
+        shared.frame[:] = frame  # latest frame to shared frame
+        stopped = bouncy_scene.loop(frame)
         info_group.write(frame)
 
         capture.show(frame)
@@ -80,15 +97,14 @@ class SceneManager:
 
         self.shared = shared
         self.args = args
-        self.name_tracker = NameTracker()
+        self.name_tracker = cvtools.NameTracker(args.path_to_faces)
 
         if capture is None:
             self.capture = camera.ThreadedCameraPlayer(0,
                                                        max_fps=args.max_fps,
                                                        dim=args.dim,
-                                                       scale=args.scale,
+                                                       scale=args.output_scale,
                                                        flip=True
-
                                                        ).start()
         else:
             self.capture = capture
@@ -104,23 +120,28 @@ class BouncyScene:
         self.args = args
         self.capture = self.manager.capture
 
-        self.bouncy_pies = motion.BouncingAssetManager(asset_fun=pie_path,
+        self.stop_timer = timers.SinceFirstBool(3)
+
+        self.bouncy_pies = motion.BouncingAssetManager(asset_fun=args.path_to_pies,
                                                        max_fps=args.max_fps,
                                                        dim=args.dim,
                                                        max_balls=MAX_BALLS,
-                                                       collisions=COLLISIONS
+                                                       collisions=COLLISIONS,
+                                                       scale = PIE_SCALE,
                                                        )
 
-        time.sleep(3)
+        self.collision_detector = motion.CollisionDetector(COLLISION_OVERLAP)
 
-        self.collision_detector = motion.CollisionDetector(.3)
         self.screen_flash = events.ColorFlash(max_ups=args.max_fps,
                                               cycle_t=.5,
-                                              direction=-1)
+                                              direction=-1
+                                              )
 
-        self.score_keeper = ScoreKeeper((10, 200), shared, args)
-
-
+        self.score_keeper = ScoreKeeper((10, 200),
+                                        manager,
+                                        color='g',
+                                        game_time=GAME_TIME
+                                        )
 
         BBoxes = []
         self.bbox_coords = np.array(shared.bbox_coords)
@@ -148,14 +169,14 @@ class BouncyScene:
             names = np.array(shared.names)
 
             for i in range(shared.n_faces.value):
-                self.bbox_coords[i] = box_stabilizer(old_coords[i], bbox_coords[i], .1)
+                self.bbox_coords[i] = box_stabilizer(old_coords[i], bbox_coords[i], .01)
                 BBoxes[i].coords = self.bbox_coords[i]
                 BBoxes[i].name = self.manager.name_tracker[names[i]]
 
         for i in range(shared.n_faces.value):
             BBoxes[i].write(frame)
 
-        if self.flash_event is True:
+        if self.flash_event is True: #todo, the first call of ScreenFlash isn't doing anything
             self.screen_flash.loop(frame)
             if self.screen_flash.complete:
                 self.screen_flash.reset()
@@ -167,12 +188,20 @@ class BouncyScene:
 
             for i, pie in enumerate(self.bouncy_pies.movers):
                 for i in range(shared.n_faces.value):
-                    if self.collision_detector.check(BBoxes[i], pie) is True and self.flash_event is False:
-                        self.flash_event = True
+                    if self.collision_detector.check(BBoxes[i], pie) is True:
+
                         self.score_keeper.score += 1
-                        break
+                        pie.finished = True
+                        pie.remove_fin()
+                        if self.flash_event is False:
+                            self.flash_event = True
 
         self.score_keeper.write(frame)
+
+        if self.score_keeper.timer_finished is True and self.stop_timer() is True:
+            return True
+
+        return False
 
 
 class InfoGroup(groups.AssetGroup):
@@ -208,13 +237,20 @@ class InfoGroup(groups.AssetGroup):
 
 class ScoreKeeper(groups.AssetGroup):
 
-    def __init__(self, position, shared, args):
-        super().__init__(position)
-        self.scale = 1.25
-        self.color = 'w'
-        self.shared = shared
-        self.args = args
+    def __init__(self,
+                 position,
+                 manager,
+                 game_time=20,
+                 *args,
+                 **kwargs
+                 ):
+
+        super().__init__(position, *args, **kwargs)
+        self.manager = manager
+        self.shared = manager.shared
+        self.args = manager.args
         self._score = 0
+        self.game_time = game_time
 
 
         self.time_writer = writers.TimerWriter(title="Time",
@@ -225,7 +261,7 @@ class ScoreKeeper(groups.AssetGroup):
                                               moving_average=MA,
                                               scale=self.scale,
                                               color=self.color,
-                                              count_from=20,
+                                              count_from=game_time,
                                               )
 
         score_writer = writers.InfoWriter(text_fun= lambda: f'Keith : {self.score}',
@@ -254,80 +290,80 @@ class ScoreKeeper(groups.AssetGroup):
             self._score = new_score
 
 
-class NameTracker:
-
-    def __init__(self):
-
-        self._last_seen_timers = []
-        self.known_names = []
-        self.n_known = 0
-        self.loads_names()
-        self.indices_of_observed = []
-        self.unknown_count = 0
-        self.name_for_unknowns = "unknown"
-        self.primary = 0
-        self.hello_queue = Queue()
-
-        # help keep from having random 1 frame bad calls triggering hellos
-        # someone must show up in 5 frames in 1 second to get a hello
-        _bad_hello_function = lambda: [timers.TimeSinceFirst().start(), 0]
-        self._bad_hello_dict = defaultdict(_bad_hello_function)
-
-    def loads_names(self):
-        # this  might have to change
-        abs_dir = os.path.dirname(os.path.abspath(__file__))
-        face_folder = os.path.join(abs_dir, 'photo_assets/faces')
-        face_files = os.listdir(face_folder)
-
-        for file in face_files:
-            name = ""
-            for char in file:
-                if char.isdigit() or char in ('.', '-'):
-                    break
-                else:
-                    name += char
-
-            # if name isn't new, add it to the list.
-            if name not in self.known_names:
-                self.known_names.append(name)
-                self._last_seen_timers.append(timers.TimeSinceLast())
-            # append name
-            # set timers for each know
-        self.n_known = len(self.known_names)
-
-    def __getitem__(self, i):
-
-        if i < self.n_known:
-            # if it's a new known person
-            if i not in self.indices_of_observed:
-                timer, count = self._bad_hello_dict[i]
-                print(timer(), count)
-
-                ## todo: this should not be hardcoded
-                if timer() <= 1.5 and count > 10:
-                    self.indices_of_observed.append(i)
-                    hello = f'Hello {self.known_names[i]}, welcome!'
-                    self._last_seen_timers[i]()  # replace this soon
-                    self.hello_queue.put((i, hello))
-                    # reset timer so it can be used for other things
-                    self._bad_hello_dict[i][0].reset()
-                    self._bad_hello_dict[i][1] = 1
-
-                elif timer() <= 1.5:
-                    # count they were seen
-                    self._bad_hello_dict[i][1] += 1
-
-                else:
-                    self._bad_hello_dict[i][0].reset()
-                    self._bad_hello_dict[i][1] = 1
-
-            return self.known_names[i]
-
-        else:
-            name = f'Person {i - self.n_known + 1}'
-            if i not in self.indices_of_observed:
-                # self.indices_of_observed.append(i)
-                # self.unknown_count += 1
-                hello = f'Hello {name}, do we know each other!'
-
-            return ""
+# class NameTracker:
+#
+#     def __init__(self):
+#
+#         self._last_seen_timers = []
+#         self.known_names = []
+#         self.n_known = 0
+#         self.loads_names()
+#         self.indices_of_observed = []
+#         self.unknown_count = 0
+#         self.name_for_unknowns = "unknown"
+#         self.primary = 0
+#         self.hello_queue = Queue()
+#
+#         # help keep from having random 1 frame bad calls triggering hellos
+#         # someone must show up in 5 frames in 1 second to get a hello
+#         _bad_hello_function = lambda: [timers.TimeSinceFirst().start(), 0]
+#         self._bad_hello_dict = defaultdict(_bad_hello_function)
+#
+#     def loads_names(self):
+#         # this  might have to change
+#         abs_dir = os.path.dirname(os.path.abspath(__file__))
+#         face_folder = os.path.join(abs_dir, 'photo_assets/faces')
+#         face_files = os.listdir(face_folder)
+#
+#         for file in face_files:
+#             name = ""
+#             for char in file:
+#                 if char.isdigit() or char in ('.', '-'):
+#                     break
+#                 else:
+#                     name += char
+#
+#             # if name isn't new, add it to the list.
+#             if name not in self.known_names:
+#                 self.known_names.append(name)
+#                 self._last_seen_timers.append(timers.TimeSinceLast())
+#             # append name
+#             # set timers for each know
+#         self.n_known = len(self.known_names)
+#
+#     def __getitem__(self, i):
+#
+#         if i < self.n_known:
+#             # if it's a new known person
+#             if i not in self.indices_of_observed:
+#                 timer, count = self._bad_hello_dict[i]
+#                 print(timer(), count)
+#
+#                 ## todo: this should not be hardcoded
+#                 if timer() <= 1.5 and count > 10:
+#                     self.indices_of_observed.append(i)
+#                     hello = f'Hello {self.known_names[i]}, welcome!'
+#                     self._last_seen_timers[i]()  # replace this soon
+#                     self.hello_queue.put((i, hello))
+#                     # reset timer so it can be used for other things
+#                     self._bad_hello_dict[i][0].reset()
+#                     self._bad_hello_dict[i][1] = 1
+#
+#                 elif timer() <= 1.5:
+#                     # count they were seen
+#                     self._bad_hello_dict[i][1] += 1
+#
+#                 else:
+#                     self._bad_hello_dict[i][0].reset()
+#                     self._bad_hello_dict[i][1] = 1
+#
+#             return self.known_names[i]
+#
+#         else:
+#             name = f'Person {i - self.n_known + 1}'
+#             if i not in self.indices_of_observed:
+#                 # self.indices_of_observed.append(i)
+#                 # self.unknown_count += 1
+#                 hello = f'Hello {name}, do we know each other!'
+#
+#             return ""

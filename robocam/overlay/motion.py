@@ -19,7 +19,7 @@ import robocam.camera as camera
 # add vector form types
 class AssetMover:
 
-    #track movers for collisions
+    # track movers for collisions
     movers = []
     _n_movers= 0
 
@@ -65,14 +65,14 @@ class AssetMover:
 
     def __init__(self,
                  asset,
-                 mover_radius,
+                 mover_radius, #will be scaled with scale
                  position0,  # must be in absolute coords
                  velocity0,
                  x_range,
                  y_range,
                  border_collision=True,
                  ups=30,
-                 mass=None # updates per second
+                 mass=None, # updates per second
                  ):
         """
         wrapper class for an asset so it can move around on the screen
@@ -88,7 +88,7 @@ class AssetMover:
         self.movers.append(self)
         self._n_movers +=1
         self.id = self._n_movers
-
+        self.scale = 1
         self.collision_hash = defaultdict(lambda: False)
 
         self.asset = asset
@@ -260,11 +260,13 @@ class BouncingAssetManager:
                  starting_location = (200, -200),## TODO this relative thing will need to be fixed
                  collisions = False,
                  max_fps = 30,
-                 border_collision = True
+                 border_collision = True,
+                 radius = 85,
+                 scale = 1
                  ):
 
         assert asset_fun is not None
-
+        self.radius = radius * scale
         self.dim = list(dim)
         self.max_balls = max_balls
         self.ball_frequency = list(ball_frequency)
@@ -278,10 +280,11 @@ class BouncingAssetManager:
 
         if isinstance(asset_fun, types.FunctionType): # check to see if asset fun is a function
             self.asset_fun = asset_fun
+
         elif isinstance(asset_fun, str):
             abs_dir = os.path.dirname((os.path.abspath(__file__)))
             asset_path = os.path.join(abs_dir, asset_fun)
-            self.asset_fun = lambda: imga.ImageAsset(asset_path) # might want to do it slightly different adn not open
+            self.asset_fun = lambda: imga.ImageAsset(asset_path, scale=scale) # might want to do it slightly different adn not open
                                                                  # it from file each time.
         else:
             raise ValueError("asset_fun is not the proper type. it must be either function or string path")
@@ -305,7 +308,7 @@ class BouncingAssetManager:
         v = np.array([np.cos(a) * m, -np.sin(a) * m])
         # put circle in a mover
         AssetMover(self.asset_fun(),
-                 85,
+                 self.radius,
                  self.staring_location,
                  v,
                  (0, self.dim[0] - 1), (0, self.dim[1] - 1),
@@ -338,7 +341,7 @@ class CollisionDetector:
     def __init__(self, overlap=None):
         self.overlap = overlap
 
-    def check(self, a0, a1, overlap=0):
+    def check(self, a0, a1, overlap=None):
         _overlap = overlap if overlap is not None else self.overlap
 
         #if a0.shape == "circle" and a1.shape == 'circle':

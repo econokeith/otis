@@ -27,7 +27,7 @@ class ScreenEvent(abc.ABC):
 
 class CountDown(ScreenEvent):
 
-    def __init__(self, dim, start=10, name='tracker'):
+    def __init__(self, dim, start=10, name='tracker', fps=30):
         self.countdown_writer = writers.TextWriter(ref='c', 
                                                    scale=20, 
                                                    ltype=-1,
@@ -44,7 +44,7 @@ class CountDown(ScreenEvent):
                                                    cycle_t=1, repeat=True)
 
         self.frame =  np.zeros((*dim[::-1], 3), dtype='uint8')
-        self.no_camera_sleeper = timers.SmartSleeper(1/30)
+        self.no_camera_sleeper = timers.SmartSleeper(1/fps)
         self.name = name
         self.i = self.start
         self.finished = False
@@ -136,11 +136,11 @@ def main():
     import time
     from robocam.helpers import utilities as utils
 
-    capture = camera.CameraPlayer(dim=(1920, 1080))
+    # capture = camera.CameraPlayer(dim=(1920, 1080))
     time.sleep(2)
     # time.sleep(3)
 
-    color_flash = ColorFlash(2)
+    color_flash = CountDown((1920, 1080), 3)
     waiter = timers.SinceFirstBool(2)
 
     # while waiter() is False:
@@ -149,18 +149,19 @@ def main():
 
 
     while True:
-        capture.read()
+        # capture.read()
         # if new_flash_timer is True:
         #     color_flash = ColorFlash(3)
-        color_flash.loop(capture.frame)
-        capture.show()
+        color_flash.loop()
+        if color_flash.finished is True:
+            break
         # if color_flash.finished is True:
         #     break
 
         if utils.cv2waitkey(1) is True:
             break
 
-    capture.stop()
+    # capture.stop()
 
 
 if __name__=='__main__':

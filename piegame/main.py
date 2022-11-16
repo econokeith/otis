@@ -16,9 +16,9 @@ from piegame import camera_process
 
 def make_parser():
     parser = argparse.ArgumentParser(description='Try to avoid the Camera Bot Shooting You')
-    parser.add_argument('-d', '--dim',type=tuple, default=(1920, 1080),
+    parser.add_argument('-d', '--dim',type=tuple, default=(1280, 720),
                         help='set video dimensions. default is (1920, 1080)')
-    parser.add_argument('-m', '--max_fps', type=int, default=60,
+    parser.add_argument('-m', '--max_fps', type=int, default=30,
                         help='set max fps Default is 60')
     parser.add_argument('-p', '--port', type=int, default=0,
                         help='camera port default is 0')
@@ -40,9 +40,12 @@ def make_parser():
 parser = make_parser()
 pargs = parser.parse_args()
 pargs.video_center = np.array(pargs.dim) // 2
+pargs.path_to_faces = './faces'
+pargs.path_to_pies = 'photo_assets/pie_asset'
 
-if args.servo is True:
+if pargs.servo is True:
     from piegame import servo_process
+
 def main():
     # set up shared data
     shared_data_object = mtools.SharedDataObject()
