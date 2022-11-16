@@ -38,8 +38,8 @@ def make_parser():
 
 
 parser = make_parser()
-args = parser.parse_args()
-args.video_center = np.array(args.dim)//2
+pargs = parser.parse_args()
+pargs.video_center = np.array(pargs.dim) // 2
 
 
 def main():
@@ -52,21 +52,21 @@ def main():
     shared_data_object.add_value('new_overlay', ctypes.c_bool, True)
     shared_data_object.add_value('scene', 'i', 0)
     # add shared arrays
-    shared_data_object.add_array('frame', ctypes.c_uint8, (args.dim[1], args.dim[0], 3)) #dims are backwards cause numpy
-    shared_data_object.add_array('bbox_coords', ctypes.c_int64, (args.faces, 4))         #is reversed
+    shared_data_object.add_array('frame', ctypes.c_uint8, (pargs.dim[1], pargs.dim[0], 3)) #dims are backwards cause numpy
+    shared_data_object.add_array('bbox_coords', ctypes.c_int64, (pargs.faces, 4))         #is reversed
     shared_data_object.add_array('error', ctypes.c_double, 2)
-    shared_data_object.add_array('names', ctypes.c_uint8, args.faces)
+    shared_data_object.add_array('names', ctypes.c_uint8, pargs.faces)
     # define Processes with shared data
     process_modules = [camera_process, cv_model_process]
     #if servos are true, add it to the process list
-    if args.servo is True:
+    if pargs.servo is True:
         process_modules.append(servo_process)
 
     processes = []
     # each process module should have a primary function called 'target'
     for module in process_modules:
         process = multi.Process(target=module.target,
-                                args=(shared_data_object, args))
+                                args=(shared_data_object, pargs))
         processes.append(process)
     # start
     for process in processes:

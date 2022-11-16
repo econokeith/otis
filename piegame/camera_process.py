@@ -36,21 +36,21 @@ NUMBER_OF_PLAYERS = 1
 PLAYER_NAMES = ["Keith"]
 
 
-def target(shared, args):
+def target(shared, pargs):
     signal.signal(signal.SIGTERM, mtools.close_gracefully)
     signal.signal(signal.SIGINT, mtools.close_gracefully)
 
     capture = camera.ThreadedCameraPlayer(0,
-                                          max_fps=args.max_fps,
-                                          dim=args.dim,
+                                          max_fps=pargs.max_fps,
+                                          dim=pargs.dim,
                                           flip=False,
                                           record=RECORD
                                           ).start()
 
-    manager = SceneManager(shared, args, capture=capture)
-    bouncy_scene = BouncyScene(manager, shared, args)
+    manager = SceneManager(shared, pargs, capture=capture)
+    bouncy_scene = BouncyScene(manager, shared, pargs)
 
-    info_group = InfoGroup((10, 40), shared, args)
+    info_group = InfoGroup((10, 40), shared, pargs)
     #score_keeper = ScoreKeeper((10, 200), shared, args)
 
     while True:
@@ -237,7 +237,7 @@ class ScoreKeeper(groups.AssetGroup):
         self.add([self.time_writer, score_writer])
 
     def write(self, frame):
-        shapes.transparent_background(frame, (200, 0), (0, -250), ref=self.position, transparency=.5)
+        shapes.transparent_background(frame, (200, 0), (0, -250), ref=self.position, transparency=.9)
         super().write(frame)
 
     @property
