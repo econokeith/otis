@@ -9,7 +9,7 @@ import argparse
 import numpy as np
 
 import robocam.helpers.multitools as mtools
-from piegame import servo_process
+# from piegame import servo_process
 from piegame import cv_model_process
 from piegame import camera_process
 
@@ -41,7 +41,8 @@ parser = make_parser()
 pargs = parser.parse_args()
 pargs.video_center = np.array(pargs.dim) // 2
 
-
+if args.servo is True:
+    from piegame import servo_process
 def main():
     # set up shared data
     shared_data_object = mtools.SharedDataObject()

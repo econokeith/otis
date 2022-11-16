@@ -1,3 +1,6 @@
+import os
+import inspect
+
 import numpy as np
 from robocam.helpers import utilities as utils
 
@@ -72,3 +75,17 @@ class BBoxStabilizer:
                                               )
 
         return self.last
+
+
+def get_current_dir(file):
+    return os.path.abspath(os.path.dirname(file))
+
+def abs_path_relative_to_calling_file(rel_path):
+    abs_dir =  os.path.dirname(inspect.stack()[-1].filename)
+    return os.path.join(abs_dir, rel_path)
+
+
+
+if __name__ == "__main__":
+    f = inspect.currentframe()
+    print(f)

@@ -88,7 +88,7 @@ def target(shared_data_object, args):
 def load_face_data(face_recognition, face_location=None):
     #this  might have to change
     abs_dir = os.path.dirname(os.path.abspath(__file__))
-    face_folder = os.path.join(abs_dir, 'photo_assets/faces')
+    face_folder = os.path.join(abs_dir, '/faces')
     face_files = os.listdir(face_folder)
 
     names = []
