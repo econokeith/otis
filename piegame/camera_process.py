@@ -27,8 +27,8 @@ STARTING_LOCATION = [200, DY - 200]
 COLLISIONS = True
 BORDER = True
 # pie_path= '/home/keith/Projects/robocam/robocam/overlay/photo_assets/pie_asset'
-pie_path = './photo_asset_files/pie_asset'
-face_path = '/faces'
+pie_path = 'photo_asset_files/pie_asset'
+face_path = 'faces'
 
 MA = 30
 

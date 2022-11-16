@@ -5,6 +5,7 @@ objects
 """
 import copy
 import robocam.helpers.colortools as ctools
+import robocam.helpers.cvtools as cvtools
 
 class Writer:
 
@@ -39,4 +40,10 @@ class Writer:
             for _ in range(make_list_of-1):
                 list_of_copies.append(self.copy())
             return list_of_copies
+
+
+
+if __name__ == '__main__':
+    print(cvtools.get_current_dir(__file__))
+    print(cvtools.abs_path_relative_to_calling_file('../examples/balls.py'))
 

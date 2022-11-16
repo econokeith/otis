@@ -6,7 +6,7 @@ from collections import defaultdict
 
 import numpy as np
 
-import robocam.helpers.math
+import robocam.helpers.maths
 import robocam.helpers.utilities
 from robocam import camera as camera
 from robocam.helpers import multitools as mtools, timers as timers, utilities as utils

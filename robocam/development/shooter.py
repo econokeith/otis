@@ -12,7 +12,7 @@ import cv2
 import numpy as np
 
 import robocam.camera as camera
-import robocam.helpers.math
+import robocam.helpers.maths
 import robocam.helpers.multitools as mtools
 import robocam.helpers.utilities
 import robocam.overlay.textwriters as writers
