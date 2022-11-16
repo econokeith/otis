@@ -1,8 +1,6 @@
 import cv2
-
+from itertools import cycle
 from robocam.helpers import timers
-
-
 
 class UpDownCounter:
 
@@ -135,3 +133,16 @@ def frame_portion_to_grey(frame, darken=.25):
 #     portion = frame[p[1]-f-v:p[1]+2*f+int(3.5*v), p[0]-v:p[0]+l+v,:]
 #     middle = (portion *.25)
 #     portion[:, :, :] = middle.astype('uint8')
+
+class ColorCycle:
+
+    def __init__(self, color_iter = None):
+        self.colors = COLOR_HASH.keys()
+        if color_iter is None:
+            self._cycler = cycle(COLOR_HASH.keys())
+        else:
+            self._cycler = cycle(color_iter)
+
+    def __call__(self):
+        return next(self._cycler)
+

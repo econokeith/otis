@@ -1,5 +1,5 @@
-#todo: Extend CameraPlayer to work with PiCamera Backend
-#todo: add waitKey() break condition to CamperPlayer Method
+# todo: Extend CameraPlayer to work with PiCamera Backend
+# todo: add waitKey() break condition to CamperPlayer Method
 import time
 from threading import Thread
 import platform
@@ -8,24 +8,27 @@ import cv2
 import numpy as np
 
 import robocam.helpers.timers as timers
+from robocam.helpers import utilities as utils
 import robocam.overlay.textwriters as writers
 
 
 class CameraPlayer:
     recorder: cv2.VideoWriter
 
-    def __init__(self, src=0,
-                 name='tracker',
+    def __init__(self,
+                 src=0,
+                 name='otis',
                  dim=None,
-                 max_fps=None,
+                 max_fps=60,
                  record = False,
                  record_to = 'cam.avi',
-                 flip = True,
+                 flip = False,
                  output_scale = 1,
                  record_scale = .5,
-                 **kwargs):
+                 record_half_rate = True
+                 ):
 
-        #do necessary Linux stuff 
+        # do necessary Linux stuff
         if platform.system() == 'Linux':
             self.capture = cv2.VideoCapture(src, cv2.CAP_V4L2)
             self.capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
@@ -116,8 +119,12 @@ class CameraPlayer:
         """
         tick = time.time()
         self.grabbed, self.frame = self.capture.read()
+
         if self.flip is True:
-            self.frame = self.frame[:, ::-1, :]
+            self.frame[:, :, :] = self.frame[:, ::-1, :]
+
+
+
 
         self.latency = int(1000*(time.time()-tick))
         if silent is False:
@@ -146,6 +153,8 @@ class CameraPlayer:
 
         if self.record is True:
             self.recorder.write(_frame.astype('uint8'))
+
+
 
     def test(self, wait=False, warn=False):
         """
@@ -213,22 +222,44 @@ class ThreadedCameraPlayer(CameraPlayer):
             tick = time.time()
             self.grabbed, self._frame = self.capture.read()
             #self.new_frame = True
-            self.latency = 1//(time.time() - tick)
+            timer = (time.time() - tick)
+            if timer == 0:
+                timer = 1
+            self.latency = 1//timer
+
 
     def read(self, Silent=False):
             #cache the newest frame
             # if self.new_frame is True and self.cache is True:
             #     self._c_frame = np.array(self._frame)
             #     self.new_frame = False
+            while True:
+                if self._frame is not None and self._frame.shape != ():
+                    break
 
-
-            self._c_frame = np.array(self._frame[:, ::-1, :], copy=True)
+            self._c_frame = self._frame.copy()
             if self.flip is True:
-                self._c_frame = self._c_frame[:, ::-1, :]
-
-
-
+                # self._c_frame[:, :, :] = np.ascontiguousarray(self._c_frame[:, ::-1, :], dtype='uint8')
+                self._c_frame[:, :, :] = self._c_frame[:, ::-1, :]
 
             return self.grabbed, self.frame
 
 
+
+
+if __name__ == "__main__":
+    fps_writer = writers.TimerWriter(position=(100, 100), per_second=True)
+
+    capture = ThreadedCameraPlayer(dim=(1920, 1080),
+                                   flip=True,
+                                   max_fps=30).start()
+
+    while True:
+        capture.read()
+        fps_writer.write(capture.frame)
+        capture.show()
+
+        if utils.cv2waitkey(1) is True:
+            break
+
+    capture.stop()

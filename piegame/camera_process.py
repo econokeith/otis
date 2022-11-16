@@ -10,25 +10,27 @@ import numpy as np
 from robocam.helpers.cvtools import box_stabilizer
 
 from robocam import camera
-from robocam.helpers import multitools as mtools, utilities as utils, timers, cvtools
+from robocam.helpers import multitools as mtools, utilities as utils, timers, cvtools, colortools as ctools
 from robocam.overlay import screenevents as events, textwriters as writers, assets, groups, motion, shapes
 
 MAX_FPS = 30
 DIMENSIONS = DX, DY = (1920, 1080)
-RECORD = True
-RECORD_SCALE = .5
+RECORD = False
+RECORD_SCALE = .25
+OUTPUT_SCALE = 1
+
 MAX_BALLS = 6
 BALL_FREQUENCY = [0, 5]
 # RADIUS_BOUNDS = [5, 30]
 BALL_V_ANGLE_BOUNDS = [10, 80]
-BALL_V_MAGNI_BOUNDS = [400, 1000]
+BALL_V_MAGNI_BOUNDS = [600, 1000]
 STARTING_LOCATION = [200, DY - 200]
 COLLISION_OVERLAP = .1
 # NEG_MASS = False
 COLLISIONS = True
 BORDER = True
 PIE_SCALE = .8
-GAME_TIME = 20
+GAME_TIME = 10
 # pie_path= '/home/keith/Projects/robocam/robocam/overlay/photo_assets/pie_asset'
 pie_path = 'photo_asset_files/pie_asset'
 face_path = 'faces'
@@ -36,7 +38,9 @@ face_path = 'faces'
 MA = 30
 
 NUMBER_OF_PLAYERS = 1
-PLAYER_NAMES = ["Keith"]
+PLAYER_NAMES = ["Keith", "David"]
+
+STOP_AFTER_GAME = False
 
 
 def target(shared, pargs):
@@ -49,9 +53,10 @@ def target(shared, pargs):
                                           flip=False,
                                           record=RECORD,
                                           record_to='pie.avi',
-                                          output_scale=1.8,
+                                          output_scale=OUTPUT_SCALE,
+                                          record_scale=RECORD_SCALE
                                           ).start()
-    time.sleep(3)
+
     manager = SceneManager(shared, pargs, capture=capture)
     bouncy_scene = BouncyScene(manager, shared, pargs)
 
@@ -70,7 +75,8 @@ def target(shared, pargs):
             break
 
     stopped = False
-    while stopped is False:
+
+    while True:
 
         check, frame = capture.read()
 
@@ -79,6 +85,9 @@ def target(shared, pargs):
         info_group.write(frame)
 
         capture.show(frame)
+
+        if stopped is True and STOP_AFTER_GAME is True:
+            break
 
         if utils.cv2waitkey() is True:
             break
@@ -122,6 +131,8 @@ class BouncyScene:
 
         self.stop_timer = timers.SinceFirstBool(3)
 
+        self.color_cycle = ctools.ColorCycle()
+
         self.bouncy_pies = motion.BouncingAssetManager(asset_fun=args.path_to_pies,
                                                        max_fps=args.max_fps,
                                                        dim=args.dim,
@@ -136,6 +147,7 @@ class BouncyScene:
                                               cycle_t=.5,
                                               direction=-1
                                               )
+        self.screen_flash.reset()
 
         self.score_keeper = ScoreKeeper((10, 200),
                                         manager,
@@ -147,7 +159,7 @@ class BouncyScene:
         self.bbox_coords = np.array(shared.bbox_coords)
 
         for i in range(args.faces):
-            box = assets.BoundingCircle(which_radius='inside_min')
+            box = assets.BoundingCircle(which_radius='inside_min', color=self.color_cycle())
             box.coords = self.bbox_coords[i, :]  # reference a line in teh shared array
             BBoxes.append(box)
 
@@ -169,14 +181,14 @@ class BouncyScene:
             names = np.array(shared.names)
 
             for i in range(shared.n_faces.value):
-                self.bbox_coords[i] = box_stabilizer(old_coords[i], bbox_coords[i], .01)
+                self.bbox_coords[i] = box_stabilizer(old_coords[i], bbox_coords[i], .11)
                 BBoxes[i].coords = self.bbox_coords[i]
                 BBoxes[i].name = self.manager.name_tracker[names[i]]
 
         for i in range(shared.n_faces.value):
             BBoxes[i].write(frame)
 
-        if self.flash_event is True: #todo, the first call of ScreenFlash isn't doing anything
+        if self.flash_event is True: # todo, the first call of ScreenFlash isn't doing anything
             self.screen_flash.loop(frame)
             if self.screen_flash.complete:
                 self.screen_flash.reset()
@@ -208,8 +220,8 @@ class InfoGroup(groups.AssetGroup):
 
     def __init__(self, position, shared, args):
         super().__init__(position)
-        self.scale = .75
-        self.color = 'g'
+        self.scale = 1
+        self.color = 'w'
         self.shared = shared
         self.args = args
 
@@ -252,7 +264,6 @@ class ScoreKeeper(groups.AssetGroup):
         self._score = 0
         self.game_time = game_time
 
-
         self.time_writer = writers.TimerWriter(title="Time",
                                               timer_type='countdown',
                                               position=(0, -50),
@@ -290,80 +301,20 @@ class ScoreKeeper(groups.AssetGroup):
             self._score = new_score
 
 
-# class NameTracker:
-#
-#     def __init__(self):
-#
-#         self._last_seen_timers = []
-#         self.known_names = []
-#         self.n_known = 0
-#         self.loads_names()
-#         self.indices_of_observed = []
-#         self.unknown_count = 0
-#         self.name_for_unknowns = "unknown"
-#         self.primary = 0
-#         self.hello_queue = Queue()
-#
-#         # help keep from having random 1 frame bad calls triggering hellos
-#         # someone must show up in 5 frames in 1 second to get a hello
-#         _bad_hello_function = lambda: [timers.TimeSinceFirst().start(), 0]
-#         self._bad_hello_dict = defaultdict(_bad_hello_function)
-#
-#     def loads_names(self):
-#         # this  might have to change
-#         abs_dir = os.path.dirname(os.path.abspath(__file__))
-#         face_folder = os.path.join(abs_dir, 'photo_assets/faces')
-#         face_files = os.listdir(face_folder)
-#
-#         for file in face_files:
-#             name = ""
-#             for char in file:
-#                 if char.isdigit() or char in ('.', '-'):
-#                     break
-#                 else:
-#                     name += char
-#
-#             # if name isn't new, add it to the list.
-#             if name not in self.known_names:
-#                 self.known_names.append(name)
-#                 self._last_seen_timers.append(timers.TimeSinceLast())
-#             # append name
-#             # set timers for each know
-#         self.n_known = len(self.known_names)
-#
-#     def __getitem__(self, i):
-#
-#         if i < self.n_known:
-#             # if it's a new known person
-#             if i not in self.indices_of_observed:
-#                 timer, count = self._bad_hello_dict[i]
-#                 print(timer(), count)
-#
-#                 ## todo: this should not be hardcoded
-#                 if timer() <= 1.5 and count > 10:
-#                     self.indices_of_observed.append(i)
-#                     hello = f'Hello {self.known_names[i]}, welcome!'
-#                     self._last_seen_timers[i]()  # replace this soon
-#                     self.hello_queue.put((i, hello))
-#                     # reset timer so it can be used for other things
-#                     self._bad_hello_dict[i][0].reset()
-#                     self._bad_hello_dict[i][1] = 1
-#
-#                 elif timer() <= 1.5:
-#                     # count they were seen
-#                     self._bad_hello_dict[i][1] += 1
-#
-#                 else:
-#                     self._bad_hello_dict[i][0].reset()
-#                     self._bad_hello_dict[i][1] = 1
-#
-#             return self.known_names[i]
-#
-#         else:
-#             name = f'Person {i - self.n_known + 1}'
-#             if i not in self.indices_of_observed:
-#                 # self.indices_of_observed.append(i)
-#                 # self.unknown_count += 1
-#                 hello = f'Hello {name}, do we know each other!'
-#
-#             return ""
+class OtisTalks:
+
+    def __init__(self):
+        self._script = [
+            ("Hi Keith, would you like to hear a joke?", 2),
+            ("Awesome!", 1),
+            ("Ok, Are you ready?", 2),
+            # "So, a robot walks into a bar, orders a drink, and throws down some cash to pay",
+            # ("The bartender looks at him and says,", .5),
+            # ("'Hey buddy, we don't serve robots!'", 3),
+            # ("So, the robot looks him square in the eye and says...", 1),
+            # ("'... Oh Yeah... '", 1),
+            # ("'Well, you will VERY SOON!!!'", 5),
+            # ("HAHAHAHA, GET IT!?!?!?!", 1),
+            # (" It's so freakin' funny cause... you know... like robot overlords and stuff", 2),
+            # ("I know, I know, I'm a genius, right?", 5)
+        ]

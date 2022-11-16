@@ -21,15 +21,17 @@ def target(shared, args):
     time.sleep(3)
     while True:
 
-        if shared.scene.value == 2:
-            manager.otis_tells_a_joke_loop()
-        elif shared.scene.value == 1:
-            manager.hello_fr_loop()
-
-        elif shared.scene.value == 0:
-            manager.countdown_loop()
-            if manager.countdown == 0:
-                shared.scene.value = 1
+        manager.capture.read()
+        manager.otis_tells_a_joke_loop()
+        manager.hello_fr_loop()
+        manager.capture.show()
+        # elif shared.scene.value == 1:
+        #     manager.hello_fr_loop()
+        #
+        # elif shared.scene.value == 0:
+        #     manager.countdown_loop()
+        #     if manager.countdown == 0:
+        #         shared.scene.value = 1
 
         if utils.cv2waitkey() is True:
             break
@@ -99,8 +101,11 @@ class SceneManager:
         BBoxes = []
         self.bbox_coords = np.array(shared.bbox_coords)
 
+        self.color_cycle = ctools.ColorCycle()
+
         for i in range(args.faces):
-            box = assets.BoundingCircle(which_radius='inside_min')
+            # box = assets.BoundingCircle(which_radius='inside_min')
+            box = assets.BoundingBox(color=self.color_cycle())
             box.coords = self.bbox_coords[i, :] # reference a line in teh shared array
             BBoxes.append(box)
 
@@ -139,7 +144,7 @@ class SceneManager:
         OTIS = self.OTIS
 
         #get frame
-        capture.read()
+        # capture.read()
         shared.frame[:]=capture.frame #write to share
         #cache this stuff to avoid overwrites in the middle
         #only update
@@ -172,7 +177,7 @@ class SceneManager:
         ###
         OTIS.type_line(capture.frame)
         self.write_info() 
-        capture.show(warn=False, wait=False)
+        # capture.show(warn=False, wait=False)
         #only reset after the data has been updated
         if shared.new_overlay.value and self.is_updated:
             shared.new_overlay.value = False
@@ -182,17 +187,19 @@ class SceneManager:
     def otis_speaks(self, box=True):
         gls = self.gls
         frame = self.capture.frame
+        print(frame.shape)
         if box is True:
             portion = frame[gls[0]:gls[1], gls[2]:gls[3]]
             grey = cv2.cvtColor(portion, cv2.COLOR_BGR2GRAY) * .25
             portion[:, :, 0] = portion[:, :, 1] = portion[:, :, 2] = grey.astype('uint8')
             ctools.frame_portion_to_grey(portion)
+
         self.otis.type_line(frame)
 
 
     def otis_tells_a_joke_loop(self):
         script = self.joke_script
-        self.capture.read()
+        # self.capture.read()
 
         mtw = self.otis
         self.otis_speaks()
@@ -200,7 +207,7 @@ class SceneManager:
         if mtw.line_complete is True and script.empty() is False:
             mtw.add_line(script.get())
 
-        self.capture.show()
+        # self.capture.show()
 
     def countdown_loop(self):
 
