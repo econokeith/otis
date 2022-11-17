@@ -1,14 +1,15 @@
 import copy
 import abc
-from collections import deque
 
 import cv2
 import numpy as np
 
 
 
-from robocam.helpers import cvtools, timers
+import robocam.helpers.cvtools as cvtools
+import robocam.helpers.timers as timers
 from robocam.overlay import shapefunctions, bases, textwriters#, shapeobjects
+from robocam.overlay.shapeobjects import Line
 from robocam.overlay.textwriters import TextWriter, NameTag
 
 
@@ -267,7 +268,7 @@ class CrossHair(BoundingCircle):
             self.constant_size = True
             self._radius = radius
 
-        self.line_writer = robocam.overlay.shapeobjects.Line(color='b', thickness=self.thickness, wtype='cal')
+        self.line_writer = Line(color='b', thickness=self.thickness, wtype='cal')
 
     @property
     def radius(self):
@@ -301,3 +302,5 @@ class CrossHair(BoundingCircle):
         self.line_writer.write(frame, center, 0, radius*2.2, wtype='cal',thickness=1)
 
         shapefunctions.draw_circle(frame, center, 3, 'g', -1)
+
+

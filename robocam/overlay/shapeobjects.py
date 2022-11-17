@@ -1,8 +1,7 @@
 import cv2
 
-from robocam.helpers import utilities, colortools
-from robocam.overlay import bases
-from robocam.overlay import shapefunctions
+from robocam.helpers import utilities as utilities
+from robocam.overlay import bases, shapefunctions
 
 
 class Circle(bases.Writer):
@@ -89,6 +88,7 @@ class Rectangle(bases.Writer):
     def write(self, coords=None):
         _coords = coords if coords is not None else self.coords
         t, r, b, l = self.__translate_coords(_coords)
+
 
 class Line(bases.Writer):
 

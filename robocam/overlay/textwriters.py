@@ -13,7 +13,6 @@ from robocam.helpers import  timers, colortools, utilities
 
 from robocam.overlay import bases, shapefunctions
 
-import robocam.camera as camera
 
 
 class TextWriter(bases.Writer):
@@ -586,36 +585,36 @@ class OTIS(ScriptTypeWriter):
         self.type_line(frame)
 
 
-if __name__=='__main__':
-
-    JOKE_SCRIPT = [
-        ("Hi Keith, would you like to hear a joke?", 2),
-        ("Awesome!", 1),
-        ("Ok, Are you ready?", 2),
-        "So, a robot walks into a bar, orders a drink, and throws down some cash to pay",
-        ("The bartender looks at him and says,", .5),
-        ("'Hey buddy, we don't serve robots!'", 3),
-        ("So, the robot looks him square in the eye and says...", 1),
-        ("'... Oh Yeah... '", 1),
-        ("'Well, you will VERY SOON!!!'", 5),
-        ("HAHAHAHA, GET IT!?!?!?!", 1),
-        (" It's so freakin' funny cause... you know... like robot overlords and stuff", 2),
-        ("I know, I know, I'm a genius, right?", 5)
-    ]
-    dim = (1280, 720)
-
-    otis = OTIS(dim[0] - 550, (450, 900)).add_script(JOKE_SCRIPT)
-    capture = camera.ThreadedCameraPlayer(dim=dim).start()
-
-
-    while True:
-
-        capture.read()
-        # print(capture.frame.shape)
-        # print(capture.frame.dtype)
-
-        # otis.speaks(capture.frame)
-        capture.show()
-
-        if utilities.cv2waitkey() is True:
-            break
+# if __name__=='__main__':
+#
+#     JOKE_SCRIPT = [
+#         ("Hi Keith, would you like to hear a joke?", 2),
+#         ("Awesome!", 1),
+#         ("Ok, Are you ready?", 2),
+#         "So, a robot walks into a bar, orders a drink, and throws down some cash to pay",
+#         ("The bartender looks at him and says,", .5),
+#         ("'Hey buddy, we don't serve robots!'", 3),
+#         ("So, the robot looks him square in the eye and says...", 1),
+#         ("'... Oh Yeah... '", 1),
+#         ("'Well, you will VERY SOON!!!'", 5),
+#         ("HAHAHAHA, GET IT!?!?!?!", 1),
+#         (" It's so freakin' funny cause... you know... like robot overlords and stuff", 2),
+#         ("I know, I know, I'm a genius, right?", 5)
+#     ]
+#     dim = (1280, 720)
+#
+#     otis = OTIS(dim[0] - 550, (450, 900)).add_script(JOKE_SCRIPT)
+#     capture = camera.ThreadedCameraPlayer(dim=dim).start()
+#
+#
+#     while True:
+#
+#         capture.read()
+#         # print(capture.frame.shape)
+#         # print(capture.frame.dtype)
+#
+#         # otis.speaks(capture.frame)
+#         capture.show()
+#
+#         if utilities.cv2waitkey() is True:
+#             break

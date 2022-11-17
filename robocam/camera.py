@@ -243,19 +243,19 @@ class ThreadedCameraPlayer(CameraPlayer):
 
 
 
-if __name__ == "__main__":
-    fps_writer = writers.TimerWriter(position=(100, 100), per_second=True)
-
-    capture = ThreadedCameraPlayer(dim=(1920, 1080),
-                                   flip=True,
-                                   max_fps=30).start()
-
-    while True:
-        capture.read()
-        fps_writer.write(capture.frame)
-        capture.show()
-
-        if utils.cv2waitkey(1) is True:
-            break
-
-    capture.stop()
+# if __name__ == "__main__":
+#     fps_writer = writers.TimerWriter(position=(100, 100), per_second=True)
+#
+#     capture = ThreadedCameraPlayer(dim=(1920, 1080),
+#                                    flip=True,
+#                                    max_fps=30).start()
+#
+#     while True:
+#         capture.read()
+#         fps_writer.write(capture.frame)
+#         capture.show()
+#
+#         if utils.cv2waitkey(1) is True:
+#             break
+#
+#     capture.stop()

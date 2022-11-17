@@ -7,6 +7,7 @@ from queue import Queue
 
 import numpy as np
 
+import robocam.scripts.copy_frame
 from robocam.helpers.cvtools import box_stabilizer
 
 from robocam import camera
