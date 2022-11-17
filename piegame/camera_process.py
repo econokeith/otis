@@ -30,14 +30,15 @@ COLLISION_OVERLAP = .1
 COLLISIONS = True
 BORDER = True
 PIE_SCALE = .8
-GAME_TIME = 10
+GAME_TIME = 30
 # pie_path= '/home/keith/Projects/robocam/robocam/overlay/photo_assets/pie_asset'
 pie_path = 'photo_asset_files/pie_asset'
 face_path = 'faces'
 
 MA = 30
 
-NUMBER_OF_PLAYERS = 1
+NUMBER_OF_PLAYERS = 2
+
 PLAYER_NAMES = ["Keith", "David"]
 
 STOP_AFTER_GAME = False
@@ -50,7 +51,7 @@ def target(shared, pargs):
     capture = camera.ThreadedCameraPlayer(0,
                                           max_fps=pargs.max_fps,
                                           dim=pargs.dim,
-                                          flip=False,
+                                          flip=True,
                                           record=RECORD,
                                           record_to='pie.avi',
                                           output_scale=OUTPUT_SCALE,
@@ -199,10 +200,10 @@ class BouncyScene:
             self.bouncy_pies.move(frame)
 
             for i, pie in enumerate(self.bouncy_pies.movers):
-                for i in range(shared.n_faces.value):
+                for j in range(shared.n_faces.value):
                     if self.collision_detector.check(BBoxes[i], pie) is True:
 
-                        self.score_keeper.score += 1
+                        self.score_keeper.score[j] += 1
                         pie.finished = True
                         pie.remove_fin()
                         if self.flash_event is False:
@@ -261,7 +262,7 @@ class ScoreKeeper(groups.AssetGroup):
         self.manager = manager
         self.shared = manager.shared
         self.args = manager.args
-        self._score = 0
+        self._score = [0]*NUMBER_OF_PLAYERS
         self.game_time = game_time
 
         self.time_writer = writers.TimerWriter(title="Time",
@@ -275,13 +276,19 @@ class ScoreKeeper(groups.AssetGroup):
                                               count_from=game_time,
                                               )
 
-        score_writer = writers.InfoWriter(text_fun= lambda: f'Keith : {self.score}',
+        score_writer1 = writers.InfoWriter(text_fun= lambda: f'KEITH : {self.score[0]}',
                                           position=(0, -100),
                                           scale=self.scale,
                                           color=self.color,
                                           )
 
-        self.add([self.time_writer, score_writer])
+        score_writer2 = writers.InfoWriter(text_fun= lambda: f'DAVID : {self.score[1]}',
+                                          position=(0, -150),
+                                          scale=self.scale,
+                                          color=self.color,
+                                          )
+
+        self.add([self.time_writer, score_writer1, score_writer2])
 
     def write(self, frame):
         shapes.transparent_background(frame, (200, 0), (0, -250), ref=self.position, transparency=.9)

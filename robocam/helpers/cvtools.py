@@ -17,6 +17,9 @@ def box_stabilizer(box0, box1, threshold=.25):
     :param threshold: float
     :return: (t, r, b, l)
     """
+    if threshold == 0:
+        return box1
+
     centers = []
     radii = []
     for box in [box0, box1]:
@@ -66,7 +69,6 @@ class BBoxStabilizer:
         self.threshold = threshold
         self.last = np.zeros(4*N).reshape(N*4)
 
-
     def update_boxes(self, boxes, target_count=None):
 
         ll = boxes.shape[0] if target_count is None else target_count
@@ -81,6 +83,7 @@ class BBoxStabilizer:
 
 def get_current_dir(file):
     return os.path.abspath(os.path.dirname(file))
+
 
 def abs_path_relative_to_calling_file(rel_path):
     abs_dir =  os.path.dirname(inspect.stack()[-1].filename)
@@ -201,6 +204,7 @@ def load_face_data(face_recognition, path_to_faces):
 
 
     return names, encodings
+
 
 class BoxManager:
 

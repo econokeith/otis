@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 
 import robocam.overlay.bases as base
+from robocam.helpers import cvtools, timers
 from robocam.overlay import shapes as shapes
 from robocam.overlay import textwriters
 from robocam.overlay.textwriters import TextWriter, NameTag
@@ -107,12 +108,14 @@ class BoundingBox(base.Writer):
                  show_me = True,
                  name = "",
                  show_name = True,
-                 name_line = True
+                 name_line = True,
+                 threshold = 0, #stabilizer threshold
                  ):
 
         super().__init__()
 
-        self.coords = np.zeros(4, dtype=int) ### stored as top, right, bottom, left
+        self._coords = np.zeros(4, dtype=int) ### stored as top, right, bottom, left
+        self.old_coords = self._coords.copy()
         self.color = color
         self.thickness = thickness
         self.font_scale = font_scale
@@ -122,11 +125,36 @@ class BoundingBox(base.Writer):
         self.show_name = show_name
         self.name_line = name_line
         self.show_me = show_me
+        self.threshold = threshold
+        self.constant = None # None or (w, h)
+        self.last_update_timer = timers.TimeSinceLast()
 
     @property
     def center(self):
         t, r, b, l = self.coords
         return int((r+l)/2), int((t+b)/2)
+
+    @property
+    def coords(self):
+        if self.constant is not None:
+            w, h = self.constant
+            c = self.center
+
+            t = c[1] + h/2
+            b = c[1] - h/2
+            l = c[0] - w/2
+            r = c[0] + w/2
+
+            return np.array([t, r, b, l])
+
+        else:
+            return self._coords
+
+    # note that this setter just writes to the saved numpy array.
+    @coords.setter
+    def coords(self, new_coords):
+        self.old_coords[:] = self._coords
+        self._coords[:] = cvtools.box_stabilizer(self._coords, new_coords, threshold=self.threshold)
 
 
     @property
@@ -140,6 +168,10 @@ class BoundingBox(base.Writer):
     @property
     def width(self):
         return self.coords[1] - self.coords[3]
+
+    def update_coords(self, new_coords):
+        self.old_coords[:] = self._coords
+        self._coords[:] = cvtools.box_stabilizer(self._coords, new_coords, threshold=self.threshold)
 
     def distance_from_center(self, point):
         """
@@ -179,10 +211,6 @@ class BoundingCircle(BoundingBox):
                  ):
 
         super().__init__(color=color, thickness=thickness, **kwargs)
-        if bbox_coords is True:
-            self.coords = np.zeros(4, dtype='uint8')
-        else:
-            self.coords = np.zeros(3, dtype='uint16')
 
         self.bbox_coords = bbox_coords
 

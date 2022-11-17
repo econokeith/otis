@@ -44,9 +44,11 @@ class CameraPlayer:
             self.dim = self.capture.get(cv2.CAP_PROP_FRAME_WIDTH), self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
             self.dim = [int(d) for d in self.dim]
 
+        self.blank_frame = np.zeros(self.dim[0]*self.dim[1]*3, dtype="uint8").reshape((self.dim[1], self.dim[0], 3))
+
         self.center = int(self.dim[0]/2), int(self.dim[1]/2)
         self._frame = np.empty((*self.dim[::-1], 3))
-        self._c_frame = np.array(self._frame)
+        self._cached_frame = np.array(self._frame)
         self.grabbed = True
         self.name = name
         self.stopped = False
@@ -123,9 +125,6 @@ class CameraPlayer:
         if self.flip is True:
             self.frame[:, :, :] = self.frame[:, ::-1, :]
 
-
-
-
         self.latency = int(1000*(time.time()-tick))
         if silent is False:
             return self.grabbed, self.frame
@@ -153,8 +152,6 @@ class CameraPlayer:
 
         if self.record is True:
             self.recorder.write(_frame.astype('uint8'))
-
-
 
     def test(self, wait=False, warn=False):
         """
@@ -200,12 +197,12 @@ class ThreadedCameraPlayer(CameraPlayer):
         self.clock = timers.SmartSleeper()
         self.cache = cache
         self._frame = None
-        self._c_frame = None
+        self._cached_frame = np.copy(self.blank_frame)
 
     @property
     def frame(self):
         if self.cache is True:
-            return self._c_frame
+            return self._cached_frame
         else:
             return self._frame
 
@@ -229,18 +226,17 @@ class ThreadedCameraPlayer(CameraPlayer):
 
 
     def read(self, Silent=False):
-            #cache the newest frame
-            # if self.new_frame is True and self.cache is True:
-            #     self._c_frame = np.array(self._frame)
-            #     self.new_frame = False
+
             while True:
                 if self._frame is not None and self._frame.shape != ():
                     break
 
-            self._c_frame = self._frame.copy()
+            self._cached_frame[:,:,:] = self._frame
+
             if self.flip is True:
-                # self._c_frame[:, :, :] = np.ascontiguousarray(self._c_frame[:, ::-1, :], dtype='uint8')
-                self._c_frame[:, :, :] = self._c_frame[:, ::-1, :]
+                self._cached_frame[:, :, :] = self._frame[:, ::-1, :]
+            else:
+                self._cached_frame[:, :, :] = self._frame
 
             return self.grabbed, self.frame
 
