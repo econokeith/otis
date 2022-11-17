@@ -4,9 +4,9 @@ cls().make_list which instantiates a list of identical Writer/subclass
 objects
 """
 import copy
-import robocam.helpers.colortools as ctools
-import robocam.helpers.cvtools as cvtools
-
+from robocam.helpers import colortools
+from robocam.helpers import cvtools
+# TODO: adding the functionality with abs_point to base
 class Writer:
 
     @classmethod
@@ -19,6 +19,7 @@ class Writer:
         cls().make_list which instantiates a list of identical Writer/subclass
         objects
         """
+
         self._color = (0,0,0)
 
     @property
@@ -28,7 +29,7 @@ class Writer:
     @color.setter
     def color(self, new_color):
         if isinstance(new_color, str):
-            self._color = ctools.COLOR_HASH[new_color]
+            self._color = colortools.COLOR_HASH[new_color]
         else:
             self._color = new_color
 

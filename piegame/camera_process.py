@@ -11,7 +11,7 @@ from robocam.helpers.cvtools import box_stabilizer
 
 from robocam import camera
 from robocam.helpers import multitools as mtools, utilities as utils, timers, cvtools, colortools as ctools
-from robocam.overlay import screenevents as events, textwriters as writers, assets, groups, motion, shapes
+from robocam.overlay import screenevents as events, textwriters as writers, assets, groups, motion, shapefunctions
 
 MAX_FPS = 30
 DIMENSIONS = DX, DY = (1920, 1080)
@@ -153,41 +153,42 @@ class BouncyScene:
         self.score_keeper = ScoreKeeper((10, 200),
                                         manager,
                                         color='g',
-                                        game_time=GAME_TIME
+                                        game_time=GAME_TIME,
+                                        scale=2,
+                                        players=PLAYER_NAMES,
                                         )
 
-        BBoxes = []
         self.bbox_coords = np.array(shared.bbox_coords)
 
-        for i in range(args.faces):
-            box = assets.BoundingCircle(which_radius='inside_min', color=self.color_cycle())
-            box.coords = self.bbox_coords[i, :]  # reference a line in teh shared array
-            BBoxes.append(box)
+        self.box_fun = lambda: assets.BoundingCircle(which_radius='inside_min', color=self.color_cycle())
+        self.bbox_hash = defaultdict(self.box_fun)
 
-        self.BBoxes = BBoxes
         self.is_updated = True
         self.flash_event = False
         self.frame = np.zeros((args.dim[1], args.dim[0], 3), dtype='uint8')
+        self.names = []
 
     def loop(self, frame):
 
         shared = self.shared
-        BBoxes = self.BBoxes
+        bbox_hash = self.bbox_hash
+        tracker = self.manager.name_tracker
+
 
         # cache this stuff to avoid overwrites in the middle
         # only update
         if shared.new_overlay.value:
-            old_coords = self.bbox_coords
-            bbox_coords = np.array(shared.bbox_coords)
-            names = np.array(shared.names)
 
-            for i in range(shared.n_faces.value):
-                self.bbox_coords[i] = box_stabilizer(old_coords[i], bbox_coords[i], .11)
-                BBoxes[i].coords = self.bbox_coords[i]
-                BBoxes[i].name = self.manager.name_tracker[names[i]]
+            bbox_coords = shared.bbox_coords.copy()
+            n_faces = self.shared.n_faces.value
+            self.names = [tracker[name] for name in shared.names[:n_faces]]
 
-        for i in range(shared.n_faces.value):
-            BBoxes[i].write(frame)
+            for i, name in enumerate(self.names):
+                box = bbox_hash[name]
+                box.name = name
+                box.coords = bbox_coords[i]
+                box.write(frame)
+
 
         if self.flash_event is True: # todo, the first call of ScreenFlash isn't doing anything
             self.screen_flash.loop(frame)
@@ -200,10 +201,10 @@ class BouncyScene:
             self.bouncy_pies.move(frame)
 
             for i, pie in enumerate(self.bouncy_pies.movers):
-                for j in range(shared.n_faces.value):
-                    if self.collision_detector.check(BBoxes[i], pie) is True:
+                for name in self.names:
+                    if self.collision_detector.check(bbox_hash[name], pie) is True:
 
-                        self.score_keeper.score[j] += 1
+                        self.score_keeper.score[name] += 1
                         pie.finished = True
                         pie.remove_fin()
                         if self.flash_event is False:
@@ -254,6 +255,8 @@ class ScoreKeeper(groups.AssetGroup):
                  position,
                  manager,
                  game_time=20,
+                 players = ('Keith'),
+                 v_spacing = 70,
                  *args,
                  **kwargs
                  ):
@@ -262,12 +265,14 @@ class ScoreKeeper(groups.AssetGroup):
         self.manager = manager
         self.shared = manager.shared
         self.args = manager.args
-        self._score = [0]*NUMBER_OF_PLAYERS
+        self.score = defaultdict(lambda: 0)
         self.game_time = game_time
+        self.players = players
+        self.v_spacing = v_spacing
 
         self.time_writer = writers.TimerWriter(title="Time",
                                               timer_type='countdown',
-                                              position=(0, -50),
+                                              position=(10, -v_spacing),
                                               roundw=0,
                                               per_second=True,
                                               moving_average=MA,
@@ -276,52 +281,36 @@ class ScoreKeeper(groups.AssetGroup):
                                               count_from=game_time,
                                               )
 
-        score_writer1 = writers.InfoWriter(text_fun= lambda: f'KEITH : {self.score[0]}',
-                                          position=(0, -100),
-                                          scale=self.scale,
-                                          color=self.color,
-                                          )
+        # make the score writers
+        score_writers = []
+        score_text_fun = lambda name: f'{name} : {self.score[name]}'
+        for i, name in enumerate(self.players):
 
-        score_writer2 = writers.InfoWriter(text_fun= lambda: f'DAVID : {self.score[1]}',
-                                          position=(0, -150),
-                                          scale=self.scale,
-                                          color=self.color,
-                                          )
+            score_writer = writers.InfoWriter(text_fun= score_text_fun,
+                                              position=(10, -v_spacing*2-v_spacing*i),
+                                              scale=self.scale,
+                                              color=self.color,
+                                              )
 
-        self.add([self.time_writer, score_writer1, score_writer2])
+            score_writers.append(score_writer)
+
+        self.add([self.time_writer])
+        self.add(score_writers)
+
 
     def write(self, frame):
-        shapes.transparent_background(frame, (200, 0), (0, -250), ref=self.position, transparency=.9)
-        super().write(frame)
+        shapefunctions.write_transparent_background(frame,
+                                                    (200, 0),
+                                                    (0, -250),
+                                                    ref=self.position,
+                                                    transparency=.9
+                                                    )
+
+        self.assets[0].write(frame)
+        for name, asset in zip(self.players, self.assets[1:]):
+
+            asset.write(frame, name)
 
     @property
     def timer_finished(self):
         return self.time_writer.timer_finished
-
-    @property
-    def score(self):
-        return self._score
-
-    @score.setter
-    def score(self, new_score):
-        if not self.timer_finished:
-            self._score = new_score
-
-
-class OtisTalks:
-
-    def __init__(self):
-        self._script = [
-            ("Hi Keith, would you like to hear a joke?", 2),
-            ("Awesome!", 1),
-            ("Ok, Are you ready?", 2),
-            # "So, a robot walks into a bar, orders a drink, and throws down some cash to pay",
-            # ("The bartender looks at him and says,", .5),
-            # ("'Hey buddy, we don't serve robots!'", 3),
-            # ("So, the robot looks him square in the eye and says...", 1),
-            # ("'... Oh Yeah... '", 1),
-            # ("'Well, you will VERY SOON!!!'", 5),
-            # ("HAHAHAHA, GET IT!?!?!?!", 1),
-            # (" It's so freakin' funny cause... you know... like robot overlords and stuff", 2),
-            # ("I know, I know, I'm a genius, right?", 5)
-        ]

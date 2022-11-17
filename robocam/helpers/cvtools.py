@@ -5,7 +5,7 @@ from queue import Queue
 
 import numpy as np
 from robocam.helpers import utilities as utils, timers, colortools
-from robocam.overlay import assets
+#from robocam.overlay import assets
 
 def box_stabilizer(box0, box1, threshold=.25):
     """
@@ -141,7 +141,7 @@ class NameTracker:
             # if it's a new known person
             if i not in self.indices_of_observed:
                 timer, count = self._bad_hello_dict[i]
-                print(timer(), count)
+
 
                 ## todo: this should not be hardcoded
                 if timer() <= 1.5 and count > 10:
@@ -206,30 +206,30 @@ def load_face_data(face_recognition, path_to_faces):
     return names, encodings
 
 
-class BoxManager:
-
-    def __init__(self,
-                 name_tracker,
-                 box_type=assets.BoundingBox,
-                 color_cycler = None,
-                 **kwargs
-                 ):
-
-        assert issubclass(box_type, assets.BoundingBox)
-
-        self.box_hash = dict()
-        self.name_tracker = name_tracker
-        self.box_type = box_type
-        self.color_cycler = color_cycler
-
-        self.new_box_fun = lambda new_name : box_type(name=new_name,
-                                                      color=next(self.color_cycler)
-                                                      **kwargs,)
-
-    def _update_box(self, name):
-
-        try:
-            box = self.box_hash[name]
-
-        except:
-            box = self.new_box_fun(name)
+# class BoxManager:
+#
+#     def __init__(self,
+#                  name_tracker,
+#                  box_type=assets.BoundingBox,
+#                  color_cycler = None,
+#                  **kwargs
+#                  ):
+#
+#         assert issubclass(box_type, assets.BoundingBox)
+#
+#         self.box_hash = dict()
+#         self.name_tracker = name_tracker
+#         self.box_type = box_type
+#         self.color_cycler = color_cycler
+#
+#         self.new_box_fun = lambda new_name : box_type(name=new_name,
+#                                                       color=next(self.color_cycler)
+#                                                       **kwargs,)
+#
+#     def _update_box(self, name):
+#
+#         try:
+#             box = self.box_hash[name]
+#
+#         except:
+#             box = self.new_box_fun(name)

@@ -6,7 +6,6 @@ import os
 import cv2
 import numpy as np
 
-
 from robocam.helpers import multitools as mtools
 from robocam.helpers import timers, cvtools
 from robocam.helpers import utilities as utils
@@ -18,16 +17,6 @@ if DEBUG:
     logging.basicConfig(filename='text_files/logs/log.log', filemode='w', level=logging.INFO)
 
 
-def _target(shared, args):
-    import face_recognition
-
-    signal.signal(signal.SIGTERM, mtools.close_gracefully)
-    signal.signal(signal.SIGINT, mtools.close_gracefully)
-
-    # if utils.cv2waitkey() is True:
-    #     break
-
-    
         
 def target(shared_data_object, args):
     # import locally to avoid GPU conflicts

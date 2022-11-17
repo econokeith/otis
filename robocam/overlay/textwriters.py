@@ -6,16 +6,17 @@ import types
 import cv2
 import numpy as np
 
-import robocam.helpers.utilities as utils
-import robocam.helpers.timers as timers
-import robocam.helpers.colortools as ctools
-import robocam.overlay.bases as base
-import robocam.overlay.shapes as shapes
-import robocam.helpers.utilities as utilities
+
+
+
+from robocam.helpers import  timers, colortools, utilities
+
+from robocam.overlay import bases, shapefunctions
+
 import robocam.camera as camera
 
 
-class TextWriter(base.Writer):
+class TextWriter(bases.Writer):
     text_fun: types.FunctionType
     def __init__(self,
                  position = (0,0),  #position
@@ -30,8 +31,10 @@ class TextWriter(base.Writer):
                  jtype = 'l'
                  ):
 
+        super().__init__()
+
         self.font = font
-        self.color = ctools.color_function(color)
+        self.color = color
         self.ref = ref
         self.position = position
         self.scale = scale
@@ -76,17 +79,17 @@ class TextWriter(base.Writer):
         _position = position if position is not None else self.position
         _ref = ref if ref is not None else self.ref
 
-        shapes.write_text(frame,
-                          _text,
-                          pos = _position,
-                          font=self.font,
-                          color=_color,
-                          scale=self.scale,
-                          thickness=self.thickness,
-                          ltype=self.ltype,
-                          ref=_ref,
-                          jtype=self.jtype
-                          )
+        shapefunctions.write_text(frame,
+                                  _text,
+                                  pos = _position,
+                                  font=self.font,
+                                  color=_color,
+                                  scale=self.scale,
+                                  thickness=self.thickness,
+                                  ltype=self.ltype,
+                                  ref=_ref,
+                                  jtype=self.jtype
+                                  )
 
     def write_fun(self, frame, *args, **kwargs):
         self.line = self.text_fun(*args, **kwargs)
@@ -181,7 +184,7 @@ class TimerWriter(InfoWriter):
                 self._timer()
 
             if moving_average is not None:
-                self.moving_average = utils.MovingAverage(moving_average)
+                self.moving_average = utilities.MovingAverage(moving_average)
 
         elif timer_type == 'countdown':
             self._timer = timers.CountDownTimer(self.count_from)
@@ -248,7 +251,7 @@ class TypeWriter(TextWriter):
         self.end_pause = end_pause
         self.end_timer = timers.SinceFirstBool(end_pause)
         self.loop = loop
-        self.line_iter = utils.BoundIterator([0])
+        self.line_iter = utilities.BoundIterator([0])
         self.line_complete = True
         self.line = text
         self._output = ""
@@ -272,7 +275,7 @@ class TypeWriter(TextWriter):
             self._output = ""
             
         else:
-            self.line_iter = utils.BoundIterator(new_text)
+            self.line_iter = utilities.BoundIterator(new_text)
             self.line_complete = False
             self._output = ""
 
@@ -309,7 +312,7 @@ class TypeWriter(TextWriter):
 
     def type_line(self, frame, position=None, ref=None):
         if position is not None:
-            self.position = utils.abs_point(position, ref, frame.shape)
+            self.position = utilities.abs_point(position, ref, frame.shape)
         # if there's more in the text generator, it will continue to type new letters
         # then will show the full message for length of time self.end_pause
         # then finally stop shows
@@ -335,7 +338,7 @@ class TypeWriter(TextWriter):
         else:
 
             self.line_complete = True
-            print(self.line_complete)
+
             self.end_timer.reset()
 
 
@@ -409,14 +412,14 @@ class MultiTypeWriter(TypeWriter):
         self._used_stubs = []
         self._stub_queue = Queue()
         self._stub = ""
-        self._stub_iter = utils.BoundIterator(self._stub)
+        self._stub_iter = utilities.BoundIterator(self._stub)
         self._stub_complete = True
         self.comma_pause_factor = 3
 
     def next_stub(self):
         self._used_stubs.append(self._stub)
         self._stub = self._stub_queue.get()
-        self._stub_iter = utils.BoundIterator(self._stub)
+        self._stub_iter = utilities.BoundIterator(self._stub)
         self._stub_complete = False
         self._output = ""
 
@@ -455,7 +458,7 @@ class MultiTypeWriter(TypeWriter):
 
         #set first stub
         self._stub = stubs[0]
-        self._stub_iter = utils.BoundIterator(self._stub)
+        self._stub_iter = utilities.BoundIterator(self._stub)
 
         #set stub que
         for stub in stubs[1:]:
@@ -508,7 +511,7 @@ class MultiTypeWriter(TypeWriter):
         if position is None:
             _position = self.position
         else:
-            _position = utils.abs_point(position, ref, frame.shape)
+            _position = utilities.abs_point(position, ref, frame.shape)
 
         if self._stub_iter.is_empty is False:
             #pause for a comma a tad
@@ -574,12 +577,12 @@ class OTIS(ScriptTypeWriter):
 
     def speaks(self, frame, box=True):
         gls = self.gls
-        print(gls)
+
         if box is True:
             portion = frame[gls[0]:gls[1], gls[2]:gls[3]]
             grey = cv2.cvtColor(portion, cv2.COLOR_BGR2GRAY) * .25
             portion[:, :, 0] = portion[:, :, 1] = portion[:, :, 2] = grey.astype('uint8')
-            ctools.frame_portion_to_grey(portion)
+            colortools.frame_portion_to_grey(portion)
         self.type_line(frame)
 
 
@@ -614,5 +617,5 @@ if __name__=='__main__':
         # otis.speaks(capture.frame)
         capture.show()
 
-        if utils.cv2waitkey() is True:
+        if utilities.cv2waitkey() is True:
             break

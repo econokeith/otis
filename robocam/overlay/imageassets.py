@@ -4,7 +4,7 @@ import time
 import cv2
 import numpy as np
 import robocam.overlay.bases as base
-from robocam.overlay import shapes as shapes
+from robocam.overlay import shapefunctions as shapes
 from robocam.helpers import utilities as utils
 
 # Todo: make this more easily resizeable

@@ -5,10 +5,10 @@ from collections import deque
 import cv2
 import numpy as np
 
-import robocam.overlay.bases as base
+
+
 from robocam.helpers import cvtools, timers
-from robocam.overlay import shapes as shapes
-from robocam.overlay import textwriters
+from robocam.overlay import shapefunctions, bases, textwriters#, shapeobjects
 from robocam.overlay.textwriters import TextWriter, NameTag
 
 
@@ -95,7 +95,7 @@ class AssetBase(abc.ABC):
         return (r + l) // 2, (t + b) // 2
 
 
-class BoundingBox(base.Writer):
+class BoundingBox(bases.Writer):
     shape = "rectangle"
     name_writer: TextWriter
     name: str
@@ -196,7 +196,7 @@ class BoundingBox(base.Writer):
         _name = self.name if name is None else name
         self.name_writer.write(frame, position=(0, 20), text=_name, ref=(l, t))
         if self.name_line is True:
-            shapes.draw_line(frame, (0, 0), (0, 15), self.color, 1, ref=(l + 15, t))
+            shapefunctions.draw_line(frame, (0, 0), (0, 15), self.color, 1, ref=(l + 15, t))
 
 
 class BoundingCircle(BoundingBox):
@@ -242,7 +242,7 @@ class BoundingCircle(BoundingBox):
             return
 
         _name = self.name if name is None else name
-        shapes.draw_circle(frame, self.center, self.radius, self.color, self.thickness)
+        shapefunctions.draw_circle(frame, self.center, self.radius, self.color, self.thickness)
         if self.show_name is True and (name is not None or self.name is not None):
             self.name_tag(frame, name)
 
@@ -267,7 +267,7 @@ class CrossHair(BoundingCircle):
             self.constant_size = True
             self._radius = radius
 
-        self.line_writer = shapes.Line(color='b', thickness=self.thickness, wtype='cal')
+        self.line_writer = robocam.overlay.shapeobjects.Line(color='b', thickness=self.thickness, wtype='cal')
 
     @property
     def radius(self):
@@ -294,10 +294,10 @@ class CrossHair(BoundingCircle):
         # shapes.draw_cal_line(frame, center, 90, radius*2.2, color='g', thickness=2)
         # shapes.draw_cal_line(frame, center, 0, radius*2.2, color='g', thickness=2)
 
-        shapes.draw_circle(frame, center, radius, self.color, self.thickness)
-        shapes.draw_circle(frame, center, radius/2, 'b', self.thickness/2)
+        shapefunctions.draw_circle(frame, center, radius, self.color, self.thickness)
+        shapefunctions.draw_circle(frame, center, radius / 2, 'b', self.thickness / 2)
 
         self.line_writer.write(frame, center, 90, radius*2.2, wtype='cal', thickness=1)
         self.line_writer.write(frame, center, 0, radius*2.2, wtype='cal',thickness=1)
 
-        shapes.draw_circle(frame, center, 3, 'g', -1)
+        shapefunctions.draw_circle(frame, center, 3, 'g', -1)

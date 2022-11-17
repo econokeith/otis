@@ -4,6 +4,9 @@ screens events like flashes or countdowns or pulses
 import abc
 import queue
 
+import time
+from robocam.helpers import utilities as utils
+
 import numpy as np
 import cv2
 
@@ -131,40 +134,8 @@ class ColorFlash(ScreenEvent):
         self.counter.reset()
 
 
-def main():
-    from robocam import camera
-    import time
-    from robocam.helpers import utilities as utils
-
-    # capture = camera.CameraPlayer(dim=(1920, 1080))
-    time.sleep(2)
-    # time.sleep(3)
-
-    color_flash = CountDown((1920, 1080), 3)
-    waiter = timers.SinceFirstBool(2)
-
-    # while waiter() is False:
-    #     capture.read()
-    #     capture.show()
-
-
-    while True:
-        # capture.read()
-        # if new_flash_timer is True:
-        #     color_flash = ColorFlash(3)
-        color_flash.loop()
-        if color_flash.finished is True:
-            break
-        # if color_flash.finished is True:
-        #     break
-
-        if utils.cv2waitkey(1) is True:
-            break
-
-    # capture.stop()
 
 
 if __name__=='__main__':
-    main()
-
+    pass
 
