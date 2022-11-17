@@ -101,19 +101,26 @@ class BoundingBox(base.Writer):
 
     def __init__(self,
                  color='r',  # must be either string in color hash or bgr value
-                 scale=1,  # font scale,
-                 thickness=2, # line type
-                 show_me = True
+                 font_scale=1,  # font scale,
+                 thickness=2,
+                 ltype=1,# line type
+                 show_me = True,
+                 name = "",
+                 show_name = True,
+                 name_line = True
                  ):
 
         super().__init__()
+
         self.coords = np.zeros(4, dtype=int) ### stored as top, right, bottom, left
         self.color = color
         self.thickness = thickness
-        self.name_writer = textwriters.TextWriter(scale=1, ltype=1)
-        self.name = None
-        self.show_name = True
-        self.name_line = True
+        self.font_scale = font_scale
+        self.ltype = ltype
+        self.name_writer = textwriters.TextWriter(scale=font_scale, ltype=ltype)
+        self.name = name
+        self.show_name = show_name
+        self.name_line = name_line
         self.show_me = show_me
 
     @property
