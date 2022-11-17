@@ -222,7 +222,7 @@ class BoxManager:
                                                       color=next(self.color_cycler)
                                                       **kwargs,)
 
-    def _update_box(self, nsmr):
+    def _update_box(self, name):
 
         try:
             box = self.box_hash[name]
