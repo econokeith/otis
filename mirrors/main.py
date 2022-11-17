@@ -10,8 +10,8 @@ import numpy as np
 
 import robocam.helpers.multitools as mtools
 # from piegame import servo_process
-from piegame import cv_model_process
-from piegame import camera_process
+import mirror_camera
+import mirror_vision
 
 
 def make_parser():
@@ -61,7 +61,7 @@ def main():
     shared_data_object.add_array('error', ctypes.c_double, 2)
     shared_data_object.add_array('names', ctypes.c_uint8, pargs.faces)
     # define Processes with shared data
-    process_modules = [camera_process, cv_model_process]
+    process_modules = [mirror_camera, mirror_vision]
     #if servos are true, add it to the process list
     if pargs.servo is True:
         process_modules.append(servo_process)

@@ -7,9 +7,6 @@ from queue import Queue
 
 import numpy as np
 
-import robocam.scripts.copy_frame
-from robocam.helpers.cvtools import box_stabilizer
-
 from robocam import camera
 from robocam.helpers import multitools as mtools, utilities as utils, timers, cvtools, colortools as ctools
 from robocam.overlay import screenevents as events, textwriters as writers, assets, groups, motion, shapefunctions
@@ -183,6 +180,7 @@ class BouncyScene:
             bbox_coords = shared.bbox_coords.copy()
             n_faces = self.shared.n_faces.value
             self.names = [tracker[name] for name in shared.names[:n_faces]]
+            print(self.names)
 
             for i, name in enumerate(self.names):
                 box = bbox_hash[name]
