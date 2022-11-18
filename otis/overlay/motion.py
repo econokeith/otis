@@ -183,7 +183,7 @@ class AssetMover:
         v1 = self.velocity
         v2 = ball.velocity
         x1 = self.position
-        x2 = ball.position
+        x2 = ball.center
         m1 = self.mass
         m2 = ball.mass
 
@@ -202,14 +202,14 @@ class AssetMover:
             ball.velocity = v2_new
 
             self.position += v1_new / self.ups
-            ball.position += v2_new / self.ups
+            ball.center += v2_new / self.ups
             self.collision_hash[ball.id] = True
             if clean is True:
                 remove_overlap(self, ball)
 
         elif dx_norm <= (self.radius + ball.radius):
             self.position += self.velocity / self.ups
-            ball.position += ball.velocity / self.ups
+            ball.center += ball.velocity / self.ups
 
         elif dx_norm > (self.radius + ball.radius):
             self.collision_hash[ball.id] = False
@@ -225,8 +225,8 @@ class AssetMover:
 
 
 def remove_overlap(ball1, ball2):
-    x1 = ball1.position
-    x2 = ball2.position
+    x1 = ball1.center
+    x2 = ball2.center
     r1 = ball1.radius
     r2 = ball2.radius
     m1 = ball1.mass
