@@ -37,7 +37,7 @@ def target(shared, pargs):
                                           ).start()
 
     manager = SceneManager(shared, pargs, capture=capture)
-
+    boxes = Boxes(manager, shared, pargs)
 
     info_group = InfoGroup((10, 40), shared, pargs)
 
@@ -48,6 +48,7 @@ def target(shared, pargs):
 
         check, frame = capture.read()
         shared.frame[:] = frame  # latest frame to shared frame
+        boxes.loop(frame)
         info_group.write(frame)
         capture.show(frame)
 
@@ -83,7 +84,7 @@ class SceneManager:
         self.scene_number = 0
 
 
-class BouncyScene:
+class Boxes:
 
     def __init__(self, manager, shared, args):
         self.manager = manager
