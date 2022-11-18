@@ -3,7 +3,7 @@ import os
 from collections import defaultdict
 from queue import Queue
 
-from robocam.helpers import timers as timers
+from otis.helpers import timers as timers
 
 
 def bbox_to_center(coords):

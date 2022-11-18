@@ -4,7 +4,7 @@ Jupyter notebooks
 """
 
 import time
-import robocam.helpers.timers as timers
+import otis.helpers.timers as timers
 
 def min_wait_between_calls(min_wait=1 / 30):
     """

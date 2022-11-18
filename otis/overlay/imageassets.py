@@ -4,9 +4,9 @@ import time
 import cv2
 import numpy as np
 
-import robocam.helpers.cvtools
-import robocam.overlay.bases as base
-from robocam.helpers import shapefunctions as shapes
+import otis.helpers.cvtools
+import otis.overlay.bases as base
+from otis.helpers import shapefunctions as shapes
 
 
 # Todo: make this more easily resizeable
@@ -105,7 +105,7 @@ def bbox_to_center(coords):
     return int((r+l)/2), int((t+b)/2)
 
 if __name__=='__main__':
-    import robocam.camera as camera
+    import otis.camera as camera
     Capture = camera.ThreadedCameraPlayer(0, dim=(1920, 1080)).start()
     Pie = ImageAsset('./photo_asset_files/pie_asset')
     time.sleep(3)
@@ -121,7 +121,7 @@ if __name__=='__main__':
 
         cv2.imshow('test', frame)
 
-        if robocam.helpers.cvtools.cv2waitkey():
+        if otis.helpers.cvtools.cv2waitkey():
             break
 
     Capture.stop()

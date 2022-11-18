@@ -4,11 +4,11 @@ from collections import defaultdict
 
 import numpy as np
 
-import robocam.helpers.cvtools
-import robocam.helpers.maths
-from robocam import camera
-from robocam.helpers import multitools, timers, cvtools, colortools
-from robocam.overlay import screenevents as events, textwriters, assets, groups
+import otis.helpers.cvtools
+import otis.helpers.maths
+from otis import camera
+from otis.helpers import multitools, timers, cvtools, colortools
+from otis.overlay import screenevents as events, textwriters, assets, groups
 
 MAX_FPS = 30
 
@@ -51,7 +51,7 @@ def target(shared, pargs):
         info_group.write(frame)
         capture.show(frame)
 
-        if robocam.helpers.cvtools.cv2waitkey() is True:
+        if otis.helpers.cvtools.cv2waitkey() is True:
             break
 
     capture.stop()
@@ -85,23 +85,19 @@ class SceneManager:
 
 class Boxes:
 
-    def __init__(self, manager, shared, args):
+    def __init__(self, manager):
         self.manager = manager
-        self.shared = shared
-        self.args = args
+        self.shared = manager.shared
+        self.args = manager.args
         self.capture = self.manager.capture
 
-        self.stop_timer = timers.SinceFirstBool(3)
+
 
         self.color_cycle = colortools.ColorCycle()
 
-        self.screen_flash = events.ColorFlash(max_ups=args.max_fps,
-                                              cycle_t=.5,
-                                              direction=-1
-                                              )
         self.screen_flash.reset()
 
-        self.bbox_coords = np.array(shared.bbox_coords)
+        self.bbox_coords = np.array(self.shared.bbox_coords)
 
         self.box_fun = lambda: assets.BoundingBox(color=self.color_cycle())
         self.bbox_hash = defaultdict(self.box_fun)
@@ -109,11 +105,11 @@ class Boxes:
         self.is_updated = True
         self.flash_event = False
 
-        self.frame = np.zeros((args.dim[1], args.dim[0], 3), dtype='uint8')
+        self.frame = np.zeros((self.args.dim[1], self.args.dim[0], 3), dtype='uint8')
         self.names = []
 
-    def loop(self, frame):
-
+    def loop(self):
+        frame = self.capture.frame
         shared = self.shared
         bbox_hash = self.bbox_hash
         tracker = self.manager.name_tracker
@@ -151,7 +147,7 @@ class InfoGroup(groups.AssetGroup):
                                              color=self.color,
                                              )
 
-        self.model_ma = robocam.helpers.maths.MovingAverage(MA)
+        self.model_ma = otis.helpers.maths.MovingAverage(MA)
 
         ma_text_fun = lambda: f'model updates per second : {int(1 / self.model_ma.update(shared.m_time.value))}'
         model_writer = textwriters.InfoWriter(text_fun=ma_text_fun,

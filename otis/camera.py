@@ -7,9 +7,9 @@ import platform
 import cv2
 import numpy as np
 
-import robocam.helpers.timers as timers
-from robocam.helpers import dstructures as utils
-import robocam.overlay.textwriters as writers
+import otis.helpers.timers as timers
+from otis.helpers import dstructures as utils
+import otis.overlay.textwriters as writers
 
 
 class CameraPlayer:

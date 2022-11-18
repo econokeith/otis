@@ -6,12 +6,12 @@ import numpy as np
 
 
 
-import robocam.helpers.cvtools as cvtools
-import robocam.helpers.timers as timers
-from robocam.overlay import bases, textwriters#, shapeobjects
-from robocam.helpers import shapefunctions
-from robocam.overlay.shapes import Line
-from robocam.overlay.textwriters import TextWriter, NameTag
+import otis.helpers.cvtools as cvtools
+import otis.helpers.timers as timers
+from otis.overlay import bases, textwriters#, shapeobjects
+from otis.helpers import shapefunctions
+from otis.overlay.shapes import Line
+from otis.overlay.textwriters import TextWriter, NameTag
 
 
 class AssetBase(abc.ABC):

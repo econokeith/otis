@@ -6,9 +6,9 @@ from queue import Queue
 import cv2
 import numpy as np
 
-import robocam.helpers.maths
-from robocam.helpers import dstructures as utils, timers, colortools
-#from robocam.overlay import assets
+import otis.helpers.maths
+from otis.helpers import dstructures as utils, timers, colortools
+#from otis.overlay import assets
 
 def box_stabilizer(box0, box1, threshold=.25):
     """
@@ -32,7 +32,7 @@ def box_stabilizer(box0, box1, threshold=.25):
         centers.append(c)
         radii.append(r)
 
-    distance = robocam.helpers.maths.linear_distance(*centers)
+    distance = otis.helpers.maths.linear_distance(*centers)
     if distance > threshold * radii[0]:
         return box1
     else:
@@ -61,7 +61,7 @@ class BBoxStabilizer:
             centers.append(c)
             radii.append(r)
 
-        distance = robocam.helpers.maths.linear_distance(*centers)
+        distance = otis.helpers.maths.linear_distance(*centers)
         if distance > threshold * radii[0]:
             return box1
         else:

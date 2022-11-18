@@ -4,7 +4,7 @@ import sys
 import cv2
 import numpy as np
 
-from robocam.helpers import multitools as mtools, timers as timers
+from otis.helpers import multitools as mtools, timers as timers
 from _piardservo.container import ServoContainer
 from _piardservo.microcontrollers import RPiWifi
 from _piardservo.pid import PIDController

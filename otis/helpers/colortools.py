@@ -1,6 +1,6 @@
 import cv2
 from itertools import cycle
-from robocam.helpers import timers
+from otis.helpers import timers
 
 class UpDownCounter:
 
@@ -125,7 +125,7 @@ def frame_portion_to_grey(frame, darken=.25):
 
 
 # def frame_portion_to_dark(frame):
-#     from robocam.camera import CameraPlayer
+#     from otis.camera import CameraPlayer
 #     p = mtw.position
 #     f = mtw.fheight
 #     v = mtw.vspace

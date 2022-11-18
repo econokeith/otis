@@ -6,8 +6,8 @@ import os
 import cv2
 import numpy as np
 
-import robocam.helpers.cvtools
-from robocam.helpers import timers, cvtools, multitools, dstructures
+import otis.helpers.cvtools
+from otis.helpers import timers, cvtools, multitools, dstructures
 
 DEBUG = False
 if DEBUG:
@@ -40,7 +40,7 @@ def target(shared_data_object, args):
         # compress and convert from
         model_timer()
         frame_copy[:,:,:] = shared.frame[:,:,::-1]
-        compressed_frame = robocam.helpers.cvtools.resize(frame_copy, 1 / args.cf)
+        compressed_frame = otis.helpers.cvtools.resize(frame_copy, 1 / args.cf)
         observed_boxes = face_locator(compressed_frame, model=model)
         observed_boxes = np.array(observed_boxes) * args.cf
         observed_encodings = face_recognition.face_encodings(frame_copy, observed_boxes,)
@@ -58,7 +58,7 @@ def target(shared_data_object, args):
                 log += (','+str(distance))
             logging.info(f'log', best_match_index)
 
-        if robocam.helpers.cvtools.cv2waitkey() is True:
+        if otis.helpers.cvtools.cv2waitkey() is True:
             break
 
         shared.m_time.value = model_timer()

@@ -8,7 +8,7 @@ import argparse
 
 import numpy as np
 
-import robocam.helpers.multitools as multitools
+import otis.helpers.multitools as multitools
 
 import mirror_camera
 import mirror_vision

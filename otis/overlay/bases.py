@@ -4,8 +4,8 @@ cls().make_list which instantiates a list of identical Writer/subclass
 objects
 """
 import copy
-from robocam.helpers import colortools
-from robocam.helpers import cvtools
+from otis.helpers import colortools
+from otis.helpers import cvtools
 # TODO: adding the functionality with abs_point to base
 class Writer:
 

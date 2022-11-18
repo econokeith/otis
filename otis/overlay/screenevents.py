@@ -5,13 +5,13 @@ import abc
 import queue
 
 import time
-from robocam.helpers import dstructures as utils
+from otis.helpers import dstructures as utils
 
 import numpy as np
 import cv2
 
-from robocam.helpers import colortools as ctools, timers as timers
-from robocam.overlay import textwriters as writers
+from otis.helpers import colortools as ctools, timers as timers
+from otis.overlay import textwriters as writers
 
 class ScreenEvent(abc.ABC):
 

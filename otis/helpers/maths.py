@@ -2,7 +2,7 @@ from queue import Queue
 
 import numpy as np
 
-from robocam.helpers.coordtools import abs_point
+from otis.helpers.coordtools import abs_point
 
 
 def line_from_point_angle_length(point, angle, length, ref=None, dim=None):

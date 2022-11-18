@@ -1,8 +1,8 @@
 import cv2
 
-import robocam.helpers.coordtools
-from robocam.helpers import shapefunctions
-from robocam.overlay import bases
+import otis.helpers.coordtools
+from otis.helpers import shapefunctions
+from otis.overlay import bases
 
 
 class Circle(bases.Writer):
@@ -116,8 +116,8 @@ class Line(bases.Writer):
         elif _wtype == 'cal':
             shapefunctions.draw_cal_line(frame, *args, color=_color, thickness=_thickness, ref=ref)
         else:
-            point0 = robocam.helpers.coordtools.abs_point(*args[0], ref, frame.shape[:2])
-            point1 = robocam.helpers.coordtools.abs_point(*args[1], ref, frame.shape[:2])
+            point0 = otis.helpers.coordtools.abs_point(*args[0], ref, frame.shape[:2])
+            point1 = otis.helpers.coordtools.abs_point(*args[1], ref, frame.shape[:2])
 
             cv2.line(frame, point0, point1, _color, _thickness)
 

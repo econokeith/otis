@@ -8,7 +8,7 @@ import argparse
 
 import numpy as np
 
-import robocam.helpers.multitools as mtools
+import otis.helpers.multitools as mtools
 # from piegame import servo_process
 from piegame import cv_model_process
 from piegame import camera_process
@@ -40,8 +40,8 @@ def make_parser():
 parser = make_parser()
 pargs = parser.parse_args()
 pargs.video_center = np.array(pargs.dim) // 2
-pargs.path_to_faces = './faces'
-pargs.path_to_pies = 'photo_assets/pie_asset'
+pargs.PATH_TO_FACES = './faces'
+pargs.PATH_TO_PIES = 'photo_assets/pie_asset'
 
 if pargs.servo is True:
     from piegame import servo_process

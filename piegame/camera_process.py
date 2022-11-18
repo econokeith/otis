@@ -4,12 +4,12 @@ from collections import defaultdict
 
 import numpy as np
 
-import robocam.helpers.cvtools
-import robocam.helpers.maths
-from robocam import camera
-from robocam.helpers import multitools as mtools, timers, cvtools, colortools as ctools, \
+import otis.helpers.cvtools
+import otis.helpers.maths
+from otis import camera
+from otis.helpers import multitools as mtools, timers, cvtools, colortools as ctools, \
     shapefunctions
-from robocam.overlay import screenevents as events, textwriters as writers, assets, groups, motion
+from otis.overlay import screenevents as events, textwriters as writers, assets, groups, motion
 
 MAX_FPS = 30
 DIMENSIONS = DX, DY = (1920, 1080)
@@ -29,7 +29,7 @@ COLLISIONS = True
 BORDER = True
 PIE_SCALE = .8
 GAME_TIME = 30
-# pie_path= '/home/keith/Projects/robocam/robocam/overlay/photo_assets/pie_asset'
+# pie_path= '/home/keith/Projects/otis/otis/overlay/photo_assets/pie_asset'
 pie_path = 'photo_asset_files/pie_asset'
 face_path = 'faces'
 
@@ -70,7 +70,7 @@ def target(shared, pargs):
         if count_down.finished is True:
             break
 
-        if robocam.helpers.cvtools.cv2waitkey(1) is True:
+        if otis.helpers.cvtools.cv2waitkey(1) is True:
             break
 
     stopped = False
@@ -88,7 +88,7 @@ def target(shared, pargs):
         if stopped is True and STOP_AFTER_GAME is True:
             break
 
-        if robocam.helpers.cvtools.cv2waitkey() is True:
+        if otis.helpers.cvtools.cv2waitkey() is True:
             break
 
     capture.stop()
@@ -118,7 +118,7 @@ class BouncyScene:
         self.capture = self.manager.capture
         self.stop_timer = timers.SinceFirstBool(3)
         self.color_cycle = ctools.ColorCycle()
-        self.bouncy_pies = motion.BouncingAssetManager(asset_fun=args.path_to_pies,
+        self.bouncy_pies = motion.BouncingAssetManager(asset_fun=args.PATH_TO_PIES,
                                                        max_fps=args.max_fps,
                                                        dim=args.dim,
                                                        max_balls=MAX_BALLS,
@@ -216,7 +216,7 @@ class InfoGroup(groups.AssetGroup):
                                          color=self.color,
                                          )
 
-        self.model_ma = robocam.helpers.maths.MovingAverage(MA)
+        self.model_ma = otis.helpers.maths.MovingAverage(MA)
 
         ma_text_fun = lambda: f'model updates per second : {int(1 / self.model_ma.update(shared.m_time.value))}'
         model_writer = writers.InfoWriter(text_fun=ma_text_fun,

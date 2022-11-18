@@ -10,10 +10,10 @@ import time
 import numpy as np
 import cv2
 
-from robocam.helpers import timers
-from robocam.helpers.cvtools import cv2waitkey
-from robocam.overlay import imageassets as imga
-import robocam.camera as camera
+from otis.helpers import timers
+from otis.helpers.cvtools import cv2waitkey
+from otis.overlay import imageassets as imga
+import otis.camera as camera
 
 
 # add vector form types
