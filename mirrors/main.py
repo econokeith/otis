@@ -8,12 +8,13 @@ import sys
 import numpy as np
 
 from otis.helpers import multitools, otistools
-import mirror_camera, mirror_vision, mirror_servo
+import camera_process, cv_model_process, servo_process
 
 parser = otistools.make_parser()
 pargs = parser.parse_args()
 pargs.video_center = np.array(pargs.dim) // 2
 pargs.PATH_TO_FACES = './faces'
+
 
 if pargs.servo is True:
     pass
@@ -33,10 +34,10 @@ def main():
     shared_data_object.add_array('error', ctypes.c_double, 2)
     shared_data_object.add_array('names', ctypes.c_uint8, pargs.faces)
     # define Processes with shared data
-    process_modules = [mirror_camera, mirror_vision]
+    process_modules = [camera_process, cv_model_process]
     #if servos are true, add it to the process list
     if pargs.servo is True:
-        process_modules.append(mirror_servo)
+        process_modules.append(servo_process)
 
     processes = []
     # each process module should have a primary function called 'target'

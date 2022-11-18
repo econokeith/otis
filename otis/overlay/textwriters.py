@@ -15,6 +15,7 @@ from otis.overlay import bases
 
 class TextWriter(bases.Writer):
     text_fun: types.FunctionType
+
     def __init__(self,
                  position = (0,0),  #position
                  font = cv2.FONT_HERSHEY_DUPLEX,

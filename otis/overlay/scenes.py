@@ -39,18 +39,21 @@ class SceneManager:
 
 class BoundingManager:
 
-    def __init__(self, manager):
+    def __init__(self, manager, threshold=.1):
 
         self.manager = manager
         self.shared = manager.shared
         self.args = manager.pargs
         self.capture = self.manager.capture
-
+        self.threshold = threshold
         self.color_cycle = colortools.ColorCycle()
 
         self.bbox_coords = np.array(self.shared.bbox_coords)
 
-        self.box_fun = lambda: assets.BoundingBox(color=self.color_cycle())
+        self.box_fun = lambda: assets.BoundingBox(threshold=self.threshold,
+                                                  color= self.color_cycle()
+                                                  )
+
         self.bbox_hash = defaultdict(self.box_fun)
 
         self.is_updated = True

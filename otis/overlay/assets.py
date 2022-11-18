@@ -305,3 +305,9 @@ class CrossHair(BoundingCircle):
         shapefunctions.draw_circle(frame, center, 3, 'g', -1)
 
 
+class BoundingObject(bases.Writer):
+
+    def __init__(self):
+        super().__init__()
+
+

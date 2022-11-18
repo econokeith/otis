@@ -2,7 +2,7 @@ import signal
 import sys
 
 from otis.helpers import multitools, cvtools
-from otis.overlay import scenes, groups
+from otis.overlay import scenes, writergroups
 
 pie_path = 'photo_asset_files/pie_asset'
 
@@ -13,7 +13,7 @@ def target(shared, pargs):
 
     manager = scenes.SceneManager(shared, pargs)
     boxes = scenes.BoundingManager(manager)
-    info_group = groups.BasicInfoGroup((10, 40), manager)
+    info_group = writergroups.BasicInfoGroup((10, 40), manager)
     capture = manager.capture
 
     while True:

@@ -2,7 +2,7 @@
 tools for using the multiprocessing python package
 """
 import sys
-import multiprocessing as multi
+import multiprocessing
 
 import numpy as np
 import ctypes
@@ -60,18 +60,18 @@ class SharedDataObject:
         l = np.product(dim)
 
         np_dtype = np.dtype(c_type).name
-        new_array = multi.Array(c_type, int(l)).get_obj()
+        new_array = multiprocessing.Array(c_type, int(l)).get_obj()
         new_array = np.frombuffer(new_array, dtype=np_dtype).reshape(dim)
 
         setattr(self, array_name, new_array)
 
     def add_value(self, value_name, c_type, value):
-        new_value = multi.Value(c_type, value)
+        new_value = multiprocessing.Value(c_type, value)
 
         setattr(self, value_name, new_value)
 
 
-class LibraryImportProcess(multi.Process):
+class LibraryImportProcess(multiprocessing.Process):
 
     def run(self):
         '''

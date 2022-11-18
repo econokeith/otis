@@ -7,7 +7,7 @@ import otis.helpers.cvtools
 import otis.helpers.maths
 from otis import camera
 from otis.helpers import multitools, timers, cvtools, colortools, shapefunctions
-from otis.overlay import screenevents as events, textwriters as writers, assets, groups, motion
+from otis.overlay import screenevents, textwriters, assets, writergroups, motion
 
 MAX_FPS = 30
 DIMENSIONS = DX, DY = (1920, 1080)
@@ -59,7 +59,7 @@ def target(shared, pargs):
 
     info_group = InfoGroup((10, 40), shared, pargs)
 
-    count_down = events.CountDown(pargs.dim, 3)
+    count_down = screenevents.CountDown(pargs.dim, 3)
 
     while True:
         count_down.loop(show=False)
@@ -98,11 +98,11 @@ def target(shared, pargs):
 #######################################################################################################################
 class SceneManager:
 
-    def __init__(self, shared, args, capture=None):
+    def __init__(self, shared, pargs, capture=None):
 
         self.shared = shared
-        self.args = args
-        self.name_tracker = cvtools.NameTracker(args.PATH_TO_FACES)
+        self.pargs = pargs
+        self.name_tracker = cvtools.NameTracker(pargs.PATH_TO_FACES)
         self.capture = capture
         self.scene_number = 0
 
@@ -116,6 +116,7 @@ class BouncyScene:
         self.capture = self.manager.capture
         self.stop_timer = timers.SinceFirstBool(3)
         self.color_cycle = colortools.ColorCycle()
+
         self.bouncy_pies = motion.BouncingAssetManager(asset_fun=args.PATH_TO_PIES,
                                                        max_fps=args.max_fps,
                                                        dim=args.dim,
@@ -123,11 +124,12 @@ class BouncyScene:
                                                        collisions=COLLISIONS,
                                                        scale = PIE_SCALE,
                                                        )
+
         self.collision_detector = motion.CollisionDetector(COLLISION_OVERLAP)
-        self.screen_flash = events.ColorFlash(max_ups=args.max_fps,
-                                              cycle_t=.5,
-                                              direction=-1
-                                              )
+        self.screen_flash = screenevents.ColorFlash(max_ups=args.max_fps,
+                                                    cycle_t=.5,
+                                                    direction=-1
+                                                    )
         self.screen_flash.reset()
         self.score_keeper = ScoreKeeper((10, 200),
                                         manager,
@@ -194,7 +196,7 @@ class BouncyScene:
         return False
 
 
-class InfoGroup(groups.AssetGroup):
+class InfoGroup(writergroups.AssetGroup):
 
     def __init__(self, position, shared, args):
         super().__init__(position)
@@ -203,29 +205,29 @@ class InfoGroup(groups.AssetGroup):
         self.shared = shared
         self.args = args
 
-        fps_writer = writers.TimerWriter(title="screen fps",
-                                         timer_type='last',
-                                         position=(0, 0),
-                                         roundw=0,
-                                         per_second=True,
-                                         moving_average=MA,
-                                         scale=self.scale,
-                                         color=self.color,
-                                         )
+        fps_writer = textwriters.TimerWriter(title="screen fps",
+                                             timer_type='last',
+                                             position=(0, 0),
+                                             roundw=0,
+                                             per_second=True,
+                                             moving_average=MA,
+                                             scale=self.scale,
+                                             color=self.color,
+                                             )
 
         self.model_ma = otis.helpers.maths.MovingAverage(MA)
 
         ma_text_fun = lambda: f'model updates per second : {int(1 / self.model_ma.update(shared.m_time.value))}'
-        model_writer = writers.InfoWriter(text_fun=ma_text_fun,
-                                          position=(0, -30),
-                                          scale=self.scale,
-                                          color=self.color,
-                                          )
+        model_writer = textwriters.InfoWriter(text_fun=ma_text_fun,
+                                              position=(0, -30),
+                                              scale=self.scale,
+                                              color=self.color,
+                                              )
 
         self.add([model_writer, fps_writer])
 
 
-class ScoreKeeper(groups.AssetGroup):
+class ScoreKeeper(writergroups.AssetGroup):
 
     def __init__(self,
                  position,
@@ -246,26 +248,26 @@ class ScoreKeeper(groups.AssetGroup):
         self.players = players
         self.v_spacing = v_spacing
 
-        self.time_writer = writers.TimerWriter(title="Time",
-                                              timer_type='countdown',
-                                              position=(10, -v_spacing),
-                                              roundw=0,
-                                              per_second=True,
-                                              moving_average=MA,
-                                              scale=self.scale,
-                                              color=self.color,
-                                              count_from=game_time,
-                                              )
+        self.time_writer = textwriters.TimerWriter(title="Time",
+                                                   timer_type='countdown',
+                                                   position=(10, -v_spacing),
+                                                   roundw=0,
+                                                   per_second=True,
+                                                   moving_average=MA,
+                                                   scale=self.scale,
+                                                   color=self.color,
+                                                   count_from=game_time,
+                                                   )
         # make the score textwriters
         score_writers = []
         score_text_fun = lambda name: f'{name} : {self.score[name]}'
 
         for i, name in enumerate(self.players):
-            score_writer = writers.InfoWriter(text_fun= score_text_fun,
-                                              position=(10, -v_spacing*2-v_spacing*i),
-                                              scale=self.scale,
-                                              color=self.color,
-                                              )
+            score_writer = textwriters.InfoWriter(text_fun= score_text_fun,
+                                                  position=(10, -v_spacing*2-v_spacing*i),
+                                                  scale=self.scale,
+                                                  color=self.color,
+                                                  )
             score_writers.append(score_writer)
 
         self.add([self.time_writer])

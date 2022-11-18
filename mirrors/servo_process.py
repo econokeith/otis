@@ -39,7 +39,7 @@ def target(shared_data_object, args):
             break
 
     while True:
-        #make copies in order to avoid updates in the middle of a loop
+        # make copies in order to avoid updates in the middle of a loop
         names = list(np.array(shared.names[:shared.n_faces.value]))
         primary = shared.primary.value
 
@@ -53,16 +53,14 @@ def target(shared_data_object, args):
 
         if update_limiter() and np.all(new_coords != last_coords):
             t, r, b, l = shared.bbox_coords[p_index,:]
-
             #if center of the screen, don't adjust the camera
             if t <= video_center[0] <= b and r <= video_center[0] <= l:
                 error = 0
             else:
                 target[0], target[1] = (r+l)//2, (b+t)//2
                 error = target - video_center
-                Servos[0].value += -xPID.update(error[0], sleep=0)
+                Servos[0].value += xPID.update(error[0], sleep=0)
                 Servos[1].value += yPID.update(error[1], sleep=0)
-
 
             last_coords = np.array(new_coords)
 

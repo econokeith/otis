@@ -9,9 +9,12 @@ import argparse
 import numpy as np
 
 import otis.helpers.multitools as mtools
-# from piegame import servo_process
 from piegame import cv_model_process
 from piegame import camera_process
+try:
+    import servo_process
+except:
+    print('no servo_process found')
 
 
 def make_parser():
@@ -30,7 +33,7 @@ def make_parser():
                         help='runs a hog if cpu and cnn if gpu')
     parser.add_argument('--ncpu', type=int, default='1',
                         help='number of cpus')
-    parser.add_argument('--servo', type=bool, default=False,
+    parser.add_argument('--servo', type=bool, default=True,
                         help='use servos')
     parser.add_argument('-s', '--scale', type=float, default=1.5)
     parser.add_argument('-cv', type=bool, default=True)
@@ -42,9 +45,6 @@ pargs = parser.parse_args()
 pargs.video_center = np.array(pargs.dim) // 2
 pargs.PATH_TO_FACES = './faces'
 pargs.PATH_TO_PIES = 'photo_assets/pie_asset'
-
-if pargs.servo is True:
-    from piegame import servo_process
 
 def main():
     # set up shared data
@@ -64,7 +64,10 @@ def main():
     process_modules = [camera_process, cv_model_process]
     #if servos are true, add it to the process list
     if pargs.servo is True:
-        process_modules.append(servo_process)
+        try:
+            process_modules.append(servo_process)
+        except:
+            raise ValueError("could not find servo_process")
 
     processes = []
     # each process module should have a primary function called 'target'

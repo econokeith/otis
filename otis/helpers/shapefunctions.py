@@ -1,28 +1,52 @@
 import cv2
 
-import otis.helpers.coordtools
+import otis.helpers.coordtools as coordtools
 import otis.helpers.maths
-import otis.helpers.texttools
+import otis.helpers.texttools as texttools
 from otis.helpers import dstructures, colortools
 
+
 def draw_circle(frame, center, radius, color='r', thickness=1, ltype=None, ref=None):
+
     _color = colortools.color_function(color)
+    c = coordtools.abs_point(center, ref, dim=frame)
+    cv2.circle(frame, c, int(radius), _color, int(thickness), ltype)
 
-    c = otis.helpers.coordtools.abs_point(center, ref, dim=frame.shape)
-    r = int(radius)
-    t = int(thickness)
+def draw_rectangle(frame,
+                   coords,
+                   color='r',
+                   thickness=1,
+                   ltype=None,
+                   ref=None,
+                   coord_format = 'rtlb'
+                   ):
+    """
 
-    cv2.circle(frame, c, r, _color, t, ltype)
+    Args:
+        frame:
+        coords:
+        color:
+        thickness:
+        ltype:
+        ref:
+        coord_format:
 
+    Returns:
 
-def draw_rectangle(frame, rt_point, lb_point, color='r', thickness=1, ltype=None, ref=None):
+    """
+
+    r, t, l, b = coordtools.translate_box_coords(coords, coord_format, 'rtlb', ref, frame)
     _color = colortools.color_function(color)
-    r, t = otis.helpers.coordtools.abs_point(rt_point, ref, dim=frame.shape)
-    l, b = otis.helpers.coordtools.abs_point(lb_point, ref, dim=frame.shape)
     cv2.rectangle(frame, (l, t), (r, b), _color, thickness, ltype)
 
-
-def draw_line(frame, pt1, pt2, color='r', thickness=1, ref=None):
+def draw_line(frame,
+              pt1,
+              pt2,
+              color='r',
+              thickness=1,
+              ltype=None,
+              ref=None,
+              ):
     """
     draw a line
     :param frame:
@@ -34,12 +58,12 @@ def draw_line(frame, pt1, pt2, color='r', thickness=1, ref=None):
     :return:
     """
     _color = colortools.color_function(color)
-    _pt1 = otis.helpers.coordtools.abs_point(pt1, ref, frame.shape)
-    _pt2 = otis.helpers.coordtools.abs_point(pt2, ref, frame.shape)
-    cv2.line(frame, _pt1, _pt2, _color, thickness)
+    _pt1 = coordtools.abs_point(pt1, ref, frame)
+    _pt2 = coordtools.abs_point(pt2, ref, frame)
+    cv2.line(frame, _pt1, _pt2, _color, thickness, ltype)
 
 
-def draw_cal_line(frame, center, angle, length, color='r', thickness=1, ref=None):
+def draw_cal_line(frame, center, angle, length, color='r', thickness=1, ltype=None, ref=None):
     """
     draw a line from the center angle and length
     :param frame:
@@ -52,11 +76,11 @@ def draw_cal_line(frame, center, angle, length, color='r', thickness=1, ref=None
     :return:
     """
     _color = colortools.color_function(color)
-    _pt0, _pt1 = otis.helpers.maths.line_from_center_angle_length(center, angle, length, ref=ref, dim=frame.shape)
-    cv2.line(frame, _pt0, _pt1, _color, thickness)
+    _pt0, _pt1 = otis.helpers.maths.line_from_center_angle_length(center, angle, length, ref=ref, dim=frame)
+    cv2.line(frame, _pt0, _pt1, _color, thickness, ltype)
 
 
-def draw_pal_line(frame, point, angle, length, color='r', thickness=1, ref=None):
+def draw_pal_line(frame, point, angle, length, color='r', thickness=1, ltype=None, ref=None):
     """
     draw a line from point angle and length
     :param frame:
@@ -69,8 +93,8 @@ def draw_pal_line(frame, point, angle, length, color='r', thickness=1, ref=None)
     :return:
     """
     _color = colortools.color_function(color)
-    _pt0, _pt1 = otis.helpers.maths.line_from_point_angle_length(point, angle, length, ref=ref, dim=frame.shape)
-    cv2.line(frame, _pt0, _pt1, _color, thickness)
+    _pt0, _pt1 = otis.helpers.maths.line_from_point_angle_length(point, angle, length, ref=ref, dim=frame)
+    cv2.line(frame, _pt0, _pt1, _color, thickness, ltype)
 
 
 # todo combine with bordered
@@ -85,13 +109,13 @@ def write_text(frame,
                ref=None,
                jtype='l',
                thickness=1,
-               bl=False
+               lb_origin=False
                ):
 
     _color = colortools.color_function(color)
-    _pos = otis.helpers.coordtools.abs_point(pos, ref, frame.shape)
+    _pos = coordtools.abs_point(pos, ref, frame)
     _font = cv2.FONT_HERSHEY_DUPLEX if font is None else font
-    _pos = otis.helpers.texttools.find_justified_start(text, _pos, _font, scale, ltype, jtype)
+    _pos = texttools.find_justified_start(text, _pos, _font, scale, ltype, jtype)
 
     cv2.putText(frame,
                 text,
@@ -101,7 +125,7 @@ def write_text(frame,
                 _color,
                 thickness,
                 ltype,
-                bl)
+                lb_origin)
 
 
 def write_bordered_text(frame,
@@ -109,55 +133,87 @@ def write_bordered_text(frame,
                         pos=(10, 50),
                         font=None,
                         color='b',
-                        bcolor='r',  # background color
                         scale=1,
-                        btype=-1,  # -1 means filled
-                        ltype=2,
+                        ltype=1,
                         ref=None,
-                        border=10,
-                        jtype='l'):
+                        jtype='l',
+                        lb_origin=True,
+                        v_space=10,
+                        h_space=10,
+                        b_color='r',
+                        b_ltype=1,
+                        b_thickness = 1,
+                        ):
 
     _color = colortools.color_function(color)
-    _bcolor = colortools.color_function(bcolor)
-    _pos = otis.helpers.coordtools.abs_point(pos, ref, frame.shape)
+    _bcolor = colortools.color_function(b_color)
+    _pos = otis.helpers.coordtools.abs_point(pos, ref, frame)
     _font = cv2.FONT_HERSHEY_DUPLEX if font is None else font
     _pos = otis.helpers.texttools.find_justified_start(text, _pos, _font, scale, ltype, jtype)
 
     w, h = cv2.getTextSize(text, _font, scale, ltype)[0]
 
-    l = _pos[0] - border
-    r = l + w + 2 * border
-    b = _pos[1] + border
-    t = b - h - 2 * border
+    l = _pos[0] - h_space
+    r = l + w + 2 * h_space
+    b = _pos[1] + v_space
+    t = b - h - 2 * v_space
 
-    cv2.rectangle(frame, (l, t), (r, b), _bcolor, btype)
-    write_text(frame, text, pos=_pos, font=_font, color=_color, scale=scale, ltype=ltype, ref=ref, jtype='l')
+    cv2.rectangle(frame, (l, t), (r, b), _bcolor, b_ltype, b_thickness)
+
+    write_text(frame,
+               text,
+               pos=_pos,
+               font=_font,
+               color=_color,
+               scale=scale,
+               ltype=ltype,
+               ref=ref,
+               jtype=jtype,
+               lb_origin=lb_origin
+               )
 
 
-def write_transparent_background(frame, right_top, left_bottom, transparency=.25, ref=None):
-    h, w, _ = frame.shape
+def write_transparent_background(frame,
+                                 coords,
+                                 coord_format='rtlb',
+                                 transparency=.25,
+                                 ref=None
+                                 ):
 
-    r, t = otis.helpers.coordtools.abs_point(right_top, ref, dim=frame.shape)
-    l, b = otis.helpers.coordtools.abs_point(left_bottom, ref, dim=frame.shape)
-
+    r, t, l, b = coordtools.translate_box_coords(coords, coord_format, 'rtlb', ref, frame)
     portion = frame[t:b, l:r]
-
     grey = cv2.cvtColor(portion, cv2.COLOR_BGR2GRAY) * transparency
     portion[:, :, 0] = portion[:, :, 1] = portion[:, :, 2] = grey.astype('uint8')
     colortools.frame_portion_to_grey(portion)
 
 
-def write_copy_box(frame,
-                   copy_from_location,  #
-                   copy_to_location,
-                   ):
-    rf, tf, lf, bf = copy_from_location
-    rt, tt, lt, bt = copy_to_location
+def copy_frame_portion_to(frame,
+                          source_coords,  # r, t, l, b
+                          destination_coords,
+                          source_format='rtlb',
+                          destination_format='rtlb',
+                          source_ref = None,
+                          destination_ref = None,
+                          ):
 
-    to_size = lt - rt, bt - tt
+    rf, tf, lf, bf = coordtools.translate_box_coords(source_coords,
+                                                     in_format=source_format,
+                                                     out_format='rtlb',
+                                                     ref=source_ref,
+                                                     dim=frame
+                                                     )
 
-    copy_image = cv2.resize(frame[tf:bf, lf:rf], to_size, interpolation=cv2.INTER_LINEAR)
 
-    frame[tt:bt, lt:rt] = copy_image
+    rt, tt, lt, bt = coordtools.translate_box_coords(destination_coords,
+                                                     in_format=destination_format,
+                                                     ref=destination_ref,
+                                                     out_format='rtlb',
+                                                     dim=frame
+                                                     )
+
+    frame_from = frame[tf:bf, lf:rf]
+    frame_to = frame[tt:bt, lt:rt]
+    frame_to[:] = cv2.resize(frame_from, frame_to.shape[:2][::-1])
+
 
 

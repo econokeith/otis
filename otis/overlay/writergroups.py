@@ -48,7 +48,7 @@ class BasicInfoGroup(AssetGroup):
     def __init__(self,
                  position,
                  manager,
-                 show_dim=False,
+                 show_dim=True,
                  ma=30,
                  spacing=30,
                  color='w',
