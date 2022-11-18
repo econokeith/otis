@@ -8,16 +8,15 @@ import sys
 import numpy as np
 
 from otis.helpers import multitools, otistools
-import camera_process, cv_model_process, servo_process
+import camera_process, cv_model_process
 
 parser = otistools.make_parser()
 pargs = parser.parse_args()
 pargs.video_center = np.array(pargs.dim) // 2
 pargs.PATH_TO_FACES = './faces'
 
-
 if pargs.servo is True:
-    pass
+    import servo_process
 
 def main():
     # set up shared data

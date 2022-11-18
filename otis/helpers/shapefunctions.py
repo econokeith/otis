@@ -7,10 +7,10 @@ from otis.helpers import dstructures, colortools
 
 
 def draw_circle(frame, center, radius, color='r', thickness=1, ltype=None, ref=None):
-
     _color = colortools.color_function(color)
     c = coordtools.abs_point(center, ref, dim=frame)
     cv2.circle(frame, c, int(radius), _color, int(thickness), ltype)
+
 
 def draw_rectangle(frame,
                    coords,
@@ -18,7 +18,7 @@ def draw_rectangle(frame,
                    thickness=1,
                    ltype=None,
                    ref=None,
-                   coord_format = 'rtlb'
+                   coord_format='rtlb'
                    ):
     """
 
@@ -38,6 +38,7 @@ def draw_rectangle(frame,
     r, t, l, b = coordtools.translate_box_coords(coords, coord_format, 'rtlb', ref, frame)
     _color = colortools.color_function(color)
     cv2.rectangle(frame, (l, t), (r, b), _color, thickness, ltype)
+
 
 def draw_line(frame,
               pt1,
@@ -96,7 +97,6 @@ def draw_pal_line(frame, point, angle, length, color='r', thickness=1, ltype=Non
     _pt0, _pt1 = otis.helpers.maths.line_from_point_angle_length(point, angle, length, ref=ref, dim=frame)
     cv2.line(frame, _pt0, _pt1, _color, thickness, ltype)
 
-
 # todo combine with bordered
 
 def write_text(frame,
@@ -127,7 +127,6 @@ def write_text(frame,
                 ltype,
                 lb_origin)
 
-
 def write_bordered_text(frame,
                         text,
                         pos=(10, 50),
@@ -142,7 +141,7 @@ def write_bordered_text(frame,
                         h_space=10,
                         b_color='r',
                         b_ltype=1,
-                        b_thickness = 1,
+                        b_thickness=1,
                         ):
 
     _color = colortools.color_function(color)
@@ -172,14 +171,12 @@ def write_bordered_text(frame,
                lb_origin=lb_origin
                )
 
-
 def write_transparent_background(frame,
                                  coords,
                                  coord_format='rtlb',
                                  transparency=.25,
                                  ref=None
                                  ):
-
     r, t, l, b = coordtools.translate_box_coords(coords, coord_format, 'rtlb', ref, frame)
     portion = frame[t:b, l:r]
     grey = cv2.cvtColor(portion, cv2.COLOR_BGR2GRAY) * transparency
@@ -192,8 +189,8 @@ def copy_frame_portion_to(frame,
                           destination_coords,
                           source_format='rtlb',
                           destination_format='rtlb',
-                          source_ref = None,
-                          destination_ref = None,
+                          source_ref=None,
+                          destination_ref=None,
                           ):
 
     rf, tf, lf, bf = coordtools.translate_box_coords(source_coords,
@@ -203,17 +200,30 @@ def copy_frame_portion_to(frame,
                                                      dim=frame
                                                      )
 
-
     rt, tt, lt, bt = coordtools.translate_box_coords(destination_coords,
                                                      in_format=destination_format,
                                                      ref=destination_ref,
+                                                     dim=frame
+                                                     )
+
+    source_frame = frame[tf:bf, lf:rf]
+    destination_frame = frame[tt:bt, lt:rt]
+    destination_frame[:] = cv2.resize(source_frame, destination_frame.shape[:2][::-1])
+
+
+def copy_image_to_frame(frame,
+                        image,
+                        destination_coords,
+                        coord_format='rtlb',
+                        ref=None,
+                        ):
+
+    rt, tt, lt, bt = coordtools.translate_box_coords(destination_coords,
+                                                     in_format=coord_format,
+                                                     ref=ref,
                                                      out_format='rtlb',
                                                      dim=frame
                                                      )
 
-    frame_from = frame[tf:bf, lf:rf]
     frame_to = frame[tt:bt, lt:rt]
-    frame_to[:] = cv2.resize(frame_from, frame_to.shape[:2][::-1])
-
-
-
+    frame_to[:] = cv2.resize(image, frame_to.shape[:2][::-1])

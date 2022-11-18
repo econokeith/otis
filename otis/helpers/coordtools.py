@@ -2,10 +2,10 @@ import numpy as np
 
 __FRAME_HASH = {}
 __FRAME_HASH['c'] = lambda s: (int(s[1] / 2), int(s[0] / 2))
-__FRAME_HASH['tl'] = lambda s: (0, 0)
-__FRAME_HASH['bl'] = lambda s: (0, s[0])
-__FRAME_HASH['br'] = lambda s: (s[1], s[0])
-__FRAME_HASH['tr'] = lambda s: (s[1], 0)
+__FRAME_HASH['lt'] = lambda s: (0, 0)
+__FRAME_HASH['lb'] = lambda s: (0, s[0])
+__FRAME_HASH['rb'] = lambda s: (s[1], s[0])
+__FRAME_HASH['rt'] = lambda s: (s[1], 0)
 __FRAME_HASH['l'] = lambda s: (0, int(s[0] / 2))
 __FRAME_HASH['r'] = lambda s: (s[1], int(s[0] / 2))
 __FRAME_HASH['t'] = lambda s: (int(s[1] / 2), 0)
@@ -41,7 +41,6 @@ def abs_point(relative_point,
     else:
         raise ValueError("abs_point will not accept string reference without dimensions of frame")
 
-
     return int(relative_point[0] + ref[0]), int(ref[1] - relative_point[1])
 
 def bbox_to_center(bbox_coords):
@@ -61,7 +60,7 @@ def translate_box_coords(coords,
     :return:
     """
 
-
+    abs_point_used = False
 
     if in_format == out_format and ref is None:
         return coords
@@ -75,46 +74,49 @@ def translate_box_coords(coords,
     elif in_format == 'tblr':
         t, b, l, r = coords
 
-    elif in_format == 'ltwh':
-        l, t, w, h = coords
-        b = t+h
-        r = l+h
-
     elif in_format == 'cwh':
         cx, cy, w, h = coords
-        t = cy - h/2
-        b = t + h
-        l = cx - w/2
-        r = l + w
+        cx, cy = abs_point((cx, cy), ref, dim)
+        abs_point_used = True
+        t = cy-h//2
+        b = cy+h//2
+        l = cx - w//2
+        r = cx + w//2
+
+    elif in_format == 'ltwh':
+        l, t, w, h = coords
+        l, t = abs_point((l,t), ref, dim)
+        abs_point_used = True
+        b = t+h
+        r = l+w
 
     elif in_format == 'lbwh':
         l, b, w, h = coords
+        l, b = abs_point((l,b), ref, dim)
+        abs_point_used = True
         t = b - h
         r = l + w
 
     elif in_format == 'rtwh':
         r, t, w, h = coords
-        l = r-w
-        b = t+h
-
-    elif in_format == 'rtwh':
-        r, t, w, h = coords
+        r, t = abs_point((r,t), ref, dim)
+        abs_point_used = True
         l = r-w
         b = t+h
 
     elif in_format == 'rbwh':
         r, b, w, h = coords
+        r, b = abs_point((r,b), ref, dim)
+        abs_point_used = True
         l = r-w
         t = b-h
 
     else:
         raise ValueError("invalid coord format")
 
-
-    r,t = abs_point((r,t), ref, dim)
-    l,b = abs_point((l,b), ref, dim)
-
-
+    if abs_point_used is False:
+        r, t = abs_point((r, t), ref, dim)
+        l, b = abs_point((l, b), ref, dim)
 
     if  out_format == 'ltrb':
         return l, t, r, b
