@@ -1,4 +1,4 @@
-# Robocam - Observer Tracking Interactive Scripting
+# O.T.I.S. - Observer Tracking Interactive Scripting
 
 ### What it does
 Robocam provides a framework for making interactive computer vision models and writing scripted encounters with 
