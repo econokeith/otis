@@ -26,7 +26,7 @@ def target(shared_data_object, args):
     shared = shared_data_object
     model = 'cnn' if args.device == 'gpu' else 'hog'
 
-    known_names, known_encodings = cvtools.load_face_data(face_recognition, args.path_to_faces)
+    known_names, known_encodings = cvtools.load_face_data(face_recognition, args.PATH_TO_FACES)
     face_locator = timers.FunctionTimer(face_recognition.face_locations)
 
     # this was probably excessively complicated

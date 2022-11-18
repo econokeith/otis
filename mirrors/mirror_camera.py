@@ -17,8 +17,6 @@ RECORD = False
 RECORD_SCALE = .25
 OUTPUT_SCALE = 1
 
-
-# pie_path= '/home/keith/Projects/robocam/robocam/overlay/photo_assets/pie_asset'
 pie_path = 'photo_asset_files/pie_asset'
 face_path = 'faces'
 
@@ -70,7 +68,7 @@ class SceneManager:
 
         self.shared = shared
         self.args = args
-        self.name_tracker = cvtools.NameTracker(args.path_to_faces)
+        self.name_tracker = cvtools.NameTracker(args.PATH_TO_FACES)
 
         if capture is None:
             self.capture = camera.ThreadedCameraPlayer(0,

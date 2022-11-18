@@ -98,25 +98,14 @@ def target(shared, pargs):
 #######################################################################################################################
 #######################################################################################################################
 #######################################################################################################################
-
 class SceneManager:
 
     def __init__(self, shared, args, capture=None):
 
         self.shared = shared
         self.args = args
-        self.name_tracker = cvtools.NameTracker(args.path_to_faces)
-
-        if capture is None:
-            self.capture = camera.ThreadedCameraPlayer(0,
-                                                       max_fps=args.max_fps,
-                                                       dim=args.dim,
-                                                       scale=args.output_scale,
-                                                       flip=True
-                                                       ).start()
-        else:
-            self.capture = capture
-
+        self.name_tracker = cvtools.NameTracker(args.PATH_TO_FACES)
+        self.capture = capture
         self.scene_number = 0
 
 
@@ -127,11 +116,8 @@ class BouncyScene:
         self.shared = shared
         self.args = args
         self.capture = self.manager.capture
-
         self.stop_timer = timers.SinceFirstBool(3)
-
         self.color_cycle = ctools.ColorCycle()
-
         self.bouncy_pies = motion.BouncingAssetManager(asset_fun=args.path_to_pies,
                                                        max_fps=args.max_fps,
                                                        dim=args.dim,
@@ -139,15 +125,12 @@ class BouncyScene:
                                                        collisions=COLLISIONS,
                                                        scale = PIE_SCALE,
                                                        )
-
         self.collision_detector = motion.CollisionDetector(COLLISION_OVERLAP)
-
         self.screen_flash = events.ColorFlash(max_ups=args.max_fps,
                                               cycle_t=.5,
                                               direction=-1
                                               )
         self.screen_flash.reset()
-
         self.score_keeper = ScoreKeeper((10, 200),
                                         manager,
                                         color='g',
@@ -157,24 +140,20 @@ class BouncyScene:
                                         )
 
         self.bbox_coords = np.array(shared.bbox_coords)
-
-        self.box_fun = lambda: assets.BoundingCircle(which_radius='inside_min', color=self.color_cycle())
+        self.box_fun = lambda: assets.BoundingCircle(which_radius='inside_min',
+                                                     color=self.color_cycle()
+                                                     )
         self.bbox_hash = defaultdict(self.box_fun)
-
         self.is_updated = True
         self.flash_event = False
         self.frame = np.zeros((args.dim[1], args.dim[0], 3), dtype='uint8')
         self.names = []
 
     def loop(self, frame):
-
         shared = self.shared
         bbox_hash = self.bbox_hash
         tracker = self.manager.name_tracker
 
-
-        # cache this stuff to avoid overwrites in the middle
-        # only update
         if shared.new_overlay.value:
 
             bbox_coords = shared.bbox_coords.copy()
@@ -188,7 +167,6 @@ class BouncyScene:
                 box.coords = bbox_coords[i]
                 box.write(frame)
 
-
         if self.flash_event is True: # todo, the first call of ScreenFlash isn't doing anything
             self.screen_flash.loop(frame)
             if self.screen_flash.complete:
@@ -200,12 +178,14 @@ class BouncyScene:
             self.bouncy_pies.move(frame)
 
             for i, pie in enumerate(self.bouncy_pies.movers):
-                for name in self.names:
-                    if self.collision_detector.check(bbox_hash[name], pie) is True:
 
+                for name in self.names:
+
+                    if self.collision_detector.check(bbox_hash[name], pie) is True:
                         self.score_keeper.score[name] += 1
                         pie.finished = True
                         pie.remove_fin()
+
                         if self.flash_event is False:
                             self.flash_event = True
 
@@ -279,18 +259,16 @@ class ScoreKeeper(groups.AssetGroup):
                                               color=self.color,
                                               count_from=game_time,
                                               )
-
         # make the score writers
         score_writers = []
         score_text_fun = lambda name: f'{name} : {self.score[name]}'
-        for i, name in enumerate(self.players):
 
+        for i, name in enumerate(self.players):
             score_writer = writers.InfoWriter(text_fun= score_text_fun,
                                               position=(10, -v_spacing*2-v_spacing*i),
                                               scale=self.scale,
                                               color=self.color,
                                               )
-
             score_writers.append(score_writer)
 
         self.add([self.time_writer])
@@ -307,7 +285,6 @@ class ScoreKeeper(groups.AssetGroup):
 
         self.assets[0].write(frame)
         for name, asset in zip(self.players, self.assets[1:]):
-
             asset.write(frame, name)
 
     @property

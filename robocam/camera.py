@@ -18,7 +18,7 @@ class CameraPlayer:
     def __init__(self,
                  src=0,
                  name='otis',
-                 dim=None,
+                 dim=(1280, 720),
                  max_fps=60,
                  record = False,
                  record_to = 'cam.avi',
@@ -239,23 +239,3 @@ class ThreadedCameraPlayer(CameraPlayer):
                 self._cached_frame[:, :, :] = self._frame
 
             return self.grabbed, self.frame
-
-
-
-
-# if __name__ == "__main__":
-#     fps_writer = writers.TimerWriter(position=(100, 100), per_second=True)
-#
-#     capture = ThreadedCameraPlayer(dim=(1920, 1080),
-#                                    flip=True,
-#                                    max_fps=30).start()
-#
-#     while True:
-#         capture.read()
-#         fps_writer.write(capture.frame)
-#         capture.show()
-#
-#         if utils.cv2waitkey(1) is True:
-#             break
-#
-#     capture.stop()
