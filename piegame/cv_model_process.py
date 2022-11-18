@@ -28,7 +28,7 @@ def target(shared_data_object, args):
     # this was probably excessively complicated
     # counter dict just gives the order of unique names here
     # so we can have multiple pictures of the same person
-    name_dict = utilities.CounterDict()
+    name_dict = dstructures.CounterDict()
     for name in known_names:
         name_dict[name]
 

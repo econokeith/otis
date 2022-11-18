@@ -1,14 +1,12 @@
 import signal
 import sys
 from collections import defaultdict
-
 import numpy as np
 
 import otis.helpers.cvtools
 import otis.helpers.maths
 from otis import camera
-from otis.helpers import multitools as mtools, timers, cvtools, colortools as ctools, \
-    shapefunctions
+from otis.helpers import multitools, timers, cvtools, colortools, shapefunctions
 from otis.overlay import screenevents as events, textwriters as writers, assets, groups, motion
 
 MAX_FPS = 30
@@ -43,8 +41,8 @@ STOP_AFTER_GAME = False
 
 
 def target(shared, pargs):
-    signal.signal(signal.SIGTERM, mtools.close_gracefully)
-    signal.signal(signal.SIGINT, mtools.close_gracefully)
+    signal.signal(signal.SIGTERM, multitools.close_gracefully)
+    signal.signal(signal.SIGINT, multitools.close_gracefully)
 
     capture = camera.ThreadedCameraPlayer(0,
                                           max_fps=pargs.max_fps,
@@ -117,7 +115,7 @@ class BouncyScene:
         self.args = args
         self.capture = self.manager.capture
         self.stop_timer = timers.SinceFirstBool(3)
-        self.color_cycle = ctools.ColorCycle()
+        self.color_cycle = colortools.ColorCycle()
         self.bouncy_pies = motion.BouncingAssetManager(asset_fun=args.PATH_TO_PIES,
                                                        max_fps=args.max_fps,
                                                        dim=args.dim,
@@ -159,7 +157,6 @@ class BouncyScene:
             bbox_coords = shared.bbox_coords.copy()
             n_faces = self.shared.n_faces.value
             self.names = [tracker[name] for name in shared.names[:n_faces]]
-            print(self.names)
 
             for i, name in enumerate(self.names):
                 box = bbox_hash[name]
@@ -243,7 +240,7 @@ class ScoreKeeper(groups.AssetGroup):
         super().__init__(position, *args, **kwargs)
         self.manager = manager
         self.shared = manager.shared
-        self.args = manager.args
+        self.args = manager.pargs
         self.score = defaultdict(lambda: 0)
         self.game_time = game_time
         self.players = players

@@ -4,47 +4,19 @@ Example of putting BBoxes around faces
 import multiprocessing
 import ctypes
 import sys
-import argparse
 
 import numpy as np
 
-import otis.helpers.multitools as multitools
+from otis.helpers import multitools, otistools
+import mirror_camera, mirror_vision, mirror_servo
 
-import mirror_camera
-import mirror_vision
-
-
-def make_parser():
-    parser = argparse.ArgumentParser(description='Try to avoid the Camera Bot Shooting You')
-    parser.add_argument('-d', '--dim',type=tuple, default=(1280, 720),
-                        help='set video dimensions. default is (1920, 1080)')
-    parser.add_argument('-m', '--max_fps', type=int, default=30,
-                        help='set max fps Default is 60')
-    parser.add_argument('-p', '--port', type=int, default=0,
-                        help='camera port default is 0')
-    parser.add_argument('-cf', type=float, default=2,
-                        help='shrink the frame by a factor of cf before running algo')
-    parser.add_argument('--faces', type=int, default=5,
-                        help='max number of bboxs to render. default =5')
-    parser.add_argument('--device', type=str, default='cpu',
-                        help='runs a hog if cpu and cnn if gpu')
-    parser.add_argument('--ncpu', type=int, default='1',
-                        help='number of cpus')
-    parser.add_argument('--servo', type=bool, default=False,
-                        help='use servos')
-    parser.add_argument('-s', '--scale', type=float, default=1.5)
-    parser.add_argument('-cv', type=bool, default=True)
-    return parser
-
-
-parser = make_parser()
+parser = otistools.make_parser()
 pargs = parser.parse_args()
 pargs.video_center = np.array(pargs.dim) // 2
 pargs.PATH_TO_FACES = './faces'
-pargs.path_to_pies = 'photo_assets/pie_asset'
 
 if pargs.servo is True:
-    from piegame import servo_process
+    pass
 
 def main():
     # set up shared data
@@ -64,7 +36,7 @@ def main():
     process_modules = [mirror_camera, mirror_vision]
     #if servos are true, add it to the process list
     if pargs.servo is True:
-        process_modules.append(servo_process)
+        process_modules.append(mirror_servo)
 
     processes = []
     # each process module should have a primary function called 'target'
