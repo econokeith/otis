@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 
 import robocam.helpers.timers as timers
-from robocam.helpers import utilities as utils
+from robocam.helpers import dstructures as utils
 import robocam.overlay.textwriters as writers
 
 

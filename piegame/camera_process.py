@@ -1,15 +1,15 @@
 import signal
 import sys
-import time
-import os
 from collections import defaultdict
-from queue import Queue
 
 import numpy as np
 
+import robocam.helpers.cvtools
+import robocam.helpers.maths
 from robocam import camera
-from robocam.helpers import multitools as mtools, utilities as utils, timers, cvtools, colortools as ctools
-from robocam.overlay import screenevents as events, textwriters as writers, assets, groups, motion, shapefunctions
+from robocam.helpers import multitools as mtools, timers, cvtools, colortools as ctools, \
+    shapefunctions
+from robocam.overlay import screenevents as events, textwriters as writers, assets, groups, motion
 
 MAX_FPS = 30
 DIMENSIONS = DX, DY = (1920, 1080)
@@ -70,7 +70,7 @@ def target(shared, pargs):
         if count_down.finished is True:
             break
 
-        if utils.cv2waitkey(1) is True:
+        if robocam.helpers.cvtools.cv2waitkey(1) is True:
             break
 
     stopped = False
@@ -88,7 +88,7 @@ def target(shared, pargs):
         if stopped is True and STOP_AFTER_GAME is True:
             break
 
-        if utils.cv2waitkey() is True:
+        if robocam.helpers.cvtools.cv2waitkey() is True:
             break
 
     capture.stop()
@@ -216,7 +216,7 @@ class InfoGroup(groups.AssetGroup):
                                          color=self.color,
                                          )
 
-        self.model_ma = utils.MovingAverage(MA)
+        self.model_ma = robocam.helpers.maths.MovingAverage(MA)
 
         ma_text_fun = lambda: f'model updates per second : {int(1 / self.model_ma.update(shared.m_time.value))}'
         model_writer = writers.InfoWriter(text_fun=ma_text_fun,
@@ -259,7 +259,7 @@ class ScoreKeeper(groups.AssetGroup):
                                               color=self.color,
                                               count_from=game_time,
                                               )
-        # make the score writers
+        # make the score textwriters
         score_writers = []
         score_text_fun = lambda name: f'{name} : {self.score[name]}'
 

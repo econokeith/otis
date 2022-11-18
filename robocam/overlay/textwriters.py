@@ -6,13 +6,11 @@ import types
 import cv2
 import numpy as np
 
+import robocam.helpers.coordtools
+import robocam.helpers.maths
+from robocam.helpers import timers, colortools, shapefunctions
 
-
-
-from robocam.helpers import  timers, colortools, utilities
-
-from robocam.overlay import bases, shapefunctions
-
+from robocam.overlay import bases
 
 
 class TextWriter(bases.Writer):
@@ -183,7 +181,7 @@ class TimerWriter(InfoWriter):
                 self._timer()
 
             if moving_average is not None:
-                self.moving_average = utilities.MovingAverage(moving_average)
+                self.moving_average = robocam.helpers.maths.MovingAverage(moving_average)
 
         elif timer_type == 'countdown':
             self._timer = timers.CountDownTimer(self.count_from)
@@ -256,7 +254,7 @@ class TypeWriter(TextWriter):
         self._output = ""
         self.cursor = Cursor()
         self.script = Queue()
-        self.ktimer = timers.CallHzLimiter(self.key_wait)
+        self.ktimer = timers.CallFrequencyLimiter(self.key_wait)
 
     @property
     def line(self):
@@ -311,7 +309,7 @@ class TypeWriter(TextWriter):
 
     def type_line(self, frame, position=None, ref=None):
         if position is not None:
-            self.position = utilities.abs_point(position, ref, frame.shape)
+            self.position = robocam.helpers.coordtools.abs_point(position, ref, frame.shape)
         # if there's more in the text generator, it will continue to type new letters
         # then will show the full message for length of time self.end_pause
         # then finally stop shows
@@ -510,7 +508,7 @@ class MultiTypeWriter(TypeWriter):
         if position is None:
             _position = self.position
         else:
-            _position = utilities.abs_point(position, ref, frame.shape)
+            _position = robocam.helpers.coordtools.abs_point(position, ref, frame.shape)
 
         if self._stub_iter.is_empty is False:
             #pause for a comma a tad

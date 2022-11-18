@@ -11,7 +11,7 @@ import numpy as np
 import cv2
 
 from robocam.helpers import timers
-from robocam.helpers.utilities import cv2waitkey
+from robocam.helpers.cvtools import cv2waitkey
 from robocam.overlay import imageassets as imga
 import robocam.camera as camera
 
@@ -107,7 +107,7 @@ class AssetMover:
         self.border_collision = border_collision
         self.ups = ups
         self._ups = ups
-        self.timer = timers.CallHzLimiter(1 / ups)
+        self.timer = timers.CallFrequencyLimiter(1 / ups)
         self.real_timer = timers.TimeSinceLast()
         self.real_timer()
         self.finished = False
@@ -289,7 +289,7 @@ class BouncingAssetManager:
         else:
             raise ValueError("asset_fun is not the proper type. it must be either function or string path")
 
-        self.new_asset_timer = timers.CallHzLimiter()
+        self.new_asset_timer = timers.CallFrequencyLimiter()
         self.dt_next = 0
 
 

@@ -5,7 +5,7 @@ import abc
 import queue
 
 import time
-from robocam.helpers import utilities as utils
+from robocam.helpers import dstructures as utils
 
 import numpy as np
 import cv2
@@ -40,7 +40,7 @@ class CountDown(ScreenEvent):
                                                    jtype='c'
                                                    )
 
-        self.countdown_timer = timers.CallHzLimiter(1)
+        self.countdown_timer = timers.CallFrequencyLimiter(1)
         self.start = start
         self.color_counter = ctools.UpDownCounterT(start=255, maxi=255,
                                                    dir=-1, mini=0,

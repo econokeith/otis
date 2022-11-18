@@ -1,15 +1,14 @@
 import signal
 import sys
-import time
-import os
 from collections import defaultdict
-from queue import Queue
 
 import numpy as np
 
+import robocam.helpers.cvtools
+import robocam.helpers.maths
 from robocam import camera
-from robocam.helpers import multitools as mtools, utilities as utils, timers, cvtools, colortools as ctools
-from robocam.overlay import screenevents as events, textwriters as writers, assets, groups, motion, shapefunctions
+from robocam.helpers import multitools, timers, cvtools, colortools
+from robocam.overlay import screenevents as events, textwriters, assets, groups
 
 MAX_FPS = 30
 
@@ -23,8 +22,8 @@ face_path = 'faces'
 MA = 30
 
 def target(shared, pargs):
-    signal.signal(signal.SIGTERM, mtools.close_gracefully)
-    signal.signal(signal.SIGINT, mtools.close_gracefully)
+    signal.signal(signal.SIGTERM, multitools.close_gracefully)
+    signal.signal(signal.SIGINT, multitools.close_gracefully)
 
     capture = camera.ThreadedCameraPlayer(0,
                                           max_fps=pargs.max_fps,
@@ -52,7 +51,7 @@ def target(shared, pargs):
         info_group.write(frame)
         capture.show(frame)
 
-        if utils.cv2waitkey() is True:
+        if robocam.helpers.cvtools.cv2waitkey() is True:
             break
 
     capture.stop()
@@ -94,7 +93,7 @@ class Boxes:
 
         self.stop_timer = timers.SinceFirstBool(3)
 
-        self.color_cycle = ctools.ColorCycle()
+        self.color_cycle = colortools.ColorCycle()
 
         self.screen_flash = events.ColorFlash(max_ups=args.max_fps,
                                               cycle_t=.5,
@@ -142,24 +141,24 @@ class InfoGroup(groups.AssetGroup):
         self.shared = shared
         self.args = args
 
-        fps_writer = writers.TimerWriter(title="screen fps",
-                                         timer_type='last',
-                                         position=(0, 0),
-                                         roundw=0,
-                                         per_second=True,
-                                         moving_average=MA,
-                                         scale=self.scale,
-                                         color=self.color,
-                                         )
+        fps_writer = textwriters.TimerWriter(title="screen fps",
+                                             timer_type='last',
+                                             position=(0, 0),
+                                             roundw=0,
+                                             per_second=True,
+                                             moving_average=MA,
+                                             scale=self.scale,
+                                             color=self.color,
+                                             )
 
-        self.model_ma = utils.MovingAverage(MA)
+        self.model_ma = robocam.helpers.maths.MovingAverage(MA)
 
         ma_text_fun = lambda: f'model updates per second : {int(1 / self.model_ma.update(shared.m_time.value))}'
-        model_writer = writers.InfoWriter(text_fun=ma_text_fun,
-                                          position=(0, -30),
-                                          scale=self.scale,
-                                          color=self.color,
-                                          )
+        model_writer = textwriters.InfoWriter(text_fun=ma_text_fun,
+                                              position=(0, -30),
+                                              scale=self.scale,
+                                              color=self.color,
+                                              )
 
         self.add([model_writer, fps_writer])
 

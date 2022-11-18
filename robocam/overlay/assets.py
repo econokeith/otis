@@ -8,8 +8,9 @@ import numpy as np
 
 import robocam.helpers.cvtools as cvtools
 import robocam.helpers.timers as timers
-from robocam.overlay import shapefunctions, bases, textwriters#, shapeobjects
-from robocam.overlay.shapeobjects import Line
+from robocam.overlay import bases, textwriters#, shapeobjects
+from robocam.helpers import shapefunctions
+from robocam.overlay.shapes import Line
 from robocam.overlay.textwriters import TextWriter, NameTag
 
 

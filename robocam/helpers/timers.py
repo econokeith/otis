@@ -4,8 +4,6 @@ import abc
 
 class Timer(abc.ABC):
 
-
-
     @abc.abstractmethod
     def __init__(self, *args, **kwargs):
         """
@@ -44,13 +42,14 @@ class SmartSleeper(Timer):
 
 class TimeSinceLast(Timer):
 
-    def __init__(self):
+    def __init__(self, freq=False):
         """
         returns the time elapsed since the last time it was called
         """
         self._tick = time.time()
         self.on = False
         self.finished = False
+        self.freq = freq
 
     def __call__(self):
         if self.on is False:
@@ -61,7 +60,14 @@ class TimeSinceLast(Timer):
         tock = time.time()
         out: float = tock - self._tick
         self._tick = tock
-        return out
+
+        if self.freq is False:
+            return out
+        else:
+            try:
+                return 1/out
+            except:
+                return 0
 
 
 class TimeSinceFirst(Timer):
@@ -116,10 +122,6 @@ class CountDownTimer(TimeSinceFirst):
             return 0
 
 
-
-
-
-
 class FunctionTimer(Timer):
 
     def __init__(self, function):
@@ -156,7 +158,7 @@ class SinceFirstBool(TimeSinceFirst):
             return False
 
 
-class CallHzLimiter(Timer):
+class CallFrequencyLimiter(Timer):
 
     def __init__(self, wait=1 / 3, first=True):
         """
@@ -252,7 +254,7 @@ class TimedCycle:
         self.repeat = repeat
         self.complete = False
 
-        self.ups_timer = CallHzLimiter(1/max_ups)
+        self.ups_timer = CallFrequencyLimiter(1 / max_ups)
         self.last_timer = TimeSinceLast()
         self.total_steps = 0
 
@@ -261,7 +263,7 @@ class TimedCycle:
         return int(self._i)
 
     def reset(self):
-        self.ups_timer = CallHzLimiter(1/self.max_ups)
+        self.ups_timer = CallFrequencyLimiter(1 / self.max_ups)
         self.last_timer = TimeSinceLast()
         self.complete = False
         self._i = self.start

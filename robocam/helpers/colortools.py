@@ -21,7 +21,7 @@ class UpDownCounter:
         self.cycle_length = maxi - mini + 1
         self.last_timer = timers.TimeSinceLast()
         self.Hz = Hz
-        self.max_timer = timers.CallHzLimiter()
+        self.max_timer = timers.CallFrequencyLimiter()
 
     def __call__(self):
 
@@ -58,7 +58,7 @@ class UpDownCounterT:
         self.cycle_t = cycle_t
         self.last_timer = timers.TimeSinceLast()
         self.speed =  self.length/ self.cycle_t
-        self.ups_timer = timers.CallHzLimiter(1/max_ups)
+        self.ups_timer = timers.CallFrequencyLimiter(1 / max_ups)
         self.repeat = repeat
 
     def __call__(self):

@@ -3,8 +3,11 @@ import inspect
 from collections import defaultdict
 from queue import Queue
 
+import cv2
 import numpy as np
-from robocam.helpers import utilities as utils, timers, colortools
+
+import robocam.helpers.maths
+from robocam.helpers import dstructures as utils, timers, colortools
 #from robocam.overlay import assets
 
 def box_stabilizer(box0, box1, threshold=.25):
@@ -29,7 +32,7 @@ def box_stabilizer(box0, box1, threshold=.25):
         centers.append(c)
         radii.append(r)
 
-    distance = utils.linear_distance(*centers)
+    distance = robocam.helpers.maths.linear_distance(*centers)
     if distance > threshold * radii[0]:
         return box1
     else:
@@ -58,7 +61,7 @@ class BBoxStabilizer:
             centers.append(c)
             radii.append(r)
 
-        distance = utils.linear_distance(*centers)
+        distance = robocam.helpers.maths.linear_distance(*centers)
         if distance > threshold * radii[0]:
             return box1
         else:
@@ -233,3 +236,17 @@ def load_face_data(face_recognition, path_to_faces):
 #
 #         except:
 #             box = self.new_box_fun(name)
+def cv2waitkey(n=1):
+    """
+    will return True on keyboard mash of q, Q or esc
+    else return False
+    :param n: millisecond wait.
+    :return: Bool
+    """
+    if cv2.waitKey(n) & 0xFF in [ord('q'), ord('Q'), 27]:
+        return True
+    else:
+        return False
+
+def resize(frame, scale=.5):
+    return cv2.resize(frame, (0, 0), fx=scale, fy=scale)

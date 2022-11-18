@@ -6,9 +6,10 @@ import os
 import cv2
 import numpy as np
 
+import robocam.helpers.cvtools
 from robocam.helpers import multitools as mtools
 from robocam.helpers import timers, cvtools
-from robocam.helpers import utilities as utils
+from robocam.helpers import dstructures as utils
 
 IMG_CF = 3
 
@@ -45,7 +46,7 @@ def target(shared_data_object, args):
         model_timer()
         frame_copy[:,:,:] = np.array(shared.frame)
         frame_copy = frame_copy[:,:,::-1]
-        compressed_frame = utils.resize(frame_copy, 1/args.cf)
+        compressed_frame = robocam.helpers.cvtools.resize(frame_copy, 1 / args.cf)
         observed_boxes = face_locator(compressed_frame, model=model)
 
         observed_boxes = np.array(observed_boxes) * args.cf
@@ -66,7 +67,7 @@ def target(shared_data_object, args):
                 log += (','+str(distance))
             logging.info(f'log', best_match_index)
 
-        if utils.cv2waitkey() is True:
+        if robocam.helpers.cvtools.cv2waitkey() is True:
             break
 
         shared.m_time.value = model_timer()

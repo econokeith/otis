@@ -3,9 +3,11 @@ import time
 
 import cv2
 import numpy as np
+
+import robocam.helpers.cvtools
 import robocam.overlay.bases as base
-from robocam.overlay import shapefunctions as shapes
-from robocam.helpers import utilities as utils
+from robocam.helpers import shapefunctions as shapes
+
 
 # Todo: make this more easily resizeable
 # Todo: need to better define ImageAsset BoundingShape
@@ -119,7 +121,7 @@ if __name__=='__main__':
 
         cv2.imshow('test', frame)
 
-        if utils.cv2waitkey():
+        if robocam.helpers.cvtools.cv2waitkey():
             break
 
     Capture.stop()
