@@ -9,7 +9,8 @@ from otis.overlay import shapes
 if __name__ == "__main__":
 
     square_dim = (200, 200)
-    little_output_dim = (200, 50)
+    wide_dim = (200, 50)
+    tall_dim = (50, 200)
     big_output_dim = (300, 300)
     dim = (1280, 720)
     capture = camera.ThreadedCameraPlayer(max_fps=30, dim=dim, flip=False).start()
@@ -17,9 +18,6 @@ if __name__ == "__main__":
     n_littles = 1
     while True:
         _, frame = capture.read()
-        # frame_from = frame[tf:bf, lf:rf]
-        # frame_to = frame[tt:bt, lt:rt]
-        # frame_to[:] = cv2.resize(frame_from, frame_to.shape[:2][::-1])
 
 
         corners = ('rt', 'lb', 'lt', 'rb')
@@ -39,20 +37,20 @@ if __name__ == "__main__":
 
         bw, bh = big_output_dim
         for i in range(n_littles):
-            w, h = little_output_dim
+            w, h = wide_dim
             shapefunctions.copy_frame_portion_to(frame,
                                                  (0, 0, *square_dim),
-                                                 (bw+i*w, 0, *little_output_dim),
+                                                 (bw+i*w, 5, *wide_dim),
                                                  source_format='cwh',
                                                  destination_format='lbwh',
                                                  source_ref='c',
                                                  destination_ref='lb',
                                                  )
         for i in range(n_littles):
-            w, h = little_output_dim
+            w, h = wide_dim
             shapefunctions.copy_frame_portion_to(frame,
                                                  (0, 0, *square_dim),
-                                                 (-bw - i * w, 0, *little_output_dim),
+                                                 (-bw - i * w, 5, *wide_dim),
                                                  source_format='cwh',
                                                  destination_format='rbwh',
                                                  source_ref='c',
@@ -60,10 +58,10 @@ if __name__ == "__main__":
                                                  )
 
         for i in range(n_littles):
-            w, h = little_output_dim
+            w, h = wide_dim
             shapefunctions.copy_frame_portion_to(frame,
                                                  (0, 0, *square_dim),
-                                                 (-bw - i * w, 0, *little_output_dim),
+                                                 (-bw - i * w, -5, *wide_dim),
                                                  source_format='cwh',
                                                  destination_format='rtwh',
                                                  source_ref='c',
@@ -71,15 +69,33 @@ if __name__ == "__main__":
                                                  )
 
         for i in range(n_littles):
-            w, h = little_output_dim
+            w, h = wide_dim
             shapefunctions.copy_frame_portion_to(frame,
                                                  (0, 0, *square_dim),
-                                                 (bw + i * w, 0, *little_output_dim),
+                                                 (bw + i * w, -5, *wide_dim),
                                                  source_format='cwh',
                                                  destination_format='ltwh',
                                                  source_ref='c',
                                                  destination_ref='lt',
                                                  )
+
+        shapefunctions.copy_frame_portion_to(frame,
+                                             (0, 0, *square_dim),
+                                             (5, -210, *(50, 300)),
+                                             source_format='cwh',
+                                             destination_format='ltwh',
+                                             source_ref='c',
+                                             destination_ref='lt',
+                                             )
+
+        shapefunctions.copy_frame_portion_to(frame,
+                                             (0, 0, *square_dim),
+                                             (-5, -210, *(50, 300)),
+                                             source_format='cwh',
+                                             destination_format='rtwh',
+                                             source_ref='c',
+                                             destination_ref='rt',
+                                             )
 
         square.write(frame)
         capture.show()
