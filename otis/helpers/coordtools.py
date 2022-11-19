@@ -111,6 +111,42 @@ def translate_box_coords(coords,
         l = r-w
         t = b-h
 
+    elif in_format == 'ctwh':
+        cx, cy, w, h = coords
+        cx, cy = abs_point((cx, cy), ref, dim)
+        abs_point_used = True
+        r = cx - w//2
+        l = cx + w//2
+        t = cy
+        b = cy + h
+
+    elif in_format == 'cbwh':
+        cx, cy, w, h = coords
+        cx, cy = abs_point((cx, cy), ref, dim)
+        abs_point_used = True
+        r = cx - w//2
+        l = cx + w//2
+        t = cy - h
+        b = cy
+
+    elif in_format == 'crwh':
+        cx, cy, w, h = coords
+        cx, cy = abs_point((cx, cy), ref, dim)
+        abs_point_used = True
+        r = cx
+        l = cx + w
+        t = cy - h//2
+        b = cy + h//2
+
+    elif in_format == 'clwh':
+        cx, cy, w, h = coords
+        cx, cy = abs_point((cx, cy), ref, dim)
+        abs_point_used = True
+        r = cx - h
+        l = cx
+        t = cy - h//2
+        b = cy + h//2
+
     else:
         raise ValueError("invalid coord format")
 

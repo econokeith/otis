@@ -14,7 +14,6 @@ class Circle(bases.Writer, CircleType):
     def __init__(self,
                  center=(100,100),
                  radius=1,
-                 coords= None,
                  color='r',
                  thickness=1,
                  ltype=None,
