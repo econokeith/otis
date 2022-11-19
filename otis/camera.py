@@ -24,7 +24,7 @@ class CameraPlayer:
                  record_to = 'cam.avi',
                  flip = False,
                  output_scale = 1,
-                 record_scale = .5,
+                 record_scale = .5, # I need to fix this
                  record_half_rate = True
                  ):
 
