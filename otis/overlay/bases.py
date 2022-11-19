@@ -3,6 +3,7 @@ Writer is basically just a fancy mixin to add the class method
 cls().make_list which instantiates a list of identical Writer/subclass
 objects
 """
+import abc
 import copy
 from otis.helpers import colortools
 from otis.helpers import cvtools
@@ -48,3 +49,18 @@ if __name__ == '__main__':
     print(cvtools.get_current_dir(__file__))
     print(cvtools.abs_path_relative_to_calling_file('../examples/balls.py'))
 
+
+class ShapeObject(metaclass=abc.ABCMeta):
+    pass
+
+
+class CircleType(ShapeObject, metaclass=abc.ABCMeta):
+    pass
+
+
+class RectangleType(ShapeObject, metaclass=abc.ABCMeta):
+    pass
+
+
+class LineType(ShapeObject, metaclass=abc.ABCMeta):
+    pass

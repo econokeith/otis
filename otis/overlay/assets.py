@@ -181,7 +181,7 @@ class CrossHair(BoundingCircle):
             self.constant_size = True
             self._radius = radius
 
-        self.line_writer = Line(color='b', thickness=self.thickness, wtype='cal')
+        self.line_writer = Line(color='b', thickness=self.thickness, line_format='cal')
 
     @property
     def radius(self):

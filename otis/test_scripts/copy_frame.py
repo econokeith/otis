@@ -11,7 +11,7 @@ if __name__ == "__main__":
     square_dim = (200, 200)
     little_output_dim = (200, 50)
     big_output_dim = (300, 300)
-    dim = (720, 720)
+    dim = (1280, 720)
     capture = camera.ThreadedCameraPlayer(max_fps=30, dim=dim, flip=False).start()
     square = shapes.Rectangle((0, 0, *square_dim), 'cwh', ref='c', dim=dim, thickness=2)
     n_littles = 1

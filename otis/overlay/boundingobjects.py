@@ -7,17 +7,16 @@ from otis.overlay import bases, shapes
 from otis.overlay.textwriters import NameTag
 from otis.helpers import coordtools
 
-
 class BoundingAsset(bases.Writer, abc.ABC):
 
     @abc.abstractmethod
     def __init__(self,
                  color='r',
-                 name=None,
-                 name_tagger=None,
-                 show_name=False,
-                 show_self=True,
-                 coord_format='rtlb',
+                 name = None,
+                 name_tagger = None,
+                 show_name = False,
+                 show_self = True,
+                 coord_format = 'rtlb',
                  thickness=1,
                  ltype=None,
                  ):
@@ -42,30 +41,19 @@ class BoundingAsset(bases.Writer, abc.ABC):
 class BoundingAssetBox(BoundingAsset):
 
     def __init__(self,
-                 set_dim=None,
+                 set_dim = None,
                  **kwargs,
                  ):
         super().__init__(**kwargs)
         assert len(set_dim) == 2
         self.set_dim = set_dim
-        self.asset = shapes.Rectangle(color=self.color,
-                                      thickness=self.thickness,
-                                      ltype=self.ltype,
-                                      coord_format=self.coords_format
-                                      )
+        self.asset =shapes.Rectangle(color=self.color,
+                                     thickness=self.thickness,
+                                     ltype=self.ltype,
+                                     coord_format = self.coords_format
+                                     )
 
     def write(self, frame):
         if self.set_dim is not None:
-            cx, cy, _, _ = coordtools.translate_box_coords(self.coords,
-                                                           in_format=self.coords_format,
-                                                           out_format='cwh',
-                                                           )
+            cx, cy, _, _ = 1, 2, 3, 4
 
-            coords = coordtools.translate_box_coords((cx, cy, *self.set_dim),
-                                                     in_format='cwh',
-                                                     out_format='rtlb'
-                                                     )
-        else:
-            coords = self.coords
-
-        self.asset.write(frame, coords)

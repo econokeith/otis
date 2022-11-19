@@ -1,24 +1,10 @@
-import abc
-
 import cv2
 
-import otis.helpers.coordtools
 from otis.helpers import shapefunctions, coordtools
 from otis.overlay import bases
+from otis.overlay.bases import CircleType, RectangleType, LineType
 
-class ShapeObject(metaclass=abc.ABCMeta):
-    pass
-
-
-class CircleType(ShapeObject, metaclass=abc.ABCMeta):
-    pass
-
-
-class RectangleType(ShapeObject, metaclass=abc.ABCMeta):
-    pass
-
-
-class LineType(ShapeObject, metaclass=abc.ABCMeta):
+class Shape(bases.Writer):
     pass
 
 
@@ -26,8 +12,9 @@ class Circle(bases.Writer, CircleType):
     shape = "circle"
 
     def __init__(self,
-                 center,
-                 radius,
+                 center=(100,100),
+                 radius=1,
+                 coords= None,
                  color='r',
                  thickness=1,
                  ltype=None,
@@ -109,21 +96,21 @@ class Line(bases.Writer, LineType):
                  color='r',  # must be either string in color hash or bgr value
                  thickness=2,
                  ltype = None,
-                 wtype='ep'  # line type
+                 line_format='ep'  # line type
                  ):
 
         super().__init__()
         self.color = color
         self.thickness = thickness
         self.reference = None
-        self.wtype = wtype
+        self.line_format = line_format
         self.ltype = ltype
 
     def write(self, frame, *line_data, ref=None, wtype=None, color=None, thickness=None, ltype=None):
 
         _thickness = self.thickness if thickness is None else thickness
         _color = self.color if color is None else color
-        _wtype = self.wtype if wtype is None else wtype
+        _wtype = self.line_format if wtype is None else wtype
         _ltype = self.ltype if ltype is None else ltype
 
         if _wtype == 'pal':
@@ -131,8 +118,8 @@ class Line(bases.Writer, LineType):
         elif _wtype == 'cal':
             shapefunctions.draw_cal_line(frame, *line_data, color=_color, thickness=_thickness, ref=ref)
         else:
-            point0 = otis.helpers.coordtools.abs_point(*line_data[0], ref, frame.shape[:2])
-            point1 = otis.helpers.coordtools.abs_point(*line_data[1], ref, frame.shape[:2])
+            point0 = coordtools.abs_point(*line_data[0], ref, frame.shape[:2])
+            point1 = coordtools.abs_point(*line_data[1], ref, frame.shape[:2])
 
             cv2.line(frame, point0, point1, _color, _thickness, _ltype)
 
