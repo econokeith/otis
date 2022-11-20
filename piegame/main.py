@@ -33,7 +33,7 @@ def make_parser():
                         help='runs a hog if cpu and cnn if gpu')
     parser.add_argument('--ncpu', type=int, default='1',
                         help='number of cpus')
-    parser.add_argument('--servo', type=bool, default=True,
+    parser.add_argument('--servo', type=bool, default=False,
                         help='use servos')
     parser.add_argument('-s', '--scale', type=float, default=1.5)
     parser.add_argument('-cv', type=bool, default=True)

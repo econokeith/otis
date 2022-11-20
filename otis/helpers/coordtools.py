@@ -10,6 +10,10 @@ __FRAME_HASH['l'] = lambda s: (0, int(s[0] / 2))
 __FRAME_HASH['r'] = lambda s: (s[1], int(s[0] / 2))
 __FRAME_HASH['t'] = lambda s: (int(s[1] / 2), 0)
 __FRAME_HASH['b'] = lambda s: (int(s[1] / 2), s[0])
+__FRAME_HASH['cl'] = lambda s: (0, int(s[0] / 2))
+__FRAME_HASH['cr'] = lambda s: (s[1], int(s[0] / 2))
+__FRAME_HASH['ct'] = lambda s: (int(s[1] / 2), 0)
+__FRAME_HASH['cb'] = lambda s: (int(s[1] / 2), s[0])
 
 # todo: clean up the dim variable to make it consistent between np.shape and regular dims. basically need to switch
 def abs_point(relative_point,
@@ -78,8 +82,8 @@ def translate_box_coords(coords,
         cx, cy, w, h = coords
         cx, cy = abs_point((cx, cy), ref, dim)
         abs_point_used = True
-        t = cy-h//2
-        b = cy+h//2
+        t = cy- h//2
+        b = cy+ h//2
         l = cx - w//2
         r = cx + w//2
 
@@ -147,6 +151,15 @@ def translate_box_coords(coords,
         t = cy - h//2
         b = cy + h//2
 
+    elif in_format == 'cirle':
+        cx, cy, r, _ = coords
+        cx, cy = abs_point((cx, cy), ref, dim)
+        abs_point_used = True
+        t = cy- r//2
+        b = cy+ r//2
+        l = cx - r//2
+        r = cx + r//2
+
     else:
         raise ValueError("invalid coord format")
 
@@ -160,6 +173,55 @@ def translate_box_coords(coords,
     elif out_format == 'tblr':
         return t, b, l, r
 
+    elif out_format == 'cwh':
+        cx = (l+r)//2
+        cy = (t+b)//2
+        h = (b-t)
+        w = (l-r)
+        return cx, cy, h, w
+
     else:
         return r, t, l, b
+
+
+def find_center_radius_from_box_coords(box_coords,
+                                       radius_type='inner', #can be 'inner', 'outer', 'avg', 'diag'
+                                       box_format='circle',
+                                       ref=None,
+                                       dim=None
+                                       ):
+    """
+
+    Args:
+        box_coords:
+        radius_type: can be 'inner', 'outer', 'avg', 'diag'
+        box_format:
+        ref:
+        dim:
+
+    Returns:
+        (cx, cy, radius, radius)
+
+    """
+    if len(box_coords) == 3 or box_format == 'circle':
+        return *box_coords, box_coords[2]
+
+    cx, cy, w, h = translate_box_coords(box_coords,
+                                        in_format=box_format,
+                                        out_format='cwh',
+                                        ref=ref,
+                                        dim=dim
+                                        )
+
+    if radius_type == 'inner':
+        radius = min(w, h)//2
+    elif radius_type == 'outer':
+        radius = max(w, h)//2
+    elif radius_type == 'diag':
+        radius = np.sqrt(w**2 + h**2)
+    else:
+        radius = (w+h)//2
+
+    return cx, cy, radius, radius
+
 

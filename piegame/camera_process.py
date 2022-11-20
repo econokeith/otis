@@ -13,7 +13,7 @@ MAX_FPS = 30
 DIMENSIONS = DX, DY = (1920, 1080)
 RECORD = False
 RECORD_SCALE = .25
-OUTPUT_SCALE = 1
+OUTPUT_SCALE = 1.5
 
 MAX_BALLS = 6
 BALL_FREQUENCY = [0, 5]
@@ -275,12 +275,12 @@ class ScoreKeeper(writergroups.AssetGroup):
 
 
     def write(self, frame):
-        shapefunctions.write_transparent_background(frame,
-                                                    (200, 0),
-                                                    (0, -250),
-                                                    ref=self.position,
-                                                    transparency=.9
-                                                    )
+        # shapefunctions.write_transparent_background(frame,
+        #                                             (200, 0),
+        #                                             (0, -250),
+        #                                             ref=self.position,
+        #                                             transparency=.9
+        #                                             )
 
         self.assets[0].write(frame)
         for name, asset in zip(self.players, self.assets[1:]):

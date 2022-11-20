@@ -1,70 +1,31 @@
 import cv2
-
+import numpy as np
+import abc
 from otis.helpers import shapefunctions, coordtools
 from otis.overlay import bases
 from otis.overlay.bases import CircleType, RectangleType, LineType
 
-class Shape(bases.Writer):
-    pass
 
-
-class Circle(bases.Writer, CircleType):
-    shape = "circle"
+class ShapeAsset(bases.Writer, abc.ABC):
 
     def __init__(self,
-                 center=(100,100),
-                 radius=1,
-                 color='r',
-                 thickness=1,
-                 ltype=None,
-                 ref=None,
-                 ):
-        super().__init__()
-        self.center = center
-        self.radius = radius
-        self.color = color
-        self.thickness = thickness
-        self.ltype = ltype
-        self.ref = ref
-
-
-    def write(self, frame, position=None):
-        _center = self.center if position is None else position
-        shapefunctions.draw_circle(frame,
-                                   _center,
-                                   self.radius,
-                                   color=self.color,
-                                   thickness=self.thickness,
-                                   ltype=self.ltype,
-                                   ref=self.ref
-                                   )
-
-
-class Rectangle(bases.Writer, RectangleType):
-    shape = "rectangle"
-
-    def __init__(self,
-                 coords=(100, 100, 30, 30),
-                 coord_format='rtlb',
                  color='r',
                  thickness=1,
                  ltype=None,
                  ref=None,
                  dim=None,
-                 ):
+                 coord_format='rtlb',
+                 update_format='None'):
         super().__init__()
 
-        self.coord_format = coord_format
-        self._coords = coordtools.translate_box_coords(coords,
-                                                       in_format=coord_format,
-                                                       ref=ref,
-                                                       dim=dim
-                                                       )
+        self._coords = np.zeros(4, dtype=int)
         self.color = color
         self.thickness = thickness
         self.ltype = ltype
         self.ref = ref
         self.dim = dim
+        self.update_format = update_format
+        self.coord_format = coord_format
 
     @property
     def coords(self):
@@ -72,20 +33,116 @@ class Rectangle(bases.Writer, RectangleType):
 
     @coords.setter
     def coords(self, new_coords):
-        self._coords = coordtools.translate_box_coords(new_coords,
-                                                       in_format=self.coord_format,
-                                                       ref=self.ref,
-                                                       dim=self.dim
-                                                       )
+        self._coords[:] = coordtools.translate_box_coords(new_coords,
+                                                          in_format=self.update_format,
+                                                          out_format=self.coord_format
+                                                          )
+
+
+    @property
+    @abc.abstractmethod
+    def center(self):
+        pass
+
+
+    @center.setter
+    @abc.abstractmethod
+    def center(self, new_center):
+        pass
+
+
+class Circle(ShapeAsset, CircleType):
+
+    def __init__(self,
+                 center,
+                 radius,
+                 *args,
+                 radius_type='inner',
+                 **kwargs
+                 ):
+        super().__init__(*args, **kwargs)
+
+        self._coords[:2] = center
+        self._coords[2:] = radius
+        self.coord_format = 'cwh'
+        self.radius_type = radius_type
+        self.radius = radius
+        self.center = center
+
+    @property
+    def coords(self):
+        return super().coords
+
+    @coords.setter
+    def coords(self, new_coords):
+        self._coords[:] = coordtools.find_center_radius_from_box_coords(new_coords,
+                                                                        box_format=self.update_format,
+                                                                        radius_type=self.radius_type
+                                                                        )
+
+    @property
+    def radius(self):
+        return self._coords[2]
+
+    @radius.setter
+    def radius(self, new_radius):
+        self._coords[2] = self._coords[3] = new_radius
+
+    @property
+    def center(self):
+        return self._coords[:2]
+
+    @center.setter
+    def center(self, new_center):
+        self._coords[:2] = new_center
+
+    def write(self, frame, center=None, radius=None):
+
+        if center is not None: self.center = center
+        if radius is not None: self.radius = radius
+
+        shapefunctions.draw_circle(frame,
+                                   self.center,
+                                   self.radius,
+                                   color=self.color,
+                                   thickness=self.thickness,
+                                   ltype=self.ltype,
+                                   ref=self.ref,
+                                   )
+
+
+class Rectangle(ShapeAsset, RectangleType):
+    shape = "rectangle"
+
+    def __init__(self,
+                 coords,
+                 *args,
+                 **kwargs,
+                 ):
+
+        super().__init__(*args,**kwargs)
+        self._coords[:] = coords
+
+    @property
+    def center(self):
+        cx, cy, _, _ = coordtools.translate_box_coords(self.coords, self.coord_format, 'cwh')
+        return cx, cy
+
+    @center.setter
+    def center(self, new_center):
+        pass
 
     def write(self, frame, coords=None):
+
         if coords is not None: self.coords = coords
+
         shapefunctions.draw_rectangle(frame,
                                       self.coords,
                                       color=self.color,
                                       thickness=self.thickness,
                                       ltype=self.ltype,
-                                      coord_format='rtlb'
+                                      coord_format=self.coord_format,
+                                      ref=self.ref,
                                       )
 
 
@@ -94,7 +151,7 @@ class Line(bases.Writer, LineType):
     def __init__(self,
                  color='r',  # must be either string in color hash or bgr value
                  thickness=2,
-                 ltype = None,
+                 ltype=None,
                  line_format='ep'  # line type
                  ):
 
