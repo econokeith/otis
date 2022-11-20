@@ -43,14 +43,17 @@ class ShapeAsset(bases.AssetWriter):
                                                           out_format=self.coord_format
                                                           )
 
-
     @property
     def center(self):
         pass
 
+
     @center.setter
     def center(self, new_center):
         pass
+
+    def center_width_height(self):
+        return coordtools.translate_box_coords(self._coords, self.coord_format, 'cwh')
 
 
 class Circle(ShapeAsset, CircleType):
@@ -107,7 +110,7 @@ class Circle(ShapeAsset, CircleType):
         self._coords[:2] = new_center
 
 
-    def write(self, frame, center=None, radius=None, color=None, ref=None, save=True):
+    def write(self, frame, center=None, radius=None, color=None, ref=None, save=False):
         """
         :type frame: np.array
         """
@@ -167,7 +170,7 @@ class Rectangle(ShapeAsset, RectangleType):
                                                           out_format=self.coord_format
                                                           )
 
-    def write(self, frame, coords=None, color=None, ref=None, save=True):
+    def write(self, frame, coords=None, color=None, ref=None, save=False):
         """
         :type frame: np.array
         """
@@ -222,7 +225,7 @@ class Line(bases.AssetWriter, LineType):
     def coords(self, new_coords):
         self._coords[:] = new_coords
 
-    def write(self, frame, coords=None, color=None, ref=None, save=True):
+    def write(self, frame, coords=None, color=None, ref=None, save=False):
 
         _coords = self.coords if coords is None else coords
         _color = self.color if color is None else color

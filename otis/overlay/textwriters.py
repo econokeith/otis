@@ -100,7 +100,6 @@ class TextWriter(bases.AssetWriter):
         self._font = new_font
         self.font_height = self.get_text_size("T")[1]
 
-
     @property
     def line_spacing(self):
         spacing = self._line_spacing
@@ -114,17 +113,6 @@ class TextWriter(bases.AssetWriter):
     @line_spacing.setter
     def line_spacing(self, spacing):
         self._line_spacing = spacing
-
-
-
-
-    # @property
-    # def coords(self):
-    #     return self._position
-    #
-    # @coords.setter
-    # def coords(self, new_position):
-    #     self._position = uti.abs_point(new_position, self.ref, self.dim)
 
     def get_text_size(self, text=None):
         _text = self.line if text is None else text
@@ -171,6 +159,7 @@ class TextWriter(bases.AssetWriter):
                                   )
 
         if isinstance(self.outliner, shapes.Rectangle):
+
             l = justified_position[0] - self.h_space
             b = justified_position[1] + self.v_space
             w, h = self.get_text_size()
@@ -199,13 +188,15 @@ class TextWriter(bases.AssetWriter):
 # TODO: clean up differences between TypeWriter and MultiLineTyper
 class NameTag(TextWriter):
 
-
     def __init__(self,
                  name = None,
                  v_offset=20,
                  h_offset=0,
                  attached_to=None,
                  color = None,
+                 box_reference='c', #'c', 'l', 'r'
+                 line_to_box= False,
+                 ltb_offset=0,
                  **kwargs,
                  ):
 
@@ -215,6 +206,10 @@ class NameTag(TextWriter):
         self.h_offset = h_offset
         self.attached_to = attached_to
         self.color = color
+        self.box_reference=box_reference
+        self.ltb_offset = ltb_offset
+        self.line_to_fox = line_to_box
+        self.jtype = box_reference
 
     @property
     def name(self):
@@ -224,7 +219,7 @@ class NameTag(TextWriter):
     def name(self, new_name):
         self.line = new_name
 
-    def write(self, frame, **kwargs):
+    def write(self, frame, name=None, color=None, **kwargs):
         #might wanna change this so that it just get's entered each time
         if self.name is not None:
             name = self.name
@@ -238,22 +233,23 @@ class NameTag(TextWriter):
         else:
             color = self.attached_to.color
 
+        x, y, w, h = self.attached_to.center_width_height()
+
+        if self.box_reference == 'l':
+            ref = (x-w//2, y+h//2)
+
+        elif self.box_reference == 'r':
+            ref = (x+w//2, y+h//2)
+        else:
+            ref = (x, y+h//2)
 
         super().write(frame,
-                      position=(0, self.v_offset + self.v_space),
-                      text=name
-
+                      position=(self.ltb_offset, self.v_offset + self.v_space),
+                      text=name,
+                      color=color,
+                      ref = ref,
+                      save =False
                       )
-
-        if self.underline is True:
-            pass
-            # shapes.draw_line(frame,
-            #                  (0, 0),
-            #                  (0, da),
-            #                  self.color,
-            #                  1,
-            #                  ref=(l + da, t)
-            #                  )
 
 
 class InfoWriter(TextWriter):
