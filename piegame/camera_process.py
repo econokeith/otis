@@ -284,7 +284,7 @@ class ScoreKeeper(writergroups.AssetGroup):
 
         self.assets[0].write(frame)
         for name, asset in zip(self.players, self.assets[1:]):
-            asset.write(frame)
+            asset.write(frame, name)
 
     @property
     def timer_finished(self):

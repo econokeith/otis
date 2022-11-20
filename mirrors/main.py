@@ -17,7 +17,11 @@ pargs.PATH_TO_FACES = 'faces'
 pargs.output_scale = 1.8
 
 if pargs.servo is True:
-    import servo_process
+    try:
+        import servo_process
+        use_servo = True
+    except:
+        use_servo = False
 
 def main():
     # set up shared data
@@ -36,7 +40,7 @@ def main():
     # define Processes with shared data
     process_modules = [camera_process, cv_model_process]
     #if servos are true, add it to the process list
-    if pargs.servo is True:
+    if use_servo is True:
         process_modules.append(servo_process)
 
     processes = []
