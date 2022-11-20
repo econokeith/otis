@@ -129,6 +129,10 @@ class AssetMover:
     def center(self):
         return self.position
 
+    @center.setter
+    def center(self, new_center):
+        self.position = new_center
+
     def move(self):
         # don't update if it's not time
         if self.timer() is False or self.finished is True:
@@ -335,7 +339,7 @@ class BouncingAssetManager:
 
 class CollisionDetector:
     """
-    currently only supports, currently not optimized for searches faster than O(n^2)
+    currently only supports circles, currently not optimized for searches faster than O(n^2)
     """
 
     def __init__(self, overlap=None):
