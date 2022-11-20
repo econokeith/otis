@@ -138,7 +138,7 @@ class AssetMover:
         if self.timer() is False or self.finished is True:
             return
 
-        # find proposal position
+        # find proposal coords
         prop_x, prop_y = self.position + self.velocity / self.ups
 
         # check if proposals are in bound and then act based on self.border_collision
@@ -223,7 +223,7 @@ class AssetMover:
             return
         self.ups = min(1./self.real_timer(), self._ups)
         try:
-            self.asset.write(frame, position=self.position.astype(int))
+            self.asset.write(frame)
         except:
             self.movers.remove(self)
 

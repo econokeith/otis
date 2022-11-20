@@ -6,7 +6,8 @@ from otis.overlay import bases
 from otis.overlay.bases import CircleType, RectangleType, LineType
 
 
-class ShapeAsset(bases.Writer, abc.ABC):
+class ShapeAsset(bases.AssetWriter):
+
 
     def __init__(self,
                  color='r',
@@ -15,7 +16,10 @@ class ShapeAsset(bases.Writer, abc.ABC):
                  ref=None,
                  dim=None,
                  coord_format='rtlb',
-                 update_format='None'):
+                 update_format=None,
+                 collisions = False,
+                 ):
+
         super().__init__()
 
         self._coords = np.zeros(4, dtype=int)
@@ -24,8 +28,9 @@ class ShapeAsset(bases.Writer, abc.ABC):
         self.ltype = ltype
         self.ref = ref
         self.dim = dim
-        self.update_format = update_format
         self.coord_format = coord_format
+        self.update_format = coord_format if update_format is None else update_format
+        self.collisions = collisions
 
     @property
     def coords(self):
@@ -40,27 +45,32 @@ class ShapeAsset(bases.Writer, abc.ABC):
 
 
     @property
-    @abc.abstractmethod
     def center(self):
         pass
 
-
     @center.setter
-    @abc.abstractmethod
     def center(self, new_center):
         pass
 
 
 class Circle(ShapeAsset, CircleType):
-
+    shape = 'circle'
     def __init__(self,
                  center,
                  radius,
-                 *args,
                  radius_type='inner',
                  **kwargs
                  ):
-        super().__init__(*args, **kwargs)
+        """
+
+        Args:
+            center:
+            radius:
+            *args:
+            radius_type:
+            **kwargs:
+        """
+        ShapeAsset.__init__(self, **kwargs)
 
         self._coords[:2] = center
         self._coords[2:] = radius
@@ -96,102 +106,166 @@ class Circle(ShapeAsset, CircleType):
     def center(self, new_center):
         self._coords[:2] = new_center
 
-    def write(self, frame, center=None, radius=None):
 
-        if center is not None: self.center = center
-        if radius is not None: self.radius = radius
+    def write(self, frame, center=None, radius=None, color=None, ref=None, save=True):
+        """
+        :type frame: np.array
+        """
+        _center = self.center if center is None else center
+        _radius = self.radius if radius is None else radius
+        _color = self.color if color is None else color
+        _ref = self.ref if ref is None else ref
+
+        if save is True:
+            self.center = _center
+            self.radius = _radius
+            self.color = _color
+            self.ref = _ref
 
         shapefunctions.draw_circle(frame,
-                                   self.center,
-                                   self.radius,
-                                   color=self.color,
+                                   _center,
+                                   _radius,
+                                   color=_color,
                                    thickness=self.thickness,
                                    ltype=self.ltype,
-                                   ref=self.ref,
+                                   ref=_ref,
                                    )
 
+
+# todo: need to think of a way to efficiently update center and find height/width
 
 class Rectangle(ShapeAsset, RectangleType):
     shape = "rectangle"
 
     def __init__(self,
-                 coords,
-                 *args,
+                 coords=(0,0,0,0),
                  **kwargs,
                  ):
 
-        super().__init__(*args,**kwargs)
+        ShapeAsset.__init__(self, **kwargs)
         self._coords[:] = coords
 
     @property
     def center(self):
-        cx, cy, _, _ = coordtools.translate_box_coords(self.coords, self.coord_format, 'cwh')
+        cx, cy, _, _ = coordtools.translate_box_coords(self.coords,
+                                                       in_format=self.coord_format,
+                                                       out_format='cwh'
+                                                       )
         return cx, cy
 
     @center.setter
     def center(self, new_center):
-        pass
+        # find the center, width, and height
+        cy, cx, w, h = coordtools.translate_box_coords(self.coords,
+                                                       in_format=self.coord_format,
+                                                       out_format='cwh'
+                                                       )
+        cy_new, cx_new = new_center
+        # change the center and then convert back to appropriate format
+        self._coords[:] = coordtools.translate_box_coords((cx_new, cy_new, w, h),
+                                                          in_format='cwh',
+                                                          out_format=self.coord_format
+                                                          )
 
-    def write(self, frame, coords=None):
+    def write(self, frame, coords=None, color=None, ref=None, save=True):
+        """
+        :type frame: np.array
+        """
 
-        if coords is not None: self.coords = coords
+        _coords = self.coords if coords is None else coords
+        _color = self.color if color is None else color
+        _ref = self.ref if ref is None else ref
+
+        if save is True:
+
+            self.coords = _coords
+            self.color = _color
+            self.ref = _ref
 
         shapefunctions.draw_rectangle(frame,
-                                      self.coords,
-                                      color=self.color,
+                                      _coords,
+                                      color=_color,
                                       thickness=self.thickness,
                                       ltype=self.ltype,
                                       coord_format=self.coord_format,
-                                      ref=self.ref,
+                                      ref=_ref,
                                       )
 
 
-class Line(bases.Writer, LineType):
+class Line(bases.AssetWriter, LineType):
 
     def __init__(self,
-                 color='r',  # must be either string in color hash or bgr value
+                 coords = (0, 0, 0, 0),
+                 color = 'r',
                  thickness=2,
                  ltype=None,
-                 line_format='ep'  # line type
+                 coord_format='points',# points (x1, y1, x2, y2), 'pal': (x1, y1, angle, length), 'cal' center angle length
+                 ref=None,
+                 dim=None
                  ):
 
         super().__init__()
+
+        self._coords = np.array(coords)
         self.color = color
         self.thickness = thickness
-        self.reference = None
-        self.line_format = line_format
         self.ltype = ltype
+        self.coord_format = coord_format
+        self.ref = ref
+        self.dim = dim
 
-    def write(self, frame, *line_data, ref=None, wtype=None, color=None, thickness=None, ltype=None):
+    @property
+    def coords(self):
+        return self._coords
 
-        _thickness = self.thickness if thickness is None else thickness
+    @coords.setter
+    def coords(self, new_coords):
+        self._coords[:] = new_coords
+
+    def write(self, frame, coords=None, color=None, ref=None, save=True):
+
+        _coords = self.coords if coords is None else coords
         _color = self.color if color is None else color
-        _wtype = self.line_format if wtype is None else wtype
-        _ltype = self.ltype if ltype is None else ltype
+        _ref = self.ref if ref is None else ref
 
-        if _wtype == 'pal':
-            shapefunctions.draw_pal_line(frame, *line_data, color=_color, thickness=_thickness, ref=ref)
-        elif _wtype == 'cal':
-            shapefunctions.draw_cal_line(frame, *line_data, color=_color, thickness=_thickness, ref=ref)
+        if save is True:
+
+            self.coords = _coords
+            self.color = _color
+            self.ref = _ref
+
+        # depending on the line coord format, choose a different drawing function
+        if self.coord_format == 'pal':
+            shapefunctions.draw_pal_line(frame, _coords[:2], _coords[2], _coords[3],
+                                         color=_color, thickness=self.thickness, ltype=self.ltype, ref=_ref)
+        elif self.coord_format == 'cal':
+            shapefunctions.draw_cal_line(frame, _coords[:2], _coords[2], _coords[3],
+                                         color=_color, thickness=self.thickness, ltype=self.ltype, ref=_ref)
         else:
-            point0 = coordtools.abs_point(*line_data[0], ref, frame.shape[:2])
-            point1 = coordtools.abs_point(*line_data[1], ref, frame.shape[:2])
+            point0 = coordtools.abs_point(_coords[:2], ref, frame)
+            point1 = coordtools.abs_point(_coords[2:], ref, frame)
 
-            cv2.line(frame, point0, point1, _color, _thickness, _ltype)
+            cv2.line(frame, point0, point1, _color, self.thickness, self.ltype)
 
 
-class TransparentBackground(bases.Writer, RectangleType):
+class TransparentBackground(RectangleType):
 
-    def __init__(self, top_right, bottom_left, transparency=.25, ref=None):
-        self.top_right = top_right
-        self.bottom_left = bottom_left
+    def __init__(self,
+                 coords=(0, 0, 0, 0),
+                 transparency=.25,
+                 coord_format= 'rtlb',
+                 ref=None):
+
+        super().__init__()
+        self.coords = coords
         self.transparency = transparency
+        self.coord_format = coord_format
         self.ref = ref
 
     def write(self, frame):
         shapefunctions.write_transparent_background(frame,
-                                                    right_top=self.top_right,
-                                                    left_bottom=self.bottom_left,
+                                                    coords=self.coords,
+                                                    coord_format=self.coord_format,
                                                     transparency=self.transparency,
                                                     ref=self.ref
                                                     )

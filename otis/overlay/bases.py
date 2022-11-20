@@ -1,6 +1,6 @@
 """
-Writer is basically just a fancy mixin to add the class method
-cls().make_list which instantiates a list of identical Writer/subclass
+AssetWriter is basically just a fancy mixin to add the class method
+cls().make_list which instantiates a list of identical AssetWriter/subclass
 objects
 """
 import abc
@@ -8,20 +8,30 @@ import copy
 from otis.helpers import colortools
 from otis.helpers import cvtools
 # TODO: adding the functionality with abs_point to base
-class Writer:
+class AssetWriter:
 
     @classmethod
     def make_list(cls, n_writers, *args, **kwargs):
         return [cls(*args, **kwargs) for _ in range(n_writers)]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self,*args, **kwargs,
+                 # color='r',
+                 # thickness=1,
+                 # ltype=None,
+                 # ref = None,
+                 # dim = None
+                 ):
         """
-        Writer is basically just a fancy mixin to add the class method
-        cls().make_list which instantiates a list of identical Writer/subclass
+        AssetWriter is basically just a fancy mixin to add the class method
+        cls().make_list which instantiates a list of identical AssetWriter/subclass
         objects
         """
 
         self._color = (0,0,0)
+        # self.thickness = thickness
+        # self.ltype = ltype
+        # self.ref = ref
+        # self.dim = dim
 
     @property
     def color(self):

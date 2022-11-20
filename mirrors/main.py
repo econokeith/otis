@@ -13,7 +13,7 @@ import camera_process, cv_model_process
 parser = otistools.make_parser()
 pargs = parser.parse_args()
 pargs.video_center = np.array(pargs.dim) // 2
-pargs.PATH_TO_FACES = './faces'
+pargs.PATH_TO_FACES = 'faces'
 pargs.output_scale = 1.8
 
 if pargs.servo is True:

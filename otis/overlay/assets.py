@@ -9,7 +9,7 @@ from otis.overlay.shapes import Line
 from otis.overlay.textwriters import TextWriter
 
 
-class BoundingBox(bases.Writer):
+class BoundingBox(bases.AssetWriter):
     shape = "rectangle"
     name_writer: TextWriter
     name: str
@@ -34,14 +34,23 @@ class BoundingBox(bases.Writer):
         self.thickness = thickness
         self.font_scale = font_scale
         self.ltype = ltype
-        self.name_writer = textwriters.TextWriter(scale=font_scale, ltype=ltype)
-        self.name = name
+        self.name_writer = textwriters.TextWriter(scale=font_scale, ltype=ltype, border=True)
+        self._name = name
         self.show_name = show_name
         self.name_line = name_line
         self.show_me = show_me
         self.threshold = threshold
         self.constant = None # None or (w, h)
         self.last_update_timer = timers.TimeSinceLast()
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, new_name):
+        self._name = new_name
+        self.name_writer.line = new_name
 
     @property
     def center(self):
@@ -103,14 +112,15 @@ class BoundingBox(bases.Writer):
         cv2.rectangle(frame, (l, t), (r, b), self.color, self.thickness)
         _name = name if name is not None else self.name
         if self.show_name is True and (_name is not None):
+
             self.name_tag(frame, name)
 
     def name_tag(self, frame, name=None):
         t, r, b, l = self.coords
         _name = self.name if name is None else name
         self.name_writer.write(frame, position=(0, 20), text=_name, ref=(l, t))
-        if self.name_line is True:
-            shapefunctions.draw_line(frame, (0, 0), (0, 15), self.color, 1, ref=(l + 15, t))
+        # if self.name_line is True:
+        #     shapefunctions.draw_line(frame, (0, 0), (0, 15), self.color, 1, ref=(l + 15, t))
 
 
 class BoundingCircle(BoundingBox):
@@ -166,7 +176,7 @@ class BoundingCircle(BoundingBox):
         _name = name if name is not None else self.name
         self.name_writer.write(frame, position=(0, self.radius+20), text=_name, ref=(x,y))
         # if self.name_line is True:
-        #     shapes.draw_line(frame, (0, 0), (0, 15), self.color, 1, ref=(position[0], position[1]-5))
+        #     shapes.draw_line(frame, (0, 0), (0, 15), self.color, 1, ref=(coords[0], coords[1]-5))
 
 
 class CrossHair(BoundingCircle):
@@ -181,7 +191,7 @@ class CrossHair(BoundingCircle):
             self.constant_size = True
             self._radius = radius
 
-        self.line_writer = Line(color='b', thickness=self.thickness, line_format='cal')
+        self.line_writer = Line(color='b', thickness=self.thickness, coord_format='cal')
 
     @property
     def radius(self):

@@ -278,13 +278,13 @@ class ScoreKeeper(writergroups.AssetGroup):
         # shapefunctions.write_transparent_background(frame,
         #                                             (200, 0),
         #                                             (0, -250),
-        #                                             ref=self.position,
+        #                                             ref=self.coords,
         #                                             transparency=.9
         #                                             )
 
         self.assets[0].write(frame)
         for name, asset in zip(self.players, self.assets[1:]):
-            asset.write(frame, name)
+            asset.write(frame)
 
     @property
     def timer_finished(self):

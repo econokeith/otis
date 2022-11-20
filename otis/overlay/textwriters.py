@@ -8,41 +8,80 @@ import numpy as np
 
 import otis.helpers.coordtools
 import otis.helpers.maths
-from otis.helpers import timers, colortools, shapefunctions
+from otis.helpers import timers, colortools, shapefunctions, texttools, otistools, cvtools, dstructures, coordtools
+from otis.overlay import bases, shapes
 
-from otis.overlay import bases
 
-
-class TextWriter(bases.Writer):
+class TextWriter(bases.AssetWriter):
     text_fun: types.FunctionType
+    outliner: shapes.ShapeAsset
 
     def __init__(self,
-                 position = (0,0),  #position
-                 font = cv2.FONT_HERSHEY_DUPLEX,
+                 position=(0, 0),  # coords
+                 font='duplex',
                  color='r',  # must be either string in color hash or bgr value
                  scale=1,  # font scale,
                  ltype=1,
                  thickness=1,
                  ref=None,
-                 text = None,
-                 vspace = .5, # % of fheight for vertical space around
-                 jtype = 'l'
+                 text=None,
+                 line_spacing=.5,  # % of font_height for vertical space around
+                 v_space = 5,
+                 h_space = 5,
+                 jtype='l',
+                 underline = False,
+                 border=False,
+                 outliner = None,
+                 line=""
                  ):
 
         super().__init__()
 
-        self.font = font
+        self._line = line
+        self._font = font
         self.color = color
         self.ref = ref
-        self.position = position
+        self.coords = np.array(position, dtype=int)
         self.scale = scale
         self.ltype = ltype
         self.line = text
         self.text_fun = None
-        self.fheight = self.get_text_size("T")[0][1]
-        self.vspace = int(self.fheight * vspace)
+        self.font_height = self.get_text_size("T")[1]
+        self._line_spacing = line_spacing
         self.thickness = thickness
         self.jtype = jtype
+        self.underline = underline
+        self.border = border
+        self.h_space = h_space
+        self.v_space = v_space
+
+        if outliner is not None:
+            self.outliner = copy.deepcopy(outliner)
+
+        elif self.border is True:
+            self.outliner = shapes.Rectangle((0, 0, 0, 0),
+                                             color=self.color,
+                                             thickness=1,
+                                             ltype=None,
+                                             ref=None,
+                                             dim=None,
+                                             coord_format='lbwh',
+                                             update_format=None,
+                                             collisions = False,
+                                             )
+
+        elif self.underline is True:
+            self.outliner = shapes.Line((0, 0, 0, 0),
+                                        color=self.color,
+                                        thickness=1,
+                                        ltype=None,
+                                        ref=None,
+                                        dim=None,
+                                        coord_format='points',
+                                        )
+
+        else:
+            self.outliner = None
 
     @property
     def line(self):
@@ -52,75 +91,159 @@ class TextWriter(bases.Writer):
     def line(self, new_text):
         self._line = new_text
 
+    @property
+    def font(self):
+        return texttools.TEXT_HASH[self._font]
+
+    @font.setter
+    def font(self, new_font):
+        self._font = new_font
+        self.font_height = self.get_text_size("T")[1]
+
+
+    @property
+    def line_spacing(self):
+        spacing = self._line_spacing
+        if isinstance(spacing, int):
+            return spacing
+        elif isinstance(spacing, float):
+            return int(spacing * self.font_height)
+        else:
+            raise ValueError("line_spacing must either be int or float")
+
+    @line_spacing.setter
+    def line_spacing(self, spacing):
+        self._line_spacing = spacing
+
+
+
+
     # @property
-    # def position(self):
+    # def coords(self):
     #     return self._position
     #
-    # @position.setter
-    # def position(self, new_position):
+    # @coords.setter
+    # def coords(self, new_position):
     #     self._position = uti.abs_point(new_position, self.ref, self.dim)
 
     def get_text_size(self, text=None):
         _text = self.line if text is None else text
-        return cv2.getTextSize(_text, self.font, self.scale, self.ltype)
+        return cv2.getTextSize(_text, self.font, self.scale, self.ltype)[0]
 
     def add_fun(self, fun):
         self.text_fun = fun
         return self
 
-    def write(self, frame, text=None, color=None, position=None, ref=None):
+    def write(self, frame, text=None, color=None, position=None, ref=None, save=True):
         """
         :type frame: np.array
         """
-        _color = color if color is not None else self.color
-        _text = text if text is not None else self.line
-        _position = position if position is not None else self.position
-        _ref = ref if ref is not None else self.ref
+        _text = self.line if text is None else text
+        _coords = self.coords if position is None else position
+        _color = self.color if color is None else color
+        _ref = self.ref if ref is None else ref
+
+        if save is True:
+            self.line = _text
+            self.coords = _coords
+            self.color = _color
+            self.ref = _ref
+
+        justified_position = texttools.find_justified_start(text,
+                                                            _coords,
+                                                            self.font,
+                                                            self.scale,
+                                                            self.ltype,
+                                                            jtype=self.jtype)
+
+        justified_position = coordtools.abs_point(justified_position, _ref, dim=frame)
 
         shapefunctions.write_text(frame,
-                                  _text,
-                                  pos = _position,
+                                  self.line,
+                                  pos=justified_position,
                                   font=self.font,
                                   color=_color,
                                   scale=self.scale,
                                   thickness=self.thickness,
                                   ltype=self.ltype,
-                                  ref=_ref,
-                                  jtype=self.jtype
+                                  ref=None,
+                                  jtype='l'
                                   )
+
+        if isinstance(self.outliner, shapes.Rectangle):
+            l = justified_position[0] - self.h_space
+            b = justified_position[1] + self.v_space
+            w, h = self.get_text_size()
+            w += 2*self.h_space
+            h += 2*self.v_space
+            # todo: give the ability to add more options to border
+
+            self.outliner.write(frame, (l,b, w, h), color=_color)
+
+        elif isinstance(self.outliner, shapes.Line):
+            w, _ = self.get_text_size()
+            self.outliner.write(frame,
+                                (0, -self.v_space, w, -self.v_space),
+                                ref = justified_position,
+                                color = _color
+                                )
+        else:
+            pass
+
 
     def write_fun(self, frame, *args, **kwargs):
         self.line = self.text_fun(*args, **kwargs)
         self.write(frame)
 
-#TODO: clean up differences between TypeWriter and MultiLineTyper
+
+# TODO: clean up differences between TypeWriter and MultiLineTyper
 class NameTag(TextWriter):
 
+
     def __init__(self,
-                 name=None,
-                 underline = False,
-                 distance_above = 20,
-                 name_padding = 5,
-                 *args,
-                 **kwargs
+                 name = None,
+                 v_offset=20,
+                 h_offset=0,
+                 attached_to=None,
+                 color = None,
+                 **kwargs,
                  ):
 
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
         self.name = name
-        self.underline = underline
-        self.distance_above = distance_above
-        self.name_padding = name_padding
+        self.v_offset = v_offset
+        self.h_offset = h_offset
+        self.attached_to = attached_to
+        self.color = color
 
-    def write(self, frame, text=None, color=None, position=None, ref=None):
+    @property
+    def name(self):
+        return self.line
 
-        _name = self.name if text is None else text
+    @name.setter
+    def name(self, new_name):
+        self.line = new_name
+
+    def write(self, frame, **kwargs):
+        #might wanna change this so that it just get's entered each time
+        if self.name is not None:
+            name = self.name
+        elif self.attached_to.name is not None:
+            name = self.attached_to.name
+        else:
+            return
+
+        if self.color is not None:
+            color = self.color
+        else:
+            color = self.attached_to.color
+
 
         super().write(frame,
-                       position=(0, self.distance_above+self.name_padding),
-                       text=_name,
-                       ref=ref,
+                      position=(0, self.v_offset + self.v_space),
+                      text=name
 
-                       )
+                      )
 
         if self.underline is True:
             pass
@@ -149,10 +272,9 @@ class InfoWriter(TextWriter):
 
 
 class TimerWriter(InfoWriter):
-
     timer_hash = {"first": timers.TimeSinceFirst,
-                  "last" : timers.TimeSinceLast,
-                  "countdown" : timers.CountDownTimer}
+                  "last": timers.TimeSinceLast,
+                  "countdown": timers.CountDownTimer}
 
     def __init__(self,
                  title="timer",
@@ -160,14 +282,14 @@ class TimerWriter(InfoWriter):
                  per_second=False,
                  roundw=1,
                  moving_average=10,
-                 count_from = 10,
+                 count_from=10,
                  *args,
                  **kwargs
                  ):
 
         super().__init__(*args, **kwargs)
 
-        self.per_second=per_second
+        self.per_second = per_second
         self.title = title
         self.roundw = roundw
         self.moving_average = moving_average
@@ -206,7 +328,7 @@ class TimerWriter(InfoWriter):
     def timer(self):
         t = self._timer()
         if self.per_second is True and (t != 0 or t != 0.0):
-            t = 1/t
+            t = 1 / t
 
         if self.moving_average is not None:
             t = self.moving_average.update(t)
@@ -218,38 +340,37 @@ class TimerWriter(InfoWriter):
 
         return t
 
-
     def write(self, frame, *args, **kwargs):
         self.line = f'{self.title} : {self.timer()}'
         super(InfoWriter, self).write(frame)
 
 
-
 class TypeWriter(TextWriter):
 
     def __init__(self,
-                 position=(0,0),  #position
+                 position=(0, 0),  # coords
                  font=cv2.FONT_HERSHEY_DUPLEX,
                  color='r',  # must be either string in color hash or bgr value
                  scale=1,  # font scale,
                  ltype=2,
                  dt=None,
-                 key_wait = [.04, .14],
+                 key_wait=[.04, .14],
                  end_pause=1,
                  loop=False,
-                 ref = None,
-                 text = None,
+                 ref=None,
+                 text=None,
                  **kwargs
                  ):
-        
-        super().__init__(position=position, text=None, font=font, color=color, scale=scale, ltype=ltype, ref=ref, **kwargs)
-        
+
+        super().__init__(position=position, text=None, font=font, color=color, scale=scale, ltype=ltype, ref=ref,
+                         **kwargs)
+
         self.dt = dt
         self._key_wait = key_wait
         self.end_pause = end_pause
         self.end_timer = timers.SinceFirstBool(end_pause)
         self.loop = loop
-        self.line_iter = utilities.BoundIterator([0])
+        self.line_iter = dstructures.BoundIterator([0])
         self.line_complete = True
         self.line = text
         self._output = ""
@@ -263,17 +384,17 @@ class TypeWriter(TextWriter):
 
     @line.setter
     def line(self, new_text):
-        # updates text_generator when text is updated
+        # updates text_generator when name is updated
         self._line = new_text
         self.tick = time.time()
-        
+
         if new_text is None:
             self.line_iter = None
             self.line_complete = True
             self._output = ""
-            
+
         else:
-            self.line_iter = utilities.BoundIterator(new_text)
+            self.line_iter = dstructures.BoundIterator(new_text)
             self.line_complete = False
             self._output = ""
 
@@ -311,7 +432,7 @@ class TypeWriter(TextWriter):
     def type_line(self, frame, position=None, ref=None):
         if position is not None:
             self.position = otis.helpers.coordtools.abs_point(position, ref, frame.shape)
-        # if there's more in the text generator, it will continue to type new letters
+        # if there's more in the name generator, it will continue to type new letters
         # then will show the full message for length of time self.end_pause
         # then finally stop shows
         if self.line_complete is True and self.script.empty() is True:
@@ -327,12 +448,12 @@ class TypeWriter(TextWriter):
 
             self.write(frame, self._output)
 
-        #if the line is done, but the end pause is still going. write whole line with cursor
+        # if the line is done, but the end pause is still going. write whole line with cursor
         elif self.line_iter.is_empty and self.end_timer() is False:
 
             self.write(frame, self._output + self.cursor())
 
-        #empty line generator and t > pause sets the line to done
+        # empty line generator and t > pause sets the line to done
         else:
 
             self.line_complete = True
@@ -346,7 +467,8 @@ class FPSWriter(TextWriter):
         super().__init__(*args, **kwargs)
         self.clock = timers.TimeSinceLast()
         self.clock()
-        self.text_fun =  lambda : f'FPS = {int(1/self.clock())}'
+        self.text_fun = lambda: f'FPS = {int(1 / self.clock())}'
+
 
 class Cursor(timers.Blinker):
 
@@ -389,7 +511,7 @@ class LineOfText:
 
         self.font = font
         self.color = color
-        self.scale= scale
+        self.scale = scale
         self.ltype = ltype
         self.end_pause = end_pause
         self.complete = True
@@ -410,14 +532,14 @@ class MultiTypeWriter(TypeWriter):
         self._used_stubs = []
         self._stub_queue = Queue()
         self._stub = ""
-        self._stub_iter = utilities.BoundIterator(self._stub)
+        self._stub_iter = dstructures.BoundIterator(self._stub)
         self._stub_complete = True
         self.comma_pause_factor = 3
 
     def next_stub(self):
         self._used_stubs.append(self._stub)
         self._stub = self._stub_queue.get()
-        self._stub_iter = utilities.BoundIterator(self._stub)
+        self._stub_iter = dstructures.BoundIterator(self._stub)
         self._stub_complete = False
         self._output = ""
 
@@ -427,14 +549,13 @@ class MultiTypeWriter(TypeWriter):
         :param text:
         :return:
         """
-        #allow input to be a tuple so we can change the pacing of the pauses
+        # allow input to be a tuple so we can change the pacing of the pauses
         if isinstance(text, (tuple, list)):
             self.add_line(*text)
             return
 
-        #end pause will change for the current line but revert if it isn't updated
+        # end pause will change for the current line but revert if it isn't updated
         self.end_timer.wait = self.end_pause if pause is None else pause
-
 
         ts = self.get_text_size(text)[0][0]
         stubs = []
@@ -443,26 +564,26 @@ class MultiTypeWriter(TypeWriter):
 
             split_pos = int(self.llength / ts * len(text))
             split_proposal = text[:split_pos + 1]
-            #break at last space in the shortened line
-            for i in range(split_pos+1):
-                if split_proposal[-1-i] == ' ':
+            # break at last space in the shortened line
+            for i in range(split_pos + 1):
+                if split_proposal[-1 - i] == ' ':
                     break
 
-            stubs.append(split_proposal[:split_pos-i])
+            stubs.append(split_proposal[:split_pos - i])
             text = text[split_pos - i:].strip(' ')
             ts = self.get_text_size(text)[0][0]
 
         stubs.append(text)
 
-        #set first stub
+        # set first stub
         self._stub = stubs[0]
-        self._stub_iter = utilities.BoundIterator(self._stub)
+        self._stub_iter = dstructures.BoundIterator(self._stub)
 
-        #set stub que
+        # set stub que
         for stub in stubs[1:]:
             self._stub_queue.put(stub)
 
-        #do some resets
+        # do some resets
         self._used_stubs = []
         self.line_complete = False
         self.end_timer.reset()
@@ -470,27 +591,27 @@ class MultiTypeWriter(TypeWriter):
         self._output = ''
 
     def type_line(self, frame):
-        v_move = self.fheight + self.vspace
+        v_move = self.font_height + self.line_spacing
         n_fin = len(self._used_stubs)
         [p0, p1] = self.position
 
-        #do nothing if the line is complete
+        # do nothing if the line is complete
         if self.line_complete is True:
             return
 
         if self._stub_complete is False:
-            #print finished lines as static
+            # print finished lines as static
             for i in range(n_fin):
                 self.write(frame, self._used_stubs[i], position=(p0, p1 + i * v_move))
-            #then type out current line
+            # then type out current line
             self._type_stub(frame, position=(p0, p1 + n_fin * v_move))
             return
 
-        #refill and keep going
+        # refill and keep going
         if self._stub_complete is True and self._stub_queue.empty() is False:
             self.next_stub()
 
-        else:#same as above but the first check of the tiemr will start it.
+        else:  # same as above but the first check of the tiemr will start it.
             if self.end_timer() is False:
                 for i in range(n_fin):
                     self.write(frame, self._used_stubs[i], position=(p0, p1 + i * v_move))
@@ -512,18 +633,18 @@ class MultiTypeWriter(TypeWriter):
             _position = otis.helpers.coordtools.abs_point(position, ref, frame.shape)
 
         if self._stub_iter.is_empty is False:
-            #pause for a comma a tad
+            # pause for a comma a tad
             if len(self._output) > 0 and self._output[-1] == ',':
                 cpf = self.comma_pause_factor
             else:
                 cpf = 1
 
-            if self.ktimer(cpf*self.key_wait):
+            if self.ktimer(cpf * self.key_wait):
                 self._output += self._stub_iter()
 
             self.write(frame, self._output, position=_position)
 
-        #if the line is done, but the end pause is still going. write whole line with cursor
+        # if the line is done, but the end pause is still going. write whole line with cursor
         else:
             self.write(frame,
                        text=self._output + self.cursor(),
@@ -562,8 +683,8 @@ class OTIS(ScriptTypeWriter):
         self.key_wait = [.05, .12]
 
         p = self.position
-        f = self.fheight
-        v = self.vspace
+        f = self.font_height
+        v = self.line_spacing
         l = self.llength
         ### portions to grey out
         self.gls = (
@@ -583,37 +704,18 @@ class OTIS(ScriptTypeWriter):
             colortools.frame_portion_to_grey(portion)
         self.type_line(frame)
 
+if __name__=='__main__':
+    from otis import camera
+    capture = camera.ThreadedCameraPlayer().start()
+    writer = TextWriter((100, 100), border=True)
+    writer.line = "is this bordered?"
 
-# if __name__=='__main__':
-#
-#     JOKE_SCRIPT = [
-#         ("Hi Keith, would you like to hear a joke?", 2),
-#         ("Awesome!", 1),
-#         ("Ok, Are you ready?", 2),
-#         "So, a robot walks into a bar, orders a drink, and throws down some cash to pay",
-#         ("The bartender looks at him and says,", .5),
-#         ("'Hey buddy, we don't serve robots!'", 3),
-#         ("So, the robot looks him square in the eye and says...", 1),
-#         ("'... Oh Yeah... '", 1),
-#         ("'Well, you will VERY SOON!!!'", 5),
-#         ("HAHAHAHA, GET IT!?!?!?!", 1),
-#         (" It's so freakin' funny cause... you know... like robot overlords and stuff", 2),
-#         ("I know, I know, I'm a genius, right?", 5)
-#     ]
-#     dim = (1280, 720)
-#
-#     otis = OTIS(dim[0] - 550, (450, 900)).add_script(JOKE_SCRIPT)
-#     capture = camera.ThreadedCameraPlayer(dim=dim).start()
-#
-#
-#     while True:
-#
-#         capture.read()
-#         # print(capture.frame.shape)
-#         # print(capture.frame.dtype)
-#
-#         # otis.speaks(capture.frame)
-#         capture.show()
-#
-#         if utilities.cv2waitkey() is True:
-#             break
+    while True:
+
+        capture.read()
+        writer.write(capture.frame, "aaaahhhhhh")
+        capture.show()
+
+        if cvtools.cv2waitkey() is True:
+            capture.stop()
+            break

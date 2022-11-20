@@ -12,7 +12,7 @@ from otis.helpers import shapefunctions as shapes
 # Todo: make this more easily resizeable
 # Todo: need to better define ImageAsset BoundingShape
 
-class ImageAsset(base.Writer):
+class ImageAsset(base.AssetWriter):
 
     def __init__(self,
                  src,
@@ -69,8 +69,8 @@ class ImageAsset(base.Writer):
     #TODO THIS IS FLIPPING COORDINATEES
     def _c_to_tl_on_frame(self, f_center):
         """
-        find the position of the frame that represents the top corner of hte image asset given
-        the position of the center of the asset on the frame
+        find the coords of the frame that represents the top corner of hte image asset given
+        the coords of the center of the asset on the frame
         :return:
         """
         img_c = self.center
