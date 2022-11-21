@@ -203,6 +203,7 @@ class NameTag(TextWriter):
                  ):
 
         super().__init__(**kwargs)
+
         self.name = name
         self.v_offset = v_offset
         self.h_offset = h_offset
@@ -210,7 +211,7 @@ class NameTag(TextWriter):
         self.color = color
         self.box_reference=box_reference
         self.ltb_offset = ltb_offset
-        self.line_to_fox = line_to_box
+        self.line_to_box = line_to_box
         self.jtype = box_reference
 
     @property
@@ -245,7 +246,8 @@ class NameTag(TextWriter):
         else:
             ref = (x, y+h//2)
 
-        super().write(frame, line=name,
+        super().write(frame,
+                      line=name,
                       coords=(self.ltb_offset, self.v_offset + self.v_space),
                       color=color,
                       ref=ref,

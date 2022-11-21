@@ -7,7 +7,7 @@ from otis.overlay import bases, shapes
 from otis.overlay.textwriters import NameTag
 from otis.helpers import coordtools, timers
 
-class BoundingAsset(bases.AssetWriter):
+class BoundingAssetMixin(bases.AssetWriter):
 
 
     def __init__(self,
@@ -32,7 +32,6 @@ class BoundingAsset(bases.AssetWriter):
 
         super().__init__()
 
-        self.coords = np.zeros(4, dtype=int)
         self.last_coords = self.coords.copy()
         self.show_name = show_name
         self.show_self = show_self
@@ -52,7 +51,9 @@ class BoundingAsset(bases.AssetWriter):
             self.name_tag.attached_to = self
 
 
-class BoundingAssetBox(BoundingAsset, shapes.Rectangle):
+
+
+class BoundingAssetBox(BoundingAssetMixin, shapes.Rectangle):
 
     def __init__(self,
                  coords = (0,0,0,0),
@@ -71,12 +72,12 @@ class BoundingAssetBox(BoundingAsset, shapes.Rectangle):
                  show_self=True
                  ):
 
-        BoundingAsset.__init__(self,
-                               name=name,
-                               name_tagger=name_tagger,
-                               show_name=show_name,
-                               show_self=show_self
-                               )
+        BoundingAssetMixin.__init__(self,
+                                    name=name,
+                                    name_tagger=name_tagger,
+                                    show_name=show_name,
+                                    show_self=show_self
+                                    )
 
         shapes.Rectangle.__init__(self,
                                   coords,
@@ -93,7 +94,7 @@ class BoundingAssetBox(BoundingAsset, shapes.Rectangle):
         assert (set_dim is None or len(set_dim)==2)
         self.set_dim = set_dim
 
-    def write(self, frame):
+    def write(self, frame, ):
         if self.set_dim is not None:
             cx, cy, _, _ = 1, 2, 3, 4
 
