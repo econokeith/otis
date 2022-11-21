@@ -118,7 +118,7 @@ class BoundingBox(bases.AssetWriter):
     def name_tag(self, frame, name=None):
         t, r, b, l = self.coords
         _name = self.name if name is None else name
-        self.name_writer.write(frame, position=(0, 20), text=_name, ref=(l, t))
+        self.name_writer.write(frame, line=_name, coords=(0, 20), ref=(l, t))
         # if self.name_line is True:
         #     shapefunctions.draw_line(frame, (0, 0), (0, 15), self.color, 1, ref=(l + 15, t))
 
@@ -174,7 +174,7 @@ class BoundingCircle(BoundingBox):
         [x, y]  = list(self.center)
 
         _name = name if name is not None else self.name
-        self.name_writer.write(frame, position=(0, self.radius+20), text=_name, ref=(x,y))
+        self.name_writer.write(frame, line=_name, coords=(0, self.radius + 20), ref=(x, y))
         # if self.name_line is True:
         #     shapes.draw_line(frame, (0, 0), (0, 15), self.color, 1, ref=(coords[0], coords[1]-5))
 

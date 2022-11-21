@@ -183,7 +183,7 @@ class BouncyScene:
                     if self.collision_detector.check(bbox_hash[name], pie) is True:
                         self.score_keeper.score[name] += 1
                         pie.finished = True
-                        pie.remove_fin()
+                        pie.remove_finished()
 
                         if self.flash_event is False:
                             self.flash_event = True
@@ -198,8 +198,8 @@ class BouncyScene:
 
 class InfoGroup(writergroups.AssetGroup):
 
-    def __init__(self, position, shared, args):
-        super().__init__(position)
+    def __init__(self, coords, shared, args):
+        super().__init__(coords)
         self.scale = 1
         self.color = 'w'
         self.shared = shared
@@ -207,7 +207,7 @@ class InfoGroup(writergroups.AssetGroup):
 
         fps_writer = textwriters.TimerWriter(title="screen fps",
                                              timer_type='last',
-                                             position=(0, 0),
+                                             coords=(0, 0),
                                              roundw=0,
                                              per_second=True,
                                              moving_average=MA,
@@ -219,7 +219,7 @@ class InfoGroup(writergroups.AssetGroup):
 
         ma_text_fun = lambda: f'model updates per second : {int(1 / self.model_ma.update(shared.m_time.value))}'
         model_writer = textwriters.InfoWriter(text_fun=ma_text_fun,
-                                              position=(0, -30),
+                                              coords=(0, -30),
                                               scale=self.scale,
                                               color=self.color,
                                               )
@@ -230,7 +230,7 @@ class InfoGroup(writergroups.AssetGroup):
 class ScoreKeeper(writergroups.AssetGroup):
 
     def __init__(self,
-                 position,
+                 coords,
                  manager,
                  game_time=20,
                  players = ('Keith'),
@@ -239,7 +239,7 @@ class ScoreKeeper(writergroups.AssetGroup):
                  **kwargs
                  ):
 
-        super().__init__(position, *args, **kwargs)
+        super().__init__(coords, *args, **kwargs)
         self.manager = manager
         self.shared = manager.shared
         self.args = manager.pargs
@@ -250,7 +250,7 @@ class ScoreKeeper(writergroups.AssetGroup):
 
         self.time_writer = textwriters.TimerWriter(title="Time",
                                                    timer_type='countdown',
-                                                   position=(10, -v_spacing),
+                                                   coords=(10, -v_spacing),
                                                    roundw=0,
                                                    per_second=True,
                                                    moving_average=MA,
@@ -264,7 +264,7 @@ class ScoreKeeper(writergroups.AssetGroup):
 
         for i, name in enumerate(self.players):
             score_writer = textwriters.InfoWriter(text_fun= score_text_fun,
-                                                  position=(10, -v_spacing*2-v_spacing*i),
+                                                  coords=(10, -v_spacing * 2 - v_spacing * i),
                                                   scale=self.scale,
                                                   color=self.color,
                                                   )

@@ -38,10 +38,15 @@ class BoundingAsset(bases.AssetWriter, abc.ABC):
         self.name = name
 
         if name_tagger is None:
-            self.name_tag = NameTag(name=name)
+            self.name_tag = NameTag(name=name,
+                                    attached_to=self)
         else:
             assert isinstance(name_tagger, NameTag)
             self.name_tag = copy.deepcopy(name_tagger)
+            self.name_tag.attached_to = self
+
+    def write(self, frame):
+        self.name_tag.write(frame, name)
 
 
 class BoundingAssetBox(BoundingAsset, shapes.Rectangle):

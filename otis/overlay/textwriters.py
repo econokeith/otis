@@ -8,7 +8,8 @@ import numpy as np
 
 import otis.helpers.coordtools
 import otis.helpers.maths
-from otis.helpers import timers, colortools, shapefunctions, texttools, otistools, cvtools, dstructures, coordtools
+from otis.helpers import timers, colortools, shapefunctions, texttools, \
+    otistools, cvtools, dstructures, coordtools, misc
 from otis.overlay import bases, shapes
 
 
@@ -17,14 +18,14 @@ class TextWriter(bases.AssetWriter):
     outliner: shapes.ShapeAsset
 
     def __init__(self,
-                 position=(0, 0),  # coords
+                 coords=(0, 0),  # coords
                  font='duplex',
                  color='r',  # must be either string in color hash or bgr value
                  scale=1,  # font scale,
                  ltype=1,
                  thickness=1,
                  ref=None,
-                 text=None,
+                 line="",
                  line_spacing=.5,  # % of font_height for vertical space around
                  v_space = 5,
                  h_space = 5,
@@ -32,7 +33,6 @@ class TextWriter(bases.AssetWriter):
                  underline = False,
                  border=False,
                  outliner = None,
-                 line=""
                  ):
 
         super().__init__()
@@ -41,10 +41,10 @@ class TextWriter(bases.AssetWriter):
         self._font = font
         self.color = color
         self.ref = ref
-        self.coords = np.array(position, dtype=int)
+        self.coords = np.array(coords, dtype=int)
         self.scale = scale
         self.ltype = ltype
-        self.line = text
+        self.line = line
         self.text_fun = None
         self.font_height = self.get_text_size("T")[1]
         self._line_spacing = line_spacing
@@ -122,22 +122,24 @@ class TextWriter(bases.AssetWriter):
         self.text_fun = fun
         return self
 
-    def write(self, frame, text=None, color=None, position=None, ref=None, save=True):
+    def write(self, frame, line=None, coords=None, color=None, ref=None, save=False):
         """
         :type frame: np.array
         """
-        _text = self.line if text is None else text
-        _coords = self.coords if position is None else position
-        _color = self.color if color is None else color
-        _ref = self.ref if ref is None else ref
+        # _line = self.line if line is None else line
+        # _coords = self.coords if coords is None else coords
+        # _color = self.color if color is None else color
+        # _ref = self.ref if ref is None else ref
+        #
+        # if save is True:
+        #     self.line = _line
+        #     self.coords = _coords
+        #     self.color = _color
+        #     self.ref = _ref
 
-        if save is True:
-            self.line = _text
-            self.coords = _coords
-            self.color = _color
-            self.ref = _ref
+        _line, _coords, _color, _ref = misc.update_save_attributes_on_write(self, locals())
 
-        justified_position = texttools.find_justified_start(text,
+        justified_position = texttools.find_justified_start(line,
                                                             _coords,
                                                             self.font,
                                                             self.scale,
@@ -219,7 +221,7 @@ class NameTag(TextWriter):
     def name(self, new_name):
         self.line = new_name
 
-    def write(self, frame, name=None, color=None, **kwargs):
+    def write(self, frame, name=None, coords=None, color=None, **kwargs):
         #might wanna change this so that it just get's entered each time
         if self.name is not None:
             name = self.name
@@ -243,12 +245,11 @@ class NameTag(TextWriter):
         else:
             ref = (x, y+h//2)
 
-        super().write(frame,
-                      position=(self.ltb_offset, self.v_offset + self.v_space),
-                      text=name,
+        super().write(frame, line=name,
+                      coords=(self.ltb_offset, self.v_offset + self.v_space),
                       color=color,
-                      ref = ref,
-                      save =False
+                      ref=ref,
+                      save=False
                       )
 
 
@@ -262,7 +263,7 @@ class InfoWriter(TextWriter):
         super().__init__(*args, **kwargs)
         self.text_fun = text_fun
 
-    def write(self, frame, *args, **kwargs):
+    def write(self, frame, *args, line=None, **kwargs):
         self.line = self.text_fun(*args, **kwargs)
         super().write(frame)
 
@@ -336,7 +337,7 @@ class TimerWriter(InfoWriter):
 
         return t
 
-    def write(self, frame, *args, **kwargs):
+    def write(self, frame, **kwargs):
         self.line = f'{self.title} : {self.timer()}'
         super(InfoWriter, self).write(frame)
 
@@ -344,21 +345,27 @@ class TimerWriter(InfoWriter):
 class TypeWriter(TextWriter):
 
     def __init__(self,
-                 position=(0, 0),  # coords
-                 font=cv2.FONT_HERSHEY_DUPLEX,
+                 coords=(0, 0),  # coords
+                 font='duplex',
                  color='r',  # must be either string in color hash or bgr value
                  scale=1,  # font scale,
                  ltype=2,
                  dt=None,
-                 key_wait=[.04, .14],
+                 key_wait=(.04, .14),
                  end_pause=1,
                  loop=False,
                  ref=None,
-                 text=None,
+                 line=None,
                  **kwargs
                  ):
 
-        super().__init__(position=position, text=None, font=font, color=color, scale=scale, ltype=ltype, ref=ref,
+        super().__init__(coords=coords,
+                         line=line,
+                         font=font,
+                         color=color,
+                         scale=scale,
+                         ltype=ltype,
+                         ref=ref,
                          **kwargs)
 
         self.dt = dt
@@ -368,7 +375,7 @@ class TypeWriter(TextWriter):
         self.loop = loop
         self.line_iter = dstructures.BoundIterator([0])
         self.line_complete = True
-        self.line = text
+        self.line = line
         self._output = ""
         self.cursor = Cursor()
         self.script = Queue()
@@ -425,9 +432,9 @@ class TypeWriter(TextWriter):
 
         return self
 
-    def type_line(self, frame, position=None, ref=None):
-        if position is not None:
-            self.position = otis.helpers.coordtools.abs_point(position, ref, frame.shape)
+    def type_line(self, frame, coords=None, ref=None):
+        if coords is not None:
+            self.coords = coordtools.abs_point(coords, ref, frame.shape)
         # if there's more in the name generator, it will continue to type new letters
         # then will show the full message for length of time self.end_pause
         # then finally stop shows
@@ -520,11 +527,11 @@ class LineOfText:
 
 class MultiTypeWriter(TypeWriter):
 
-    def __init__(self, llength, *args, **kwargs):
+    def __init__(self, line_length, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
 
-        self.llength = llength
+        self.llength = line_length
         self._used_stubs = []
         self._stub_queue = Queue()
         self._stub = ""
@@ -541,7 +548,7 @@ class MultiTypeWriter(TypeWriter):
 
     def add_line(self, text, pause=None):
         """
-        break up a long line into multiples that fit within self.llength
+        break up a long line into multiples that fit within self.line_length
         :param text:
         :return:
         """
@@ -586,10 +593,10 @@ class MultiTypeWriter(TypeWriter):
         self._stub_complete = False
         self._output = ''
 
-    def type_line(self, frame):
-        v_move = self.font_height + self.line_spacing
+    def type_line(self, frame, **kwargs):
+        v_move = self.line_spacing
         n_fin = len(self._used_stubs)
-        [p0, p1] = self.position
+        [p0, p1] = self.coords
 
         # do nothing if the line is complete
         if self.line_complete is True:
@@ -598,9 +605,9 @@ class MultiTypeWriter(TypeWriter):
         if self._stub_complete is False:
             # print finished lines as static
             for i in range(n_fin):
-                self.write(frame, self._used_stubs[i], position=(p0, p1 + i * v_move))
+                self.write(frame, self._used_stubs[i], coords=(p0, p1 + i * v_move))
             # then type out current line
-            self._type_stub(frame, position=(p0, p1 + n_fin * v_move))
+            self._type_stub(frame, coords=(p0, p1 + n_fin * v_move))
             return
 
         # refill and keep going
@@ -610,23 +617,23 @@ class MultiTypeWriter(TypeWriter):
         else:  # same as above but the first check of the tiemr will start it.
             if self.end_timer() is False:
                 for i in range(n_fin):
-                    self.write(frame, self._used_stubs[i], position=(p0, p1 + i * v_move))
-                self._type_stub(frame, position=(p0, p1 + (n_fin) * v_move))
+                    self.write(frame, self._used_stubs[i], coords=(p0, p1 + i * v_move))
+                self._type_stub(frame, coords=(p0, p1 + (n_fin) * v_move))
             else:
                 self.line_complete = True
 
-    def _type_stub(self, frame, position=None, ref=None):
+    def _type_stub(self, frame, coords=None, ref=None):
         """
         single line stochastic typer just to clean things up.
         :param frame:
-        :param position:
+        :param coords:
         :param ref:
         :return:
         """
-        if position is None:
-            _position = self.position
+        if coords is None:
+            _coords = self.coords
         else:
-            _position = otis.helpers.coordtools.abs_point(position, ref, frame.shape)
+            _coords = coordtools.abs_point(coords, ref, frame.shape)
 
         if self._stub_iter.is_empty is False:
             # pause for a comma a tad
@@ -638,21 +645,19 @@ class MultiTypeWriter(TypeWriter):
             if self.ktimer(cpf * self.key_wait):
                 self._output += self._stub_iter()
 
-            self.write(frame, self._output, position=_position)
+            self.write(frame, self._output, coords=_coords)
 
         # if the line is done, but the end pause is still going. write whole line with cursor
         else:
-            self.write(frame,
-                       text=self._output + self.cursor(),
-                       position=_position)
+            self.write(frame, line=self._output + self.cursor(), coords=_coords)
 
             self._stub_complete = True
 
 
 class ScriptTypeWriter(MultiTypeWriter):
 
-    def __init__(self, llength, *args, **kwargs):
-        super().__init__(llength, *args, **kwargs)
+    def __init__(self, line_length, *args, **kwargs):
+        super().__init__(line_length, *args, **kwargs)
 
         self.script_queue = Queue()
 
@@ -661,7 +666,7 @@ class ScriptTypeWriter(MultiTypeWriter):
             self.script_queue.put(line)
         return self
 
-    def type_line(self, frame):
+    def type_line(self, frame, **kwargs):
         if self.line_complete is False:
             super().type_line(frame)
             return
@@ -673,12 +678,18 @@ class ScriptTypeWriter(MultiTypeWriter):
 
 
 class OTIS(ScriptTypeWriter):
-    def __init__(self, llength, *args, **kwargs):
-        super().__init__(llength, (450, 900), scale=2, end_pause=3, color='g')
+    def __init__(self, line_length, *args, **kwargs):
+        super().__init__(line_length,
+                         (450, 900),
+                         scale=2,
+                         end_pause=3,
+                         color='g',
+                         **kwargs
+                         )
 
         self.key_wait = [.05, .12]
 
-        p = self.position
+        p = self.coords
         f = self.font_height
         v = self.line_spacing
         l = self.llength

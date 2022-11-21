@@ -110,7 +110,7 @@ def color_function(color):
 #     p = mtw.coords
 #     f = mtw.font_height
 #     v = mtw.line_spacing
-#     l = mtw.llength
+#     l = mtw.line_length
 #     portion = frame[p[1]-f-v:p[1]+2*f+int(3.5*v), p[0]-v:p[0]+l+2*v,:]
 #     grey = cv2.cvtColor(portion, cv2.COLOR_BGR2GRAY)
 #
@@ -129,7 +129,7 @@ def frame_portion_to_grey(frame, darken=.25):
 #     p = mtw.coords
 #     f = mtw.font_height
 #     v = mtw.line_spacing
-#     l = mtw.llength
+#     l = mtw.line_length
 #     portion = frame[p[1]-f-v:p[1]+2*f+int(3.5*v), p[0]-v:p[0]+l+v,:]
 #     middle = (portion *.25)
 #     portion[:, :, :] = middle.astype('uint8')

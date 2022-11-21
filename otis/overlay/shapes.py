@@ -109,7 +109,6 @@ class Circle(ShapeAsset, CircleType):
     def center(self, new_center):
         self._coords[:2] = new_center
 
-
     def write(self, frame, center=None, radius=None, color=None, ref=None, save=False):
         """
         :type frame: np.array
