@@ -5,16 +5,17 @@ import numpy as np
 
 from otis.overlay import bases, shapes
 from otis.overlay.textwriters import NameTag
-from otis.helpers import coordtools
+from otis.helpers import coordtools, timers
 
-class BoundingAsset(bases.AssetWriter, abc.ABC):
+class BoundingAsset(bases.AssetWriter):
 
-    @abc.abstractmethod
+
     def __init__(self,
                  name = None,
                  name_tagger = None,
                  show_name = False,
-                 show_self = True
+                 show_self = True,
+                 time_to_inactive=0,
                  ):
         """
         Bounding asset functionality to shape assets for use in displaying bounding objects
@@ -36,17 +37,19 @@ class BoundingAsset(bases.AssetWriter, abc.ABC):
         self.show_name = show_name
         self.show_self = show_self
         self.name = name
+        self.is_active = True
+        self.time_since_last_observed = timers.TimeSinceLast()
+        self.time_to_inactive = time_to_inactive
 
         if name_tagger is None:
             self.name_tag = NameTag(name=name,
                                     attached_to=self)
         else:
             assert isinstance(name_tagger, NameTag)
+            if self.name_tag.attached_to is not None:
+                self.name_tag.attached_to = None
             self.name_tag = copy.deepcopy(name_tagger)
             self.name_tag.attached_to = self
-
-    def write(self, frame):
-        self.name_tag.write(frame, name)
 
 
 class BoundingAssetBox(BoundingAsset, shapes.Rectangle):

@@ -6,7 +6,7 @@ from otis.overlay import bases
 from otis.overlay.bases import CircleType, RectangleType, LineType
 
 
-class ShapeAsset(bases.AssetWriter):
+class ShapeAsset(bases.AssetWriter, abc.ABC):
 
 
     def __init__(self,
@@ -46,7 +46,6 @@ class ShapeAsset(bases.AssetWriter):
     @property
     def center(self):
         pass
-
 
     @center.setter
     def center(self, new_center):
@@ -192,7 +191,6 @@ class Rectangle(ShapeAsset, RectangleType):
                                       coord_format=self.coord_format,
                                       ref=_ref,
                                       )
-
 
 class Line(bases.AssetWriter, LineType):
 
