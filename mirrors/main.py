@@ -30,7 +30,7 @@ def main():
     # add shared values
     shared_data_object.add_value('m_time', 'd', .1)
     shared_data_object.add_value('n_faces', 'i', 0)
-    shared_data_object.add_value('primary', 'i', 0)
+    shared_data_object.add_value('primary_target', 'i', 0)
     shared_data_object.add_value('new_overlay', ctypes.c_bool, True)
     shared_data_object.add_value('scene', 'i', 0)
     # add shared arrays
@@ -46,7 +46,7 @@ def main():
         process_modules.append(servo_process)
 
     processes = []
-    # each process module should have a primary function called 'target'
+    # each process module should have a primary_target function called 'target'
     for module in process_modules:
         process = multiprocessing.Process(target=module.target,
                                           args=(shared_data_object, pargs)

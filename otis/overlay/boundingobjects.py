@@ -40,6 +40,7 @@ class BoundingAsset(bases.AssetHolderMixin):
         self.name = name
         self.time_to_inactive = time_to_inactive
         self.time_since_last_observed = timers.TimeSinceLast()
+        self.i_am_new = True
 
         # setup NameTag object
         if name_tagger is None:
@@ -78,7 +79,10 @@ class BoundingAsset(bases.AssetHolderMixin):
 
 class BoundingManager:
 
-    def __init__(self, manager, threshold=.1):
+    def __init__(self,
+                 manager,
+                 threshold=.1,
+                 ):
 
         self.manager = manager
         self.shared = manager.shared
@@ -105,6 +109,21 @@ class BoundingManager:
         self.flash_event = False
 
         self.frame = np.zeros((self.args.dim[1], self.args.dim[0], 3), dtype='uint8')
+        self._primary_target = None
+        self.time_for_new_primary = timers.TimeElapsedBool()
+        self.n_faces = 0
+        self.name_tracker = self.manager.name_tracker
+        self.primary_timer_range = [5, 20]
+
+    @property
+    def primary_target(self):
+        return self._primary_target
+
+    @primary_target.setter
+    def primary_target(self, new_target):
+        if new_target != self.primary_target:
+            self._primary_target = new_target
+            self.time_for_new_primary = timers.TimeElapsedBool(np.random.randint(*self.primary_timer_range))
 
 
     def make_new_bounder(self, name=None):
@@ -115,23 +134,63 @@ class BoundingManager:
     def loop(self, frame):
 
         shared = self.shared
-        bbox_hash = self.bbox_hash
-        tracker = self.manager.name_tracker
-        # cache this stuff to avoid overwrites in the middle
-        # only update
+
+        active_names = []
+        # update scene data if new data from cv_process
         if shared.new_overlay.value:
+            self.n_faces = self.shared.n_faces.value
+            self.bbox_coords = shared.bbox_coords.copy()
+            self.names = [self.name_tracker[name] for name in shared.names[:self.n_faces]]
 
-            bbox_coords = shared.bbox_coords.copy()
-            n_faces = self.shared.n_faces.value
-            self.names = [tracker[name] for name in shared.names[:n_faces]]
+        # update boxes and print unknowns because we are only using one box to print all unknowns
+        for i, name in enumerate(self.names):
+            box = self.bbox_hash[name]
+            box.name = name
+            box.coords = self.bbox_coords[i]
+            if name == 'unknown':
+                box.write(frame)
 
-            for i, name in enumerate(self.names):
-                box = bbox_hash[name]
-                box.name = name
-                box.coords = bbox_coords[i]
+        self.active_faces = 0
+        self.active_names = []
 
-            for box in bbox_hash.values():
-                if box.is_active is True:
-                    box.write(frame)
+        # print all actives - there is only 1 unknown box so it would only print one unknown we didn't do the last step
+        for box in self.bbox_hash.values():
+            if box.is_active is True:
+                self.active_faces +=1
+                self.active_names.append(box.name)
+                box.write(frame)
+                active_names.append(box.name)
+
+        for name in active_names:
+            box = self.bbox_hash[name]
+            if box.i_am_new is True and (box.name != 'unknown' or active_names.count('unknown')==1):
+                self.primary_target = box.name
+                self.time_for_new_primary.reset()
+                box.i_am_new = False
+
+        if self.active_faces == 1:
+            self.primary_target = active_names[0]
+
+        elif self.n_faces > 1 and self.time_for_new_primary() is True:
+            names = np.array(self.active_names)
+            names = names[(names != self.primary_target)]
+
+            # have to worry about unknowns when there are bunch because we haven't built a way to track multiple unknowns
+            if active_names.count('unknown')>1:
+                names = names[(names!='unknown')]
+
+            self.primary_target = names[np.random.choice(len(names))]
+
+        else:
+            pass
+
+        if self.manager.pargs.servo is True:
+            self.shared.servo_target = self.bbox_hash[self.primary_target].center
+
+
+
+
+
+
 
 

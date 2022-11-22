@@ -10,13 +10,14 @@ from _piardservo.microcontrollers import RPiWifi
 from _piardservo.pid import PIDController
 
 MAX_SERVO_UPDATES_PER_SECOND = 10
+X_PID_VALUES = (.0001, .000001, .00001)
+Y_PID_VALUES = (.0001, .000001, .00001)
 
 def target(shared_data_object, args):
 
     signal.signal(signal.SIGTERM, mtools.close_gracefully)
     signal.signal(signal.SIGINT, mtools.close_gracefully)
 
-    shared = shared_data_object
     if args.servo is False:
         sys.exit()
 
@@ -26,44 +27,27 @@ def target(shared_data_object, args):
     Servos[0].value = -.1
     Servos[1].value = -.5
 
-    xPID = PIDController(.0001, .000001, .00001)
-    yPID = PIDController(.00001, .000001, .00001)
-
-    video_center = args.video_center
+    xPID = PIDController(*X_PID_VALUES)
+    yPID = PIDController(*Y_PID_VALUES)
 
     update_limiter = timers.CallFrequencyLimiter(1 / MAX_SERVO_UPDATES_PER_SECOND)
-    target = np.array(video_center)
-    last_coords = np.array(target)
+
+    target = np.asarray(shared_data_object.target)
+    video_center = np.array(args.video_center)
+    error = np.zeros(2, dtype=int)
+    target[:] = args.video_center
 
     while True:
         if shared_data_object.n_faces.value > 0:
             break
 
     while True:
-        # make copies in order to avoid updates in the middle of a loop
-        names = list(np.array(shared.names[:shared.n_faces.value]))
-        primary = shared.primary.value
 
-        if primary in names:
-            p_index = list(names).index(primary)
-        else:
-            p_index = 0
+        if update_limiter():
 
-        #copy
-        new_coords = np.array(shared.bbox_coords[p_index,:])
-
-        if update_limiter() and np.all(new_coords != last_coords):
-            t, r, b, l = shared.bbox_coords[p_index,:]
-            #if center of the screen, don't adjust the camera
-            if t <= video_center[0] <= b and r <= video_center[0] <= l:
-                error = 0
-            else:
-                target[0], target[1] = (r+l)//2, (b+t)//2
-                error = target - video_center
-                Servos[0].value += xPID.update(error[0], sleep=0)
-                Servos[1].value += yPID.update(error[1], sleep=0)
-
-            last_coords = np.array(new_coords)
+            error[:] = target - video_center
+            Servos[0].value += xPID.update(error[0], sleep=0)
+            Servos[1].value += yPID.update(error[1], sleep=0)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
