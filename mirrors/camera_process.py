@@ -3,7 +3,7 @@ import sys
 
 from otis import camera as camera
 from otis.helpers import multitools, cvtools
-from otis.overlay import scenes, writergroups, shapes
+from otis.overlay import scenes, writergroups, shapes, boundingobjects
 from otis.helpers import shapefunctions
 
 pie_path = 'photo_asset_files/pie_asset'
@@ -15,7 +15,8 @@ def target(shared, pargs):
 
     manager = scenes.SceneManager(shared, pargs)
     manager.capture.silent_sleep = False
-    boxes = scenes.BoundingManager(manager)
+    # boxes = scenes.BoundingManager(manager)
+    boxes = boundingobjects.BoundingManager(manager)
     info_group = writergroups.BasicInfoGroup((10, 40), manager)
     capture = manager.capture
 

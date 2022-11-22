@@ -13,6 +13,8 @@ from otis.helpers import dstructures as utils
 
 IMG_CF = 3
 
+MAX_FACE_DISTANCE = .65
+
 DEBUG = False
 if DEBUG:
     logging.basicConfig(filename='text_files/logs/log.log', filemode='w', level=logging.INFO)
@@ -28,6 +30,9 @@ def target(shared_data_object, args):
     model = 'cnn' if args.device == 'gpu' else 'hog'
 
     known_names, known_encodings = cvtools.load_face_data(face_recognition, args.PATH_TO_FACES)
+    known_names.append('unknown')
+    max_faces = args.faces
+    n_known_faces =  len(known_names)
     face_locator = timers.FunctionTimer(face_recognition.face_locations)
 
     # this was probably excessively complicated
@@ -41,9 +46,12 @@ def target(shared_data_object, args):
 
     frame_copy = np.zeros((args.dim[1], args.dim[0], 3), dtype='uint8')
 
+    face_distances = np.zeros((n_known_faces+1)*(max_faces), dtype=float).reshape((max_faces, n_known_faces+1))
+    face_distances[:, -1] = MAX_FACE_DISTANCE
+    model_timer()
     while True:
         # compress and convert from
-        model_timer()
+
         frame_copy[:,:,:] = np.array(shared.frame)
         frame_copy = frame_copy[:,:,::-1]
         compressed_frame = otis.helpers.cvtools.resize(frame_copy, 1 / args.cf)
@@ -57,9 +65,10 @@ def target(shared_data_object, args):
         for i in range(shared.n_faces.value):
 
             np.copyto(shared.bbox_coords[i,:], observed_boxes[i])
-            face_distances = face_recognition.face_distance(known_encodings, observed_encodings[i])
-            best_match_index = np.argmin(face_distances)
+            face_distances[i, :-1] = face_recognition.face_distance(known_encodings, observed_encodings[i])
+            best_match_index = np.argmin(face_distances[i])
             shared.names[i] = name_dict[known_names[best_match_index]]
+
 
         if DEBUG is True:
             log = '%i'

@@ -72,11 +72,20 @@ def translate_box_coords(coords,
     if in_format == 'rtlb':
         r, t, l, b = coords
 
+    elif in_format == 'lbrt':
+        l, b, r, t, = coords
+
     elif in_format == 'ltrb':
         l, t, r, b = coords
 
     elif in_format == 'tblr':
         t, b, l, r = coords
+
+    elif in_format == 'rblt':
+        r, b, l, t = coords
+
+    elif in_format == 'trbl':
+        t, r, b, l = coords
 
     elif in_format == 'cwh':
         cx, cy, w, h = coords
@@ -172,6 +181,12 @@ def translate_box_coords(coords,
 
     elif out_format == 'tblr':
         return t, b, l, r
+
+    elif out_format == 'lbrt':
+        return l, b, r, t
+
+    elif out_format == 'trbl':
+        return t, r, b, l
 
     elif out_format == 'cwh':
         cx = (l+r)//2

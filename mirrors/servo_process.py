@@ -9,6 +9,7 @@ from _piardservo.container import ServoContainer
 from _piardservo.microcontrollers import RPiWifi
 from _piardservo.pid import PIDController
 
+MAX_SERVO_UPDATES_PER_SECOND = 10
 
 def target(shared_data_object, args):
 
@@ -25,14 +26,14 @@ def target(shared_data_object, args):
     Servos[0].value = -.1
     Servos[1].value = -.5
 
-    xPID = PIDController(.001, 0, .00001)
-    yPID = PIDController(.001, 0, .00001)
+    xPID = PIDController(.0001, .000001, .00001)
+    yPID = PIDController(.00001, .000001, .00001)
 
     video_center = args.video_center
 
-    update_limiter = timers.CallFrequencyLimiter(1 / 5)
+    update_limiter = timers.CallFrequencyLimiter(1 / MAX_SERVO_UPDATES_PER_SECOND)
     target = np.array(video_center)
-    last_coords = np.array(shared_data_object.bbox_coords[0,:])
+    last_coords = np.array(target)
 
     while True:
         if shared_data_object.n_faces.value > 0:

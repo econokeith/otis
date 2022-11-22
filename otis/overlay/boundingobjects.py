@@ -8,7 +8,6 @@ from otis.overlay import bases, shapes, textwriters, assets
 
 from otis.helpers import coordtools, timers, colortools
 
-
 class BoundingAsset(bases.AssetHolderMixin):
 
     def __init__(self,
@@ -92,7 +91,8 @@ class BoundingManager:
 
         self.base_asset = shapes.Rectangle(coords=(80, 0, 0, 80),
                                            color=None,
-                                           lock_dimensions=True
+                                           lock_dimensions=True,
+                                           update_format='trbl'
                                            )
 
         self.box_fun = lambda: BoundingAsset(self.base_asset,

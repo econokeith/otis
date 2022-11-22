@@ -153,9 +153,6 @@ class CameraPlayer:
         if self.max_fps is not None:
             self.sleeper()
 
-        # print sleep time
-        if self.silent_sleep is False:
-            print(int(1000*self.sleeper.sleep_time))
 
         # show fps on screen
         if fps is True:
@@ -258,7 +255,7 @@ class ThreadedCameraPlayer(CameraPlayer):
                 if self._frame is not None and self._frame.shape != ():
                     break
 
-                if time.time()-tick > 5:
+                if time.time()-tick > 10:
                     raise RuntimeError('External camera unable to provide video feed')
 
             try:
