@@ -10,6 +10,7 @@ class ShapeAsset(bases.AssetWriter, abc.ABC):
 
 
     def __init__(self,
+                 coords,
                  color='r',
                  thickness=1,
                  ltype=None,
@@ -18,19 +19,21 @@ class ShapeAsset(bases.AssetWriter, abc.ABC):
                  coord_format='rtlb',
                  update_format=None,
                  collisions = False,
+                 lock_dimensions = False
                  ):
 
         super().__init__()
 
-        self._coords = np.zeros(4, dtype=int)
+        self._coords = np.array(coords)
         self.color = color
         self.thickness = thickness
         self.ltype = ltype
         self.ref = ref
         self.dim = dim
-        self.coord_format = coord_format
+        self._coord_format = coord_format
         self.update_format = coord_format if update_format is None else update_format
         self.collisions = collisions
+        self.lock_dimensions = lock_dimensions
 
     @property
     def coords(self):
@@ -51,12 +54,25 @@ class ShapeAsset(bases.AssetWriter, abc.ABC):
     def center(self, new_center):
         pass
 
+    @property
+    def coord_format(self):
+        return self._coord_format
+
+    @coord_format.setter
+    def coord_format(self, new_format):
+        old_format = self._coord_format
+        self._coord_format = new_format
+        self._coords[:] = coordtools.translate_box_coords(self.coords,
+                                                          in_format=old_format,
+                                                          out_format=self.coord_format
+                                                          )
+
     def center_width_height(self):
         return coordtools.translate_box_coords(self._coords, self.coord_format, 'cwh')
 
 
 class Circle(ShapeAsset, CircleType):
-    shape = 'circle'
+
     def __init__(self,
                  center,
                  radius,
@@ -72,14 +88,13 @@ class Circle(ShapeAsset, CircleType):
             radius_type:
             **kwargs:
         """
-        ShapeAsset.__init__(self, **kwargs)
 
-        self._coords[:2] = center
-        self._coords[2:] = radius
+        coords = center + (radius, radius)
+        ShapeAsset.__init__(self, coords, **kwargs)
+
         self.coord_format = 'cwh'
         self.radius_type = radius_type
-        self.radius = radius
-        self.center = center
+
 
     @property
     def coords(self):
@@ -87,10 +102,14 @@ class Circle(ShapeAsset, CircleType):
 
     @coords.setter
     def coords(self, new_coords):
-        self._coords[:] = coordtools.find_center_radius_from_box_coords(new_coords,
+        _new_coords = coordtools.find_center_radius_from_box_coords(new_coords,
                                                                         box_format=self.update_format,
                                                                         radius_type=self.radius_type
                                                                         )
+        if self.lock_dimensions is True:
+            self._coords[:2] = _new_coords[:2]
+        else:
+            self._coords[:] = _new_coords[:2]
 
     @property
     def radius(self):
@@ -107,6 +126,7 @@ class Circle(ShapeAsset, CircleType):
     @center.setter
     def center(self, new_center):
         self._coords[:2] = new_center
+
 
     def write(self, frame, center=None, radius=None, color=None, ref=None, save=False):
         """
@@ -136,15 +156,44 @@ class Circle(ShapeAsset, CircleType):
 # todo: need to think of a way to efficiently update center and find height/width
 
 class Rectangle(ShapeAsset, RectangleType):
-    shape = "rectangle"
 
     def __init__(self,
                  coords=(0,0,0,0),
                  **kwargs,
                  ):
 
-        ShapeAsset.__init__(self, **kwargs)
-        self._coords[:] = coords
+        ShapeAsset.__init__(self, coords, **kwargs)
+
+    @property
+    def coords(self):
+        return self._coords
+
+    @coords.setter
+    def coords(self, new_coords):
+        if self.lock_dimensions is False:
+            self._coords[:] = coordtools.translate_box_coords(new_coords,
+                                                              in_format=self.update_format,
+                                                              out_format=self.coord_format
+                                                              )
+        else:
+            # get width and height
+            _, _, w, h = coordtools.translate_box_coords(self.coords,
+                                                         in_format=self.coord_format,
+                                                         out_format='cwh'
+                                                         )
+            # get new center
+            cx1, cy1, _, _ = coordtools.translate_box_coords(new_coords,
+                                                             in_format=self.update_format,
+                                                             out_format='cwh'
+                                                             )
+            new_cwh_coords = (cx1, cy1, w, h)
+            # update coordinates with new center
+            self._coords[:] = coordtools.translate_box_coords(new_cwh_coords,
+                                                             in_format='cwh',
+                                                             out_format=self.coord_format
+                                                             )
+
+
 
     @property
     def center(self):

@@ -104,8 +104,8 @@ class ColorFlash(ScreenEvent):
         self.pixel = pixel
         self.show = show
         self.counter = timers.TimedCycle(
-                                        mini=mini,
-                                        maxi=maxi,
+                                        min_i=mini,
+                                        max_i=maxi,
                                         start=start,
                                         direction= direction,
                                         cycle_t = cycle_t,

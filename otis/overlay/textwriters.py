@@ -322,7 +322,7 @@ class TimerWriter(InfoWriter):
     @property
     def timer_finished(self):
         if self.timer_type == 'countdown':
-            return self._timer.finished
+            return self._timer.is_finished
 
     def timer(self):
         t = self._timer()
@@ -373,7 +373,7 @@ class TypeWriter(TextWriter):
         self.dt = dt
         self._key_wait = key_wait
         self.end_pause = end_pause
-        self.end_timer = timers.SinceFirstBool(end_pause)
+        self.end_timer = timers.TimeElapsedBool(end_pause)
         self.loop = loop
         self.line_iter = dstructures.BoundIterator([0])
         self.line_complete = True
@@ -477,14 +477,14 @@ class FPSWriter(TextWriter):
 
 class Cursor(timers.Blinker):
 
-    def __init__(self, cycle=.53, char_1='_', char_0=' '):
+    def __init__(self, cycle_time=.53, char_1='_', char_0=' '):
         """
         returns char_1 if on and char_0 if off
-        :param cycle: if float, [on_time, off_time] = [cycle, cycle], else on_time, off_time = cycle
+        :param cycle_time: if float, [on_time, off_time] = [cycle, cycle], else on_time, off_time = cycle
         :param char_1:
         :param char_0:
         """
-        super().__init__(cycle=cycle)
+        super().__init__(cycle_time=cycle_time)
         self.char_0 = char_0
         self.char_1 = char_1
 
@@ -605,7 +605,7 @@ class MultiTypeWriter(TypeWriter):
             return
 
         if self._stub_complete is False:
-            # print finished lines as static
+            # print is_finished lines as static
             for i in range(n_fin):
                 self.write(frame, self._used_stubs[i], coords=(p0, p1 + i * v_move))
             # then type out current line

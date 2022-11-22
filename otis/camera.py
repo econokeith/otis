@@ -1,5 +1,6 @@
 # todo: Extend CameraPlayer to work with PiCamera Backend
 # todo: add waitKey() break condition to CamperPlayer Method
+
 import time
 from threading import Thread
 import platform
@@ -8,7 +9,6 @@ import cv2
 import numpy as np
 
 import otis.helpers.timers as timers
-from otis.helpers import dstructures as utils
 import otis.overlay.textwriters as writers
 
 
@@ -25,8 +25,22 @@ class CameraPlayer:
                  flip = False,
                  output_scale = 1,
                  record_scale = .5, # I need to fix this
-                 record_half_rate = True
+                 silent_sleep = True
                  ):
+        """
+
+        Args:
+            src:
+            name:
+            dim:
+            max_fps:
+            record:
+            record_to:
+            flip:
+            output_scale:
+            record_scale:
+            silent_sleep:
+        """
 
         # do necessary Linux stuff
         if platform.system() == 'Linux':
@@ -58,7 +72,7 @@ class CameraPlayer:
         if self.max_fps is not None:
             self.sleeper = timers.SmartSleeper(1 / self._max_fps)
         else:
-            self.sleeper = None
+            self.sleeper = timers.SmartSleeper(0.)
 
         self.fps_writer = writers.FPSWriter((10, int(self.dim[1] - 40)))
         self.latency = 0.001
@@ -73,6 +87,7 @@ class CameraPlayer:
         self.record = record
         self.flip = flip
         self.output_scale = output_scale
+        self.silent_sleep = silent_sleep
 
 
     @property
@@ -112,7 +127,7 @@ class CameraPlayer:
     def write_fps(self):
         self.fps_writer.write(self.frame)
 
-    def read(self, silent=False):
+    def read(self):
         """
         equivalent of cv2 VideoCapture().read()
         reads new frame from buffer
@@ -126,34 +141,46 @@ class CameraPlayer:
             self.frame[:, :, :] = self.frame[:, ::-1, :]
 
         self.latency = int(1000*(time.time()-tick))
-        if silent is False:
-            return self.grabbed, self.frame
 
-    def show(self, frame=None, scale=None, width=None, wait=False, fps=False, warn=False):
+        return self.grabbed, self.frame
+
+    def show(self, frame=None, scale=None, fps=False, warn=False):
+
         _frame = self.frame if frame is None else frame
         _scale = self.output_scale if scale is None else scale
+
+        # run sleeper to limit fps
         if self.max_fps is not None:
             self.sleeper()
-        w = self.dim[0]*_scale if width is None else width
+
+        # print sleep time
+        if self.silent_sleep is False:
+            print(int(1000*self.sleeper.sleep_time))
+
+        # show fps on screen
         if fps is True:
             self.write_fps()
 
+        # show exit warning on screen
         if warn is True:
             self.exit_warning.write(_frame)
 
-
+        # change scale output
         if _scale != 1:
             out_frame = cv2.resize(_frame, (0, 0), fx=_scale, fy=_scale)
         else:
             out_frame = _frame
 
-
-        cv2.imshow(self.name, out_frame)
-
+        # record
         if self.record is True:
             self.recorder.write(_frame.astype('uint8'))
 
-    def test(self, wait=False, warn=False):
+        # display frame
+        cv2.imshow(self.name, out_frame)
+
+
+
+    def test(self, warn=False):
         """
         test to confirm that camera feed is working and check the fps
         :return:
@@ -165,7 +192,7 @@ class CameraPlayer:
             self.read()
             self.write_fps()
             dim_writer.write(self.frame)
-            self.show(wait=wait, warn=warn)
+            self.show(warn=warn)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
@@ -211,7 +238,6 @@ class ThreadedCameraPlayer(CameraPlayer):
         return self
 
     def update(self):
-
         while True:
             if self.stopped is True:
                 return
@@ -225,13 +251,24 @@ class ThreadedCameraPlayer(CameraPlayer):
             self.latency = 1//timer
 
 
-    def read(self, Silent=False):
+    def read(self):
 
+            tick = time.time()
             while True:
                 if self._frame is not None and self._frame.shape != ():
                     break
 
-            self._cached_frame[:,:,:] = self._frame
+                if time.time()-tick > 5:
+                    raise RuntimeError('External camera unable to provide video feed')
+
+            try:
+                self._cached_frame[:,:,:] = self._frame
+            except:
+                frame_dim = self._frame.shape[:2][::-1]
+                raise RuntimeError(f'Video feed {frame_dim} does not match specified dimensions {self.dim}. This '
+                                   'usually occurs because your camera is unable to record at the speficied frame size. '
+                                   'Check hardware limitations and camera setting or change camera.dim to a smaller size'
+                                   )
 
             if self.flip is True:
                 self._cached_frame[:, :, :] = self._frame[:, ::-1, :]

@@ -114,7 +114,7 @@ class BouncyScene:
         self.shared = shared
         self.args = args
         self.capture = self.manager.capture
-        self.stop_timer = timers.SinceFirstBool(3)
+        self.stop_timer = timers.TimeElapsedBool(3)
         self.color_cycle = colortools.ColorCycle()
 
         self.bouncy_pies = motion.BouncingAssetManager(asset_fun=args.PATH_TO_PIES,
@@ -182,7 +182,7 @@ class BouncyScene:
 
                     if self.collision_detector.check(bbox_hash[name], pie) is True:
                         self.score_keeper.score[name] += 1
-                        pie.finished = True
+                        pie.is_finished = True
                         pie.remove_finished()
 
                         if self.flash_event is False:

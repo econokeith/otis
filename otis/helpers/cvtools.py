@@ -88,9 +88,82 @@ def get_current_dir(file):
     return os.path.abspath(os.path.dirname(file))
 
 
-def abs_path_relative_to_calling_file(rel_path):
-    abs_dir =  os.path.dirname(inspect.stack()[-1].filename)
-    return os.path.join(abs_dir, rel_path)
+def abs_path_relative_to_calling_file(rel_path,  layers_out=2):
+    """
+    convenience function to avoid os.path type boiler plate in loading data functions
+
+    includes workaround to work when running debuggers
+    Args:
+        rel_path: relative path to data from the files where the function is called NOT WRITTEN
+
+    Returns:
+        abs_path
+    """
+    python_files = list_python_files(layers_out)
+    stack = inspect.stack()[::-1]
+
+    for frame in stack:
+        file_name = frame.filename
+
+        if file_name in python_files:
+            break
+
+    abs_dir =  os.path.dirname(file_name)
+
+    for frame in stack:
+        del frame
+    return os.path.abspath(os.path.join(abs_dir, rel_path))
+
+
+def test_fun(file=lambda:__file__):
+    return file()
+
+def list_python_files(layers_out=2):
+    """
+    returns a list of python files in package relative the location of cvtool.py
+    this is just so abs_path_relative_to_calling_file works when pycharm debugger is turned on
+    """
+
+    path_to_here = os.path.dirname(__file__)
+    path_to_parent = path_to_here
+
+    if layers_out > 0:
+        path_to_parent += '/..'*layers_out
+
+    python_file_list = []
+
+    file_queue = Queue()
+    for item in os.listdir(path_to_parent):
+        print
+        file_queue.put((path_to_parent, item))
+    # search file tree starting at otis to list all python files
+    while True:
+
+        path_to, item = file_queue.get()
+        abs_path_to = os.path.join(path_to, item)
+
+        if item[-3:] == '.py' and item[0] != "_":
+            python_file_list.append(abs_path_to)
+
+        elif item[0] == "_" or item.find('.') != -1:
+            pass
+
+        else:
+            new_items = os.listdir(abs_path_to)
+
+            for new_item in new_items:
+                file_queue.put((abs_path_to, new_item))
+
+        if file_queue.empty():
+            break
+
+    return [os.path.abspath(file) for file in python_file_list]
+
+
+
+
+
+
 
 
 class NameTracker:
@@ -144,7 +217,6 @@ class NameTracker:
             # if it's a new known person
             if i not in self.indices_of_observed:
                 timer, count = self._bad_hello_dict[i]
-
 
                 ## todo: this should not be hardcoded
                 if timer() <= 1.5 and count > 10:
@@ -250,3 +322,42 @@ def cv2waitkey(n=1):
 
 def resize(frame, scale=.5):
     return cv2.resize(frame, (0, 0), fx=scale, fy=scale)
+
+if __name__ == '__main__':
+    import os
+    from queue import Queue
+    path_to_here = os.path.dirname(__file__)
+    print(path_to_here)
+    path_to_parent = path_to_here +  '/..'
+
+    python_file_list = []
+    file_queue = Queue()
+    for item in os.listdir(path_to_parent):
+        print
+        file_queue.put((path_to_parent, item))
+
+    while True:
+        path_to, item = file_queue.get()
+        abs_path_to = os.path.join(path_to, item)
+
+        if item[-3:] == '.py' and item[0] != "_":
+            python_file_list.append(abs_path_to)
+
+        elif item[0] == "_" or item.find('.') != -1:
+            pass
+
+        else:
+            new_items = os.listdir(abs_path_to)
+
+            for new_item in new_items:
+                file_queue.put((abs_path_to, new_item))
+
+        if file_queue.empty():
+            break
+
+    python_file_list = [os.path.abspath(file) for file in python_file_list]
+    print(python_file_list)
+
+
+
+

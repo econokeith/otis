@@ -14,6 +14,7 @@ def target(shared, pargs):
     signal.signal(signal.SIGINT, multitools.close_gracefully)
 
     manager = scenes.SceneManager(shared, pargs)
+    manager.capture.silent_sleep = False
     boxes = scenes.BoundingManager(manager)
     info_group = writergroups.BasicInfoGroup((10, 40), manager)
     capture = manager.capture

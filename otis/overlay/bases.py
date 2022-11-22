@@ -55,22 +55,86 @@ class AssetWriter:
 
 
 
-if __name__ == '__main__':
-    print(cvtools.get_current_dir(__file__))
-    print(cvtools.abs_path_relative_to_calling_file('../examples/balls.py'))
-
-
 class ShapeObject(metaclass=abc.ABCMeta):
-    pass
+    _asset_shape = None
+
+    @classmethod
+    @property
+    def asset_shape(cls):
+        return cls._asset_shape
 
 
 class CircleType(ShapeObject, metaclass=abc.ABCMeta):
+    _asset_shape = 'circle'
     pass
 
 
 class RectangleType(ShapeObject, metaclass=abc.ABCMeta):
+    _asset_shape = 'rectangle'
     pass
 
 
 class LineType(ShapeObject, metaclass=abc.ABCMeta):
+    _asset_shape = 'line'
     pass
+
+
+class AssetHolderMixin:
+    """
+    mixin to access asset properties from an asset holder
+    """
+
+    @property
+    def asset_shape(self):
+        return self.asset.asset_shape
+
+    @property
+    def coords(self):
+        return self.asset.coords
+
+    @coords.setter
+    def coords(self, new_coords):
+        self.asset.coords = new_coords
+
+    @property
+    def center(self):
+        return self.asset.center
+
+    @center.setter
+    def center(self, new_center):
+        self.asset.center = new_center
+
+    @property
+    def collisions(self):
+        return self.asset.collisions
+
+    @collisions.setter
+    def collisions(self, new_col):
+        self.asset.collisions = new_col
+
+    @property
+    def color(self):
+        return self.asset.color
+
+    @color.setter
+    def color(self, new_color):
+        self.asset.color = new_color
+
+    @property
+    def coord_format(self):
+        return self.asset.coord_format
+
+    @coord_format.setter
+    def coord_format(self, new_format):
+        self.asset.coord_format = new_format
+
+    def center_width_height(self):
+        return self.asset.center_width_height()
+
+if __name__ == '__main__':
+
+    print(cvtools.get_current_dir(__file__))
+    print(cvtools.abs_path_relative_to_calling_file('photo_assets'))
+    print(cvtools.test_fun())
+
+

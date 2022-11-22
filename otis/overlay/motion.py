@@ -55,7 +55,7 @@ class AssetMover:
     def remove_finished(cls):
         living_movers = []
         for mover in cls.movers:
-            if mover.finished is False:
+            if mover.is_finished is False:
                 living_movers.append(mover)
         cls.movers = living_movers
 

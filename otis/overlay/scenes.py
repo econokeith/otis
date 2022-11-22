@@ -8,18 +8,20 @@ from otis.overlay import assets
 
 
 class SceneManager:
+    capture: camera.ThreadedCameraPlayer
 
     def __init__(self, shared, pargs, capture=None, names=True):
 
         self.shared = shared
         self.pargs = pargs
 
-        if names is True:
-
-            try:
-                self.name_tracker = cvtools.NameTracker(pargs.path_to_faces)
-            except:
-                self.name_tracker = None
+        # if names is True:
+        #
+        #     try:
+        #         self.name_tracker = cvtools.NameTracker(pargs.path_to_faces)
+        #     except:
+        #         self.name_tracker = None
+        self.name_tracker = cvtools.NameTracker(pargs.path_to_faces)
 
         if capture is None:
             self.capture = camera.ThreadedCameraPlayer(0,
@@ -33,7 +35,6 @@ class SceneManager:
                                                   ).start()
         else:
             self.capture = capture
-
         self.scene_number = 0
 
 

@@ -16,7 +16,6 @@ try:
 except:
     print('no servo_process found')
 
-
 def make_parser():
     parser = argparse.ArgumentParser(description='Try to avoid the Camera Bot Shooting You')
     parser.add_argument('-d', '--dim',type=tuple, default=(1280, 720),
