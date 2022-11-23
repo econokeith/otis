@@ -6,9 +6,8 @@ from queue import Queue
 import cv2
 import numpy as np
 
-import otis.helpers.maths
-from otis.helpers import dstructures as utils, timers, colortools
-#from otis.overlay import assets
+from otis.helpers import timers, maths
+
 
 def box_stabilizer(box0, box1, threshold=.25):
     """
@@ -32,7 +31,7 @@ def box_stabilizer(box0, box1, threshold=.25):
         centers.append(c)
         radii.append(r)
 
-    distance = otis.helpers.maths.linear_distance(*centers)
+    distance = maths.linear_distance(*centers)
     if distance > threshold * radii[0]:
         return box1
     else:
@@ -61,7 +60,7 @@ class BBoxStabilizer:
             centers.append(c)
             radii.append(r)
 
-        distance = otis.helpers.maths.linear_distance(*centers)
+        distance = maths.linear_distance(*centers)
         if distance > threshold * radii[0]:
             return box1
         else:
@@ -83,37 +82,40 @@ class BBoxStabilizer:
 
         return self.last
 
-
 def get_current_dir(file):
     return os.path.abspath(os.path.dirname(file))
 
 
-def abs_path_relative_to_calling_file(rel_path,  layers_out=2):
-    """
-    convenience function to avoid os.path type boiler plate in loading data functions
+# def abs_path_relative_to_calling_file(relative_path,  layers_out=2, debug=False):
+#     """
+#     convenience function to avoid os.path type boiler plate in loading data functions
+#
+#     includes workaround to work when running debuggers
+#     Args:
+#         relative_path: relative path to data from the files where the function is called NOT WRITTEN
+#
+#     Returns:
+#         abs_path
+#     """
+#     python_files = list_python_files(layers_out)
+#     stack = inspect.stack()[::-1]
+#     print(stack)
+#     for frame in stack:
+#         file_name = frame.filename
+#
+#         if file_name in python_files:
+#             break
+#     print(file_name)
+#     abs_dir =  os.path.dirname(file_name)
+#     print(abs_dir)
+#     for frame in stack:
+#         del frame
+#     return os.path.abspath(os.path.join(abs_dir, relative_path))
 
-    includes workaround to work when running debuggers
-    Args:
-        rel_path: relative path to data from the files where the function is called NOT WRITTEN
-
-    Returns:
-        abs_path
-    """
-    python_files = list_python_files(layers_out)
-    stack = inspect.stack()[::-1]
-
-    for frame in stack:
-        file_name = frame.filename
-
-        if file_name in python_files:
-            break
-
-    abs_dir =  os.path.dirname(file_name)
-
-    for frame in stack:
-        del frame
-    return os.path.abspath(os.path.join(abs_dir, rel_path))
-
+def abs_path_relative_to_calling_file(relative_path):
+    bottom_of_stack = inspect.stack()[-1].filename
+    abs_directory = os.path.dirname(bottom_of_stack)
+    os.path.abspath(os.path.join(abs_directory, relative_path))
 
 def test_fun(file=lambda:__file__):
     return file()
@@ -134,7 +136,7 @@ def list_python_files(layers_out=2):
 
     file_queue = Queue()
     for item in os.listdir(path_to_parent):
-        print
+
         file_queue.put((path_to_parent, item))
     # search file tree starting at otis to list all python files
     while True:
@@ -160,12 +162,6 @@ def list_python_files(layers_out=2):
     return [os.path.abspath(file) for file in python_file_list]
 
 
-
-
-
-
-
-
 class NameTracker:
 
     def __init__(self, path_to_faces):
@@ -185,7 +181,6 @@ class NameTracker:
         self.name_for_unknowns = "unknown"
         self.primary = 0
         self.hello_queue = Queue()
-
         # help keep from having random 1 frame bad calls triggering hellos
         # someone must show up in 5 frames in 1 second to get a hello
         _bad_hello_function = lambda: [timers.TimeSinceFirst().start(), 0]
@@ -202,7 +197,6 @@ class NameTracker:
                     break
                 else:
                     name += char
-
             # if name isn't new, add it to the list.
             if name not in self.known_names:
                 self.known_names.append(name)
@@ -218,7 +212,7 @@ class NameTracker:
             if i not in self.indices_of_observed:
                 timer, count = self._bad_hello_dict[i]
 
-                ## todo: this should not be hardcoded
+                ## todo: undo hardcoding
                 if timer() <= 1.5 and count > 10:
                     self.indices_of_observed.append(i)
                     hello = f'Hello {self.known_names[i]}, welcome!'

@@ -54,7 +54,6 @@ class AssetWriter:
             return list_of_copies
 
 
-
 class ShapeObject(metaclass=abc.ABCMeta):
     _asset_shape = None
 
@@ -130,6 +129,7 @@ class AssetHolderMixin:
 
     def center_width_height(self):
         return self.asset.center_width_height()
+
 
 if __name__ == '__main__':
 

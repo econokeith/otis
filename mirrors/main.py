@@ -23,6 +23,7 @@ if pargs.servo is True:
         use_servo = True
     except:
         use_servo = False
+        pargs.servo = False
 
 def main():
     # set up shared data
@@ -34,14 +35,14 @@ def main():
     shared_data_object.add_value('new_overlay', ctypes.c_bool, True)
     shared_data_object.add_value('scene', 'i', 0)
     # add shared arrays
-    shared_data_object.add_array('frame', ctypes.c_uint8, (pargs.dim[1], pargs.dim[0], 3)) #dims are backwards cause numpy
-    shared_data_object.add_array('bbox_coords', ctypes.c_int64, (pargs.faces, 4))         #is reversed
+    shared_data_object.add_array('frame', ctypes.c_uint8, (pargs.dim[1], pargs.dim[0], 3)) # dims are backwards cause numpy
+    shared_data_object.add_array('bbox_coords', ctypes.c_int64, (pargs.faces, 4))         # is reversed
     shared_data_object.add_array('error', ctypes.c_double, 2)
     shared_data_object.add_array('names', ctypes.c_uint8, pargs.faces)
     shared_data_object.add_array('servo_target', ctypes.c_uint16, 2)
     # define Processes with shared data
     process_modules = [camera_process, cv_model_process]
-    #if servos are true, add it to the process list
+    # if servos are true, add it to the process list
     if use_servo is True:
         process_modules.append(servo_process)
 
