@@ -170,7 +170,6 @@ class Rectangle(ShapeAsset, RectangleType):
 
     @coords.setter
     def coords(self, new_coords):
-        print(tuple(new_coords))
         if self.lock_dimensions is False:
             self._coords[:] = coordtools.translate_box_coords(new_coords,
                                                               in_format=self.update_format,
@@ -193,7 +192,6 @@ class Rectangle(ShapeAsset, RectangleType):
                                                              in_format='cwh',
                                                              out_format=self.coord_format
                                                              )
-            print(list(coords_updated))
             self._coords[:] = coords_updated
 
 

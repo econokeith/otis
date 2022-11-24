@@ -37,10 +37,13 @@ class BoundingAsset(bases.AssetHolderMixin):
         self.last_coords = self.coords.copy()
         self.show_name = show_name
         self.show_self = show_self
-        self.name = name
+        self._name = name
         self.time_to_inactive = time_to_inactive
-        self.time_since_last_observed = timers.TimeSinceLast()
+        self.time_since_last_observed = timers.TimeSinceFirst()
         self.i_am_new = True
+        self._is_active = False
+        self._updates_since_inactive = 0
+        self._min_updates_until_active = 8
 
         # setup NameTag object
         if name_tagger is None:
@@ -54,12 +57,24 @@ class BoundingAsset(bases.AssetHolderMixin):
             self.name_tag.attached_to = self
 
     @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, new_name):
+        self._name = new_name
+        self.name_tag.name = new_name
+
+    @property
     def is_active(self):
-        #todo: will boundingobject.is_active cause problems later
-        if self.time_since_last_observed() < self.time_to_inactive:
-            return True
-        else:
-            return False
+        if self._is_active is False and self._updates_since_inactive >= self._min_updates_until_active:
+            self._is_active = True
+
+        elif self._is_active is True and self.time_since_last_observed() > self.time_to_inactive:
+            self._is_active = False
+            self._updates_since_inactive = 0
+
+        return self._is_active
 
     @property
     def coords(self):
@@ -68,7 +83,12 @@ class BoundingAsset(bases.AssetHolderMixin):
     @coords.setter
     def coords(self, new_coords):
         self.asset.coords = new_coords
-        self.time_since_last_observed()
+        time_since = self.time_since_last_observed()
+        if time_since > self.time_to_inactive:
+            self._updates_since_inactive = 1
+        else:
+            self._updates_since_inactive += 1
+        self.time_since_last_observed.reset(True)
 
     def write(self, frame):
         if self.show_self is True:
@@ -95,12 +115,13 @@ class BoundingManager:
 
         self.base_asset = shapes.Rectangle(coords=(80, 0, 0, 80),
                                            color=None,
-                                           lock_dimensions=True,
+                                           lock_dimensions=False,
                                            update_format='trbl'
                                            )
 
         self.box_fun = lambda: BoundingAsset(self.base_asset,
-                                             color=self.color_cycle()
+                                             color=self.color_cycle(),
+                                             show_name=True
                                              )
 
         self.bbox_hash = defaultdict(self.box_fun)
@@ -110,10 +131,15 @@ class BoundingManager:
 
         self.frame = np.zeros((self.args.dim[1], self.args.dim[0], 3), dtype='uint8')
         self._primary_target = None
+        self.primary_timer_range = [5, 20]
         self.time_for_new_primary = timers.TimeElapsedBool()
         self.n_faces = 0
         self.name_tracker = self.manager.name_tracker
-        self.primary_timer_range = [5, 20]
+
+        self.a_faces = 0
+
+        self.n_boxes_active = 0
+        self.active_names = []
 
     @property
     def primary_target(self):
@@ -143,39 +169,40 @@ class BoundingManager:
             self.names = [self.name_tracker[name] for name in shared.names[:self.n_faces]]
 
         # update boxes and print unknowns because we are only using one box to print all unknowns
-        for i, name in enumerate(self.names):
-            box = self.bbox_hash[name]
-            box.name = name
-            box.coords = self.bbox_coords[i]
-            if name == 'unknown':
-                box.write(frame)
+            for i, name in enumerate(self.names):
+                box = self.bbox_hash[name]
+                box.name = name
+                box.coords = self.bbox_coords[i]
+                if name == 'unknown':
+                    box.write(frame)
 
-        self.active_faces = 0
+        self.n_boxes_active = 0
         self.active_names = []
 
         # print all actives - there is only 1 unknown box so it would only print one unknown we didn't do the last step
         for box in self.bbox_hash.values():
             if box.is_active is True:
-                self.active_faces +=1
+                self.n_boxes_active +=1
                 self.active_names.append(box.name)
                 box.write(frame)
                 active_names.append(box.name)
 
-        for name in active_names:
-            box = self.bbox_hash[name]
-            if box.i_am_new is True and (box.name != 'unknown' or active_names.count('unknown')==1):
-                self.primary_target = box.name
-                self.time_for_new_primary.reset()
-                box.i_am_new = False
+        if self.n_boxes_active == 0:
+            self.primary_target == None
 
-        if self.active_faces == 1:
+        elif self.n_boxes_active == 1:
             self.primary_target = active_names[0]
 
-        elif self.n_faces > 1 and self.time_for_new_primary() is True:
+        elif self.primary_target not in self.active_names:
+            names = np.array(self.active_names)
+            if active_names.count('unknown')>1:
+                names = names[(names!='unknown')]
+            self.primary_target = names[np.random.choice(len(names))]
+
+        elif self.time_for_new_primary() is True:
             names = np.array(self.active_names)
             names = names[(names != self.primary_target)]
 
-            # have to worry about unknowns when there are bunch because we haven't built a way to track multiple unknowns
             if active_names.count('unknown')>1:
                 names = names[(names!='unknown')]
 
@@ -184,9 +211,17 @@ class BoundingManager:
         else:
             pass
 
-        if self.manager.pargs.servo is True:
-            self.shared.servo_target = self.bbox_hash[self.primary_target].center
+        self.a_faces = self.n_boxes_active
+        self.a_names = self.active_names
 
+        if self.args.servo is True:
+
+            if self.n_boxes_active > 0:
+                servo_target = self.bbox_hash[self.primary_target].center
+            else:
+                servo_target = self.args.video_center
+
+            self.shared.servo_target[:] = servo_target
 
 
 

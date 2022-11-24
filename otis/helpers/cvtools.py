@@ -115,7 +115,8 @@ def get_current_dir(file):
 def abs_path_relative_to_calling_file(relative_path):
     bottom_of_stack = inspect.stack()[-1].filename
     abs_directory = os.path.dirname(bottom_of_stack)
-    os.path.abspath(os.path.join(abs_directory, relative_path))
+    return os.path.abspath(os.path.join(abs_directory, relative_path))
+
 
 def test_fun(file=lambda:__file__):
     return file()

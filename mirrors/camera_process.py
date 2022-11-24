@@ -1,15 +1,16 @@
 import signal
 import sys
+import cv2
 
 from otis import camera as camera
 from otis.helpers import multitools, cvtools
-from otis.overlay import scenes, writergroups, shapes, boundingobjects
+from otis.overlay import scenes, writergroups, shapes, boundingobjects, textwriters
 from otis.helpers import shapefunctions
 
 pie_path = 'photo_asset_files/pie_asset'
 
-def target(shared, pargs):
 
+def target(shared, pargs):
     signal.signal(signal.SIGTERM, multitools.close_gracefully)
     signal.signal(signal.SIGINT, multitools.close_gracefully)
 
@@ -19,18 +20,41 @@ def target(shared, pargs):
     boxes = boundingobjects.BoundingManager(manager)
     info_group = writergroups.BasicInfoGroup((10, 40), manager)
     capture = manager.capture
+    n_faces_writer = textwriters.InfoWriter(text_fun=lambda: f'n_faces= {shared.n_faces.value}',
+                                            coords=(50, 200))
+    active_faces_writer = textwriters.InfoWriter(text_fun=lambda: f'a_faces= {boxes.a_names}',
+                                                 coords=(50, 250))
+    p_target_writer = textwriters.InfoWriter(text_fun=lambda: f'primary= {boxes.primary_target}',
+                                             coords=(50, 300))
+    servo_target_writer = textwriters.InfoWriter(text_fun=lambda: f'primary= {shared.servo_target}',
+                                                 coords=(50, 350))
 
+    show_info = True
     while True:
 
         check, frame = capture.read()
         shared.frame[:] = frame  # latest frame to shared frame
         boxes.loop(frame)
         mirror_loop(frame)
-        #info_group.write(frame)
+
+        if show_info is True:
+            n_faces_writer.write(frame)
+            active_faces_writer.write(frame)
+            info_group.write(frame)
+            p_target_writer.write(frame)
+            servo_target_writer.write(frame)
+
         capture.show(frame)
 
-        if cvtools.cv2waitkey() is True:
+        key_board_input = cv2.waitKey(1) & 0xFF
+        if key_board_input == ord('q'):
             break
+
+        elif key_board_input == ord('1'):
+            show_info = not show_info
+
+        else:
+            pass
 
     capture.stop()
     sys.exit()
@@ -47,33 +71,27 @@ def mirror_loop(frame):
     big_output_dim = (300, 300)
     dim = (1280, 720)
 
-
     n_littles = 1
-
-
-
 
     corners = ('rt', 'lb', 'lt', 'rb')
     os = 20
     ff = ((-os, -os), (os, os), (os, -os), (-os, os))
     for i, corner in enumerate(corners):
-
         shapefunctions.copy_frame_portion_to(frame,
                                              (0, 0, *square_dim),
                                              (*ff[i], *big_output_dim),
                                              source_format='cwh',
-                                             destination_format=corner+'wh',
+                                             destination_format=corner + 'wh',
                                              source_ref='c',
                                              destination_ref=corner,
                                              )
-
 
     bw, bh = big_output_dim
     for i in range(n_littles):
         w, h = wide_dim
         shapefunctions.copy_frame_portion_to(frame,
                                              (0, 0, *square_dim),
-                                             (bw+i*w, 5, *wide_dim),
+                                             (bw + i * w, 5, *wide_dim),
                                              source_format='cwh',
                                              destination_format='lbwh',
                                              source_ref='c',
@@ -129,8 +147,3 @@ def mirror_loop(frame):
                                          source_ref='c',
                                          destination_ref='rt',
                                          )
-
-
-
-
-

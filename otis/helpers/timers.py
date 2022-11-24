@@ -100,8 +100,11 @@ class TimeSinceFirst(Timer):
         self.rnd = rnd
         self.is_finished = False
 
-    def reset(self):
-        self._tick = None
+    def reset(self, start=False):
+        if start is True:
+            self._tick = time.time()
+        else:
+            self._tick = None
 
     def start(self):
         self()

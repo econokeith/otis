@@ -10,8 +10,11 @@ from _piardservo.microcontrollers import RPiWifi
 from _piardservo.pid import PIDController
 
 MAX_SERVO_UPDATES_PER_SECOND = 10
-X_PID_VALUES = (.0001, .000001, .00001)
-Y_PID_VALUES = (.0001, .000001, .00001)
+# X_PID_VALUES = (.0001, .000000001, .00000001)
+# Y_PID_VALUES = (.0001, .000000001, .00000001)
+X_PID_VALUES = (1e-4, 1e-10, 2e-7)
+Y_PID_VALUES = (5e-5 ,1e-10, 2e-7)
+MINIMUM_MOVE_SIZE_PIXELS = 20
 
 def target(shared_data_object, args):
 
@@ -32,10 +35,10 @@ def target(shared_data_object, args):
 
     update_limiter = timers.CallFrequencyLimiter(1 / MAX_SERVO_UPDATES_PER_SECOND)
 
-    target = np.asarray(shared_data_object.target)
+    # target = np.asarray(shared_data_object.servo_target)
     video_center = np.array(args.video_center)
-    error = np.zeros(2, dtype=int)
-    target[:] = args.video_center
+    # error = np.zeros(2, dtype=int)W
+    # target[:] = args.video_center
 
     while True:
         if shared_data_object.n_faces.value > 0:
@@ -43,11 +46,14 @@ def target(shared_data_object, args):
 
     while True:
 
-        if update_limiter():
+        if update_limiter() is True:
+            target = np.array(shared_data_object.servo_target)
+            error = target - video_center
+            if np.abs(error[0]) > MINIMUM_MOVE_SIZE_PIXELS:
+                Servos[0].value += xPID.update(error[0], sleep=0)
 
-            error[:] = target - video_center
-            Servos[0].value += xPID.update(error[0], sleep=0)
-            Servos[1].value += yPID.update(error[1], sleep=0)
+            if np.abs(error[1]) > MINIMUM_MOVE_SIZE_PIXELS:
+                Servos[1].value += yPID.update(error[1], sleep=0)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
