@@ -1,5 +1,5 @@
 """
-This is a very simple collision detection class
+This is a very simple collisions detection class
 can be sped up
 """
 from collections import defaultdict
@@ -195,7 +195,7 @@ class AssetMover:
         dx_norm_2 = np.sum(dx ** 2)
         dx_norm = np.sqrt(dx_norm_2)
 
-        #collision hash makes it so that balls don't interact until they have fully seperated
+        #collisions hash makes it so that balls don't interact until they have fully seperated
         if dx_norm <= (self.radius + ball.radius) and self.collision_hash[ball.id] is False:
             dv = v1 - v2
             dot_p1 = np.inner(dv, dx)
@@ -348,7 +348,7 @@ class CollisionDetector:
     def check(self, a0, a1, overlap=None):
         _overlap = overlap if overlap is not None else self.overlap
 
-        #if a0.shape == "circle" and a1.shape == 'circle':
+        #if asset_0.shape == "circle" and asset_1.shape == 'circle':
         return self._circle_to_circle_check(a0, a1, _overlap)
 
     def _circle_to_circle_check(self, a0, a1, overlap=None):

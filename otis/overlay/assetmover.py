@@ -1,5 +1,5 @@
 """
-This is a very simple collision detection class
+This is a very simple collisions detection class
 can be sped up
 """
 from collections import defaultdict
@@ -39,9 +39,6 @@ class Hitbox:
         return self.dimensions[0]
 
 
-
-
-
 class AssetMover:
     movers = []
     _n_movers= 0
@@ -56,7 +53,9 @@ class AssetMover:
                  border_collision=True,
                  ups=30, #this needs to match frame_rate
                  mass=None,
-                 velocity_format = 'mag_radians'
+                 velocity_format = 'mag_radians',
+                 gravity = 0,
+                 dampen = 0,
                  ):
 
         self._coords = np.zeros(4)
@@ -76,8 +75,8 @@ class AssetMover:
 
 
         self.movers.append(self)
-        self._n_movers +=1
-        self.id = self._n_movers
+        AssetMover._n_movers +=1
+        self.id = AssetMover._n_movers
         self.scale = 1
         self.collision_hash = defaultdict(lambda: False)
         self.border_collisions = border_collision
@@ -94,6 +93,10 @@ class AssetMover:
 
         _, _, width, height = asset.center_width_height()
 
+        self.height = height
+        self.width = width
+        self.radius = (width+height) / 2
+
         if self.border_collisions is True:
 
             self.y_range += (height,-height)
@@ -108,6 +111,8 @@ class AssetMover:
         self.mass = (height*width) if mass is None else mass
         self._x_border_collision = False
         self._y_border_collision = False
+        self.gravity = gravity
+        self.dampening = 1- dampen
 
     @property
     def coords(self):
@@ -116,7 +121,6 @@ class AssetMover:
     @coords.setter
     def coords(self, new_coords):
         self._coords[:] = new_coords
-
 
     @property
     def center(self):
@@ -134,55 +138,69 @@ class AssetMover:
     def velocity(self, new_velocity):
         self._coords[2:] = new_velocity
 
-    def move(self):
+    def update_velocity(self):
         # don't update if it's not time
         if self.update_limiter() is False or self.is_finished is True:
             return
 
-        self.ups = 1. / self.real_time_elapsed()
+        self.velocity[1] -= self.gravity
         self._check_for_border_collisions()
+        self._update_velocity_from_b_collisions()
+
+    def move(self):
+        self.coords[0] += self.velocity[0] / self.ups
+        self.coords[1] += self.velocity[1] / self.ups
         self._check_for_boundary_snags()
 
-    def _check_for_border_collisions(self):
-        # find proposal coords this needs a timer added, but now it's fine.
-        prop_x, prop_y = self._coords[:2] + self._coords[2:] / self.ups
+    def write(self, frame, safe_delete=False):
+        if self.is_finished is True:
+            return
 
-        # check if proposals are in bound and then act based on self.border_collisions
+        # self.ups = max(1. / self.real_time_elapsed(), self._ups)
+        # print(self.ups)
+
+        self.ups = 1. / self.real_time_elapsed()
+        if safe_delete is True:
+            try:
+                self.asset.write(frame)
+            except:
+                self.is_finished
+        else:
+            self.asset.write(frame)
+
+    def _check_for_border_collisions(self):
+
+        prop_x, prop_y = self._coords[:2] + self._coords[2:] / self.ups
         x0, x1 = self.x_range
         y0, y1 = self.y_range
 
-        # is x inbounds after proposed move
         if x0 < prop_x < x1:
             self._x_border_collision = False
         else:
             self._x_border_collision = True
-
-        if self._x_border_collision is False:
-                self._coords[0] = prop_x
-
-        elif self._x_border_collision is True and self.border_collisions is False:
-                self.is_finished = True
-
-        elif self._x_border_collision is True and self.border_collisions is True:
-
-            self.velocity[0] *= -1
-            self._coords[0] += self.velocity[0] / self.ups
 
         if y0 < prop_y < y1:
             self._y_border_collision = False
         else:
             self._y_border_collision = True
 
-        if self._y_border_collision is False:
-            self._coords[1] = prop_y
+    def _update_velocity_from_b_collisions(self):
+        if self._x_border_collision is True and self.border_collisions is False:
+            self.is_finished = True
+        elif self._x_border_collision is True and self.border_collisions is True:
+            self.velocity[0] *= -1 * self.dampening
+        else:
+            pass
 
-        elif self._y_border_collision is True and self.border_collisions is False:
+
+        if self._y_border_collision is True and self.border_collisions is False:
             self.is_finished = True
 
         elif self._y_border_collision is True and self.border_collisions is True:
+            self.velocity[1] *= -1 * self.dampening
+        else:
+            pass
 
-            self.velocity[1] *= -1
-            self._coords[1] += self.velocity[1] / self.ups
 
     def _check_for_boundary_snags(self):
         # make sure nothing is snagged on a boundary
@@ -195,21 +213,6 @@ class AssetMover:
             self._coords[1] = self.y_range[0] + 1
         elif self._coords[1] > self.y_range[1]:
             self._coords[1] = self.y_range[1] - 1
-
-    def write(self, frame):
-        if self.is_finished is True:
-            return
-
-        # self.ups = max(1. / self.real_time_elapsed(), self._ups)
-        # print(self.ups)
-
-        self.ups = 1. / self.real_time_elapsed()
-        # try:
-        #     self.asset.write(frame)
-        # except:
-        #     self.is_finished
-        self.asset.write(frame)
-
 
 def remove_overlap(ball1, ball2):
     x1 = ball1.center
@@ -235,89 +238,66 @@ def remove_overlap(ball1, ball2):
         x2[1] += da * m2 / (m1 + m2)
 #
 
-class BouncingAssetManager:
+class CollidingAssetManager:
 
     def __init__(self,
-                 asset_fun = None, #function or string path
                  dim = (1920, 1080),
-                 max_balls = 2,
-                 ball_frequency = (3,3),
-                 velocity_magnitude_range = (300, 1000),
-                 velocity_angle_range = (10, 80),
-                 starting_location = (200, -200),## TODO this relative thing will need to be fixed
                  collisions = False,
-                 max_fps = 30,
                  border_collision = True,
-                 radius = 85,
-                 scale = 1
                  ):
 
-        assert asset_fun is not None
-        self.radius = radius * scale
-        self.dim = list(dim)
-        self.max_balls = max_balls
-        self.ball_frequency = list(ball_frequency)
-        self.velocity_magnitude_range = list(velocity_magnitude_range)
-        self.velocity_angle_range = list(velocity_angle_range)
-        self.staring_location = list(starting_location)
-        self.staring_location[1] += self.dim[1] # NEED TO NORMALIZE THIS LATER
-        self.collision = collisions
-        self.max_fps = max_fps
+
+        self.collisions = collisions
         self.border_collision = border_collision
-
-        if isinstance(asset_fun, types.FunctionType): # check to see if asset fun is a function
-            self.asset_fun = asset_fun
-
-        elif isinstance(asset_fun, str):
-            abs_dir = os.path.dirname((os.path.abspath(__file__)))
-            asset_path = os.path.join(abs_dir, asset_fun)
-            self.asset_fun = lambda: imga.ImageAsset(asset_path, scale=scale) # might want to do it slightly different adn not open
-                                                                 # it from file each time.
-        else:
-            raise ValueError("asset_fun is not the proper type. it must be either function or string path")
-
-        self.new_asset_timer = timers.CallFrequencyLimiter()
-        self.dt_next = 0
-
+        self.movers = []
+        self.dim = dim
+        self.detector = CollisionDetector()
 
     @property
-    def n_movers(self):
-        return AssetMover.n()
+    def n(self):
+        return len(self.movers)
 
-    @property
-    def movers(self):
-        return AssetMover.movers
+    def append(self, new):
+        self.movers.append(new)
 
-    def make_new(self):
-        # random initial velocity
-        m = np.random.randint(*self.velocity_magnitude_range)
-        a = np.random.randint(*self.velocity_angle_range) / 180 * np.pi
-        v = np.array([np.cos(a) * m, -np.sin(a) * m])
-        # put circle in a mover
-        AssetMover(self.asset_fun(),
-                 self.radius,
-                 self.staring_location,
-                 v,
-                 (0, self.dim[0] - 1), (0, self.dim[1] - 1),
-                 border_collision=self.border_collision,
-                 ups=self.max_fps
-                 )
+    def reset_movers(self):
+        self.movers = []
 
+    def add_movers(self, new_movers):
+        self.movers += list(new_movers)
 
-    def move(self, frame):
+    def remove_finished(self):
+        living_movers = []
+
+        for mover in self.movers:
+            if mover.is_finished is False:
+                living_movers.append(mover)
+            else:
+                del mover
+
+        self.movers = living_movers
+
+    def update_velocities(self):
+        if self.collisions is True and self.n >= 2:
+
+            for i, m0 in enumerate(self.movers[:-1]):
+                for m1 in self.movers[1+i:]:
+                    self.detector.collide(m0, m1)
+                    remove_overlap(m0, m1)
+
+        for mover in self.movers:
+            mover.update_velocity()
+
+    def write(self, frame):
         if self.border_collision is True:
-            AssetMover.remove_finished()
+            self.remove_finished()
+        for mover in self.movers:
+            mover.write(frame)
 
-        if self.new_asset_timer(self.dt_next) is True and AssetMover.n() < self.max_balls:
-            self.make_new() # balls
-            bf = self.ball_frequency
-            self.dt_next = np.random.uniform(1) * (bf[1] - bf[0]) + bf[0]
 
-        if self.collision is True:
-            AssetMover.check_collisions()
-
-        AssetMover.move_all()
-        AssetMover.write_all(frame)
+    def move(self):
+        for mover in self.movers:
+           mover.move()
 
 
 class CollisionDetector:
@@ -328,51 +308,118 @@ class CollisionDetector:
     def __init__(self, overlap=None):
         self.overlap = overlap
 
-    def check(self, a0, a1, overlap=None):
+    def check(self, asset_0, asset_1, overlap=None, update=True):
         _overlap = overlap if overlap is not None else self.overlap
 
-        #if a0.shape == "circle" and a1.shape == 'circle':
-        return self._circle_to_circle_check(a0, a1, _overlap)
+        #if asset_0.shape == "circle" and asset_1.shape == 'circle':
+        return self._circle_to_circle_check(asset_0, asset_1, _overlap)
 
     def _circle_to_circle_check(self, a0, a1, overlap=None):
-        r0 = a0.radius
-        r1 = a1.radius
+        r0 = a0.width
+        r1 = a1.width
         centers_distance = np.sqrt(np.square(a0.center-a1.center).sum())
+
         if (r1+r0) * (1-overlap) >= centers_distance:
             return True
         else:
             return False
+
+    def collide(self, asset_0, asset_1):
+        self._two_circle_velocity_update(asset_0, asset_1)
+
+    def _two_circle_velocity_update(self, circle_0, circle_1):
+
+        v0 = circle_0.velocity
+        v1 = circle_1.velocity
+        c0 = circle_0.center
+        c1 = circle_1.center
+        m0 = circle_0.mass
+        m1 = circle_0.mass
+        r0 = circle_0.width
+        r1 = circle_1.width
+
+        d_center = c0 - c1
+        dist_2 = np.sum(d_center**2)
+        distance = np.sqrt(dist_2)
+
+        # collisions hash makes it so that balls don't interact until they have fully separated
+        if distance <= (r0 + r1) and circle_0.collision_hash[circle_1.id] is False:
+            d_velocity = v0 - v1
+            dot_p0 = np.inner(d_velocity, d_center)
+            dot_p1 = np.inner(-d_velocity, -d_center)
+
+            d_v0 = -2*m1/(m0+m1)*(dot_p0 / dist_2)*d_center
+            d_v1 = -2*m0/(m0+m1)*(dot_p1 / dist_2)*(-d_center)
+
+
+            print(f'{circle_0.id} = {d_v0}')
+            print(f'{circle_1.id} = {d_v1}')
+
+            circle_0.coords[2:] += d_v0
+            circle_1.coords[2:] += d_v1
+
+            circle_0.collision_hash[circle_1.id] = True
+            circle_1.collision_hash[circle_0.id] = True
+
+        elif distance <= (r0 + r1) and circle_0.collision_hash[circle_1.id] is True:
+            pass # no effect until they seperate
+
+        elif distance > (r0 + r1):
+            circle_0.collision_hash[circle_1.id] = False
+            circle_1.collision_hash[circle_0.id] = False
+
+
+
+
+
 
 
 if __name__=='__main__':
      # Reading an image in default mode
     from otis.helpers.colortools import ColorCycle
     dim = (800, 800)
-    fps = 144
+    fps = 60
     frame = np.zeros(dim[0]*dim[1]*3).reshape((dim[1], dim[0], 3))
-    circle = shapes.Circle((0, 0), 40)
     colors = ColorCycle()
-    movers = []
 
-    for i in range(30):
+    def mover_function():
 
-        circle = shapes.Circle((0, 0), np.random.randint(10, 100), color=colors())
+        circle = shapes.Circle((0, 0), 60, color=colors())
         mover = AssetMover(circle,
-                           center=(400, 400),
-                           velocity = (np.random.randint(500, 1000), np.random.rand()*2*np.pi),
+                           center=(100, 100),
+                           velocity = (np.random.randint(200, 300), np.random.rand()*-np.pi/2),
                            dim=dim,
                            ups=fps,
-                           border_collision=True
+                           border_collision=True,
+                           gravity=-20,
+                           dampen=.02
                        )
-        movers.append(mover)
+        return mover
 
     fps_limiter = timers.SmartSleeper(1/fps)
 
+    manager = CollidingAssetManager(collisions=True)
+    # manager.append(mover_function())
+    new_ball_timer = timers.CallFrequencyLimiter(1)
+
+
+
     while True:
         frame[:,:,:] = 0
-        for mover in movers:
-            mover.move()
-            mover.write(frame)
+        # ball.update_velocity()
+        # ball.move()
+        # ball.write(frame)
+        if manager.n < 4 and new_ball_timer():
+            ball = mover_function()
+            manager.movers.append(ball)
+
+        manager.update_velocities()
+        manager.move()
+        manager.write(frame)
+
+        # manager.update_velocity()
+        # manager.move()
+        # manager.write(frame)
         fps_limiter()
 
         cv2.imshow('meh', frame)
