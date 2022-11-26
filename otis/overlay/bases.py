@@ -89,11 +89,11 @@ class AssetHolderMixin:
 
     @property
     def coords(self):
-        return self.asset.coords
+        return self.asset._coords
 
     @coords.setter
     def coords(self, new_coords):
-        self.asset.coords = new_coords
+        self.asset._coords = new_coords
 
     @property
     def center(self):

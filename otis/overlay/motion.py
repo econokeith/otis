@@ -141,7 +141,7 @@ class AssetMover:
         # find proposal coords
         prop_x, prop_y = self.coords + self.velocity / self.ups
 
-        # check if proposals are in bound and then act based on self.border_collision
+        # check if proposals are in bound and then act based on self.border_collisions
         x0, x1 = self.x_range
         y0, y1 = self.y_range
 
@@ -441,8 +441,6 @@ class MovingAsset:
 
     def move(self):
         pass
-
-
 
 
 if __name__=='__main__':

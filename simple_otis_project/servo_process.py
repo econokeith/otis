@@ -30,7 +30,9 @@ def target(shared_data_object, args):
     rpi = RPiWifi(address='192.168.1.28', pins=(22, 17))
     Servos = ServoContainer(n=2, microcontroller=rpi).connect()
 
+
     Servos[0].value,  Servos[1].value = SERVO_START
+
 
     xPID = PIDController(*X_PID_VALUES)
     yPID = PIDController(*Y_PID_VALUES)
@@ -51,8 +53,8 @@ def target(shared_data_object, args):
 
     while True:
 
-        if shared_data_object.n_boxes_active.value == 0 and SERVO_TRACKING is True:
-            if reset_complete is False :
+        if shared_data_object.n_boxes_active.value == 0:
+            if reset_complete is False:
                 Servos[0].value, Servos[1].value = SERVO_START
                 reset_complete = True
 
@@ -75,7 +77,6 @@ def target(shared_data_object, args):
             #     reset_counter = 0
 
         elif update_limiter() is True and SERVO_TRACKING is True:
-
             reset_complete = False
             target = np.array(shared_data_object.servo_target)
             error = target - video_center
@@ -90,7 +91,6 @@ def target(shared_data_object, args):
         shared_data_object.servo_position[1] = round(Servos[1].value, 2)
 
         key_board_input = shared_data_object.keyboard_input.value
-
         if key_board_input == ord('q'):
             break
 

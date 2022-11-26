@@ -34,6 +34,7 @@ class ShapeAsset(bases.AssetWriter, abc.ABC):
         self.update_format = coord_format if update_format is None else update_format
         self.collisions = collisions
         self.lock_dimensions = lock_dimensions
+        self.hitbox = self
 
     @property
     def coords(self):

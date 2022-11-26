@@ -83,7 +83,7 @@ class BasicInfoGroup(AssetGroup):
         i = 1
         try:
             self.model_ma = maths.MovingAverage(self.ma)
-            ma_text_fun = lambda: f'model updates per second : {int(1 / self.model_ma.update(self.shared.m_time.value))}'
+            ma_text_fun = lambda: f'model updates per second : {int(1 / self.model_ma.update(self.shared.model_update_time.value))}'
             model_writer = textwriters.InfoWriter(text_fun=ma_text_fun,
                                                   coords=(offsets[0], offsets[1] - self.spacing * i),
                                                   scale=self.scale,

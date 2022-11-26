@@ -15,6 +15,7 @@ def target(shared, pargs):
     signal.signal(signal.SIGTERM, multitools.close_gracefully)
     signal.signal(signal.SIGINT, multitools.close_gracefully)
 
+    key_input_limiter = timers.CallFrequencyLimiter(1/MAX_KEYS_PER_SECOND)
 
     manager = scenes.SceneManager(shared, pargs)
     manager.capture.silent_sleep = False
@@ -22,16 +23,16 @@ def target(shared, pargs):
     boxes = boundingobjects.BoundingManager(manager)
     info_group = writergroups.BasicInfoGroup((10, 40), manager)
     capture = manager.capture
-
     n_faces_writer = textwriters.InfoWriter(text_fun=lambda: f'n_faces= {shared.n_observed_faces.value}',
                                             coords=(50, 200))
     active_faces_writer = textwriters.InfoWriter(text_fun=lambda: f'a_faces= {boxes.active_names}',
                                                  coords=(50, 250))
     p_target_writer = textwriters.InfoWriter(text_fun=lambda: f'primary= {boxes.primary_target}',
                                              coords=(50, 300))
-    servo_target_writer = textwriters.InfoWriter(text_fun=lambda: f'target = {shared.servo_target}',
+    servo_target_writer = textwriters.InfoWriter(text_fun=lambda: f'primary= {shared.servo_target}',
                                                  coords=(50, 350))
-    keyboard_writer = textwriters.InfoWriter(text_fun=lambda: f'primary= {shared.keyboard_input.value}',
+
+    servo_position_writer = textwriters.InfoWriter(text_fun=lambda: f'primary= {shared.servo_position}',
                                                  coords=(50, 400))
 
     show_info = True
@@ -48,11 +49,11 @@ def target(shared, pargs):
             info_group.write(frame)
             p_target_writer.write(frame)
             servo_target_writer.write(frame)
-            keyboard_writer.write(frame)
+            servo_position_writer.write(frame)
 
         capture.show(frame)
-
-        shared.keyboard_input.value = cv2.waitKey(1) & 0xFF
+        if key_input_limiter() is True:
+            shared.keyboard_input.value = cv2.waitKey(1) & 0xFF
 
         if shared.keyboard_input.value == ord('q'):
             break

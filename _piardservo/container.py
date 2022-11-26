@@ -89,6 +89,15 @@ class ServoContainer:
     def values(self):
         return tuple([servo.value for servo in self.servos])
 
+    def set_values(self, values):
+        """
+        get's a tuple of values from the servos
+        """
+
+        for servo, value in zip(self.servos, values):
+            servo.value = value
+
+
     def pulse_widths(self):
         return tuple([servo.pulse_width for servo in self.servos])
 

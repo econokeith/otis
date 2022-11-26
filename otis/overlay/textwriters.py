@@ -276,7 +276,7 @@ class TimerWriter(InfoWriter):
                   "countdown": timers.CountDownTimer}
 
     def __init__(self,
-                 title="timer",
+                 title="update_limiter",
                  timer_type="last",
                  per_second=False,
                  roundw=1,

@@ -38,8 +38,10 @@ class BoundingAsset(bases.AssetHolderMixin):
         self.show_name = show_name
         self.show_self = show_self
         self._name = name
-        self.time_to_inactive = time_to_inactive
+        self._time_to_inactive_0 = .1
+        self._time_to_inactive_1 = time_to_inactive
         self.time_since_last_observed = timers.TimeSinceFirst()
+        self.time_since_active = timers.TimeSinceFirst()
         self.i_am_new = True
         self._is_active = False
         self._updates_since_inactive = 0
@@ -57,6 +59,13 @@ class BoundingAsset(bases.AssetHolderMixin):
             self.name_tag.attached_to = self
 
     @property
+    def time_to_inactive(self):
+        if self._is_active:
+            return self._time_to_inactive_1
+        else:
+            return self._time_to_inactive_0
+
+    @property
     def name(self):
         return self._name
 
@@ -69,6 +78,10 @@ class BoundingAsset(bases.AssetHolderMixin):
     def is_active(self):
         if self._is_active is False and self._updates_since_inactive >= self._min_updates_until_active:
             self._is_active = True
+            self.time_since_active = timers.TimeSinceFirst().start()
+
+        elif self._is_active is False and self.time_since_last_observed() > self.time_to_inactive:
+            self._updates_since_inactive = 0
 
         elif self._is_active is True and self.time_since_last_observed() > self.time_to_inactive:
             self._is_active = False
@@ -78,11 +91,11 @@ class BoundingAsset(bases.AssetHolderMixin):
 
     @property
     def coords(self):
-        return self.asset.coords
+        return self.asset._coords
 
     @coords.setter
     def coords(self, new_coords):
-        self.asset.coords = new_coords
+        self.asset._coords = new_coords
         time_since = self.time_since_last_observed()
         if time_since > self.time_to_inactive:
             self._updates_since_inactive = 1
@@ -136,7 +149,7 @@ class BoundingManager:
         self.n_faces = 0
         self.name_tracker = self.manager.name_tracker
 
-        self.a_faces = 0
+        self.n_boxes_active = 0
 
         self.n_boxes_active = 0
         self.active_names = []
@@ -164,9 +177,9 @@ class BoundingManager:
         active_names = []
         # update scene data if new data from cv_process
         if shared.new_overlay.value:
-            self.n_faces = self.shared.n_faces.value
+            self.n_faces = self.shared.n_observed_faces.value
             self.bbox_coords = shared.bbox_coords.copy()
-            self.names = [self.name_tracker[name] for name in shared.names[:self.n_faces]]
+            self.names = [self.name_tracker[name] for name in shared.observed_names[:self.n_faces]]
 
         # update boxes and print unknowns because we are only using one box to print all unknowns
             for i, name in enumerate(self.names):
@@ -211,8 +224,10 @@ class BoundingManager:
         else:
             pass
 
-        self.a_faces = self.n_boxes_active
-        self.a_names = self.active_names
+        self.n_boxes_active = self.n_boxes_active
+        self.active_names = self.active_names
+
+        shared.n_boxes_active.value = self.n_boxes_active
 
         if self.args.servo is True:
 

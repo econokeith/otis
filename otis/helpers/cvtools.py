@@ -8,7 +8,6 @@ import numpy as np
 
 from otis.helpers import timers, maths
 
-
 def box_stabilizer(box0, box1, threshold=.25):
     """
     checks that the distance between center points is
@@ -86,36 +85,36 @@ def get_current_dir(file):
     return os.path.abspath(os.path.dirname(file))
 
 
-# def abs_path_relative_to_calling_file(relative_path,  layers_out=2, debug=False):
-#     """
-#     convenience function to avoid os.path type boiler plate in loading data functions
-#
-#     includes workaround to work when running debuggers
-#     Args:
-#         relative_path: relative path to data from the files where the function is called NOT WRITTEN
-#
-#     Returns:
-#         abs_path
-#     """
-#     python_files = list_python_files(layers_out)
-#     stack = inspect.stack()[::-1]
-#     print(stack)
-#     for frame in stack:
-#         file_name = frame.filename
-#
-#         if file_name in python_files:
-#             break
-#     print(file_name)
-#     abs_dir =  os.path.dirname(file_name)
-#     print(abs_dir)
-#     for frame in stack:
-#         del frame
-#     return os.path.abspath(os.path.join(abs_dir, relative_path))
+def abs_path_relative_to_calling_file(relative_path,  layers_out=2, debug=False):
+    """
+    convenience function to avoid os.path type boiler plate in loading data functions
 
-def abs_path_relative_to_calling_file(relative_path):
-    bottom_of_stack = inspect.stack()[-1].filename
-    abs_directory = os.path.dirname(bottom_of_stack)
-    return os.path.abspath(os.path.join(abs_directory, relative_path))
+    includes workaround to work when running debuggers
+    Args:
+        relative_path: relative path to data from the files where the function is called NOT WRITTEN
+
+    Returns:
+        abs_path
+    """
+    python_files = list_python_files(layers_out)
+    stack = inspect.stack()[::-1]
+
+    for frame in stack:
+        file_name = frame.filename
+
+        if file_name in python_files:
+            break
+
+    abs_dir =  os.path.dirname(file_name)
+
+    for frame in stack:
+        del frame
+    return os.path.abspath(os.path.join(abs_dir, relative_path))
+
+# def abs_path_relative_to_calling_file(relative_path):
+#     bottom_of_stack = inspect.stack()[-1].filename
+#     abs_directory = os.path.dirname(bottom_of_stack)
+#     return os.path.abspath(os.path.join(abs_directory, relative_path))
 
 
 def test_fun(file=lambda:__file__):
@@ -219,7 +218,7 @@ class NameTracker:
                     hello = f'Hello {self.known_names[i]}, welcome!'
                     self._last_seen_timers[i]()  # replace this soon
                     self.hello_queue.put((i, hello))
-                    # reset timer so it can be used for other things
+                    # reset update_limiter so it can be used for other things
                     self._bad_hello_dict[i][0].reset()
                     self._bad_hello_dict[i][1] = 1
 

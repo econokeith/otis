@@ -32,9 +32,6 @@ def target(shared_data_object, args):
     if platform.system() == 'Darwin':
         model = 'hog'
         args.cf = 1
-    else:
-        model = 'cnn'
-        args.cf = 2
 
     known_names, known_encodings = cvtools.load_face_data(face_recognition, args.PATH_TO_FACES)
     known_names.append('unknown')
