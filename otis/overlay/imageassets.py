@@ -230,6 +230,12 @@ class AssetWithImage(bases.AssetWriter):
         if new_size is not None:
             self.coords[2:] = new_size
 
+            if self._image is None:
+                w, h = new_size
+                self._image = np.zeros(3 * w * h, dtype='uint8').reshape((h, w, 3))
+            else:
+                self._image = self.resize_image(self._image)
+
     def resize_image(self, new_image):
         if self.resize_on_write is not None:
             return new_image
@@ -239,14 +245,16 @@ class AssetWithImage(bases.AssetWriter):
 
         if self.resize_to is not None:
             image = cv2.resize(new_image, self.resize_to)
-        elif isinstance(self.scale, (float, int)) and self.scale != 1:
-            image = cv2.resize(new_image, (0, 0), fx=self.scale, fy=self.scale)
-        elif isinstance(self.scale, (tuple, list, np.ndarray)):
-            image = cv2.resize(new_image, (0, 0), fx=self.scale[0], fy=self.scale[1])
+            return image
         else:
-            image = new_image
+            if isinstance(self.scale, (float, int)) and self.scale != 1:
+                image = cv2.resize(new_image, (0, 0), fx=self.scale, fy=self.scale)
+            elif isinstance(self.scale, (tuple, list, np.ndarray)):
+                image = cv2.resize(new_image, (0, 0), fx=self.scale[0], fy=self.scale[1])
+            else:
+                image = new_image
 
-        self.resize_to = image.shape[:2][::-1]
+            self.resize_to = image.shape[:2][::-1]
 
         return image
 
@@ -263,19 +271,21 @@ class AssetWithImage(bases.AssetWriter):
 
         return self
 
-    def write(self, frame, image=None, coords=None, ref=None):
+    def write(self, frame, image=None, coords=None, ref=None, in_format='cwh'):
 
+        _coords = self.coords if coords is None else coords
         _image = self.image if image is None else image
+        _ref = self.ref if ref is None else ref
 
         if self.resize_on_write is None:
             _image = self.resize_image(_image)
         else:
             _image = cv2.resize(_image, self.resize_on_write)
 
-        r,t,l,b = coordtools.translate_box_coords(self.coords,
-                                                 in_format='cwh',
+        r,t,l,b = coordtools.translate_box_coords(_coords,
+                                                  in_format=in_format,
                                                  out_format='rtlb',
-                                                 ref=self.ref,
+                                                 ref=_ref,
                                                  dim=frame
                                                  )
 
@@ -294,11 +304,11 @@ class AssetWithImage(bases.AssetWriter):
 
         if r >= w_f:
             dr = r - w_f + 1
-            r = w_f-1
+            r = w_f
 
         if b >= h_f:
             db = b - h_f + 1
-            b = h_f - 1
+            b = h_f
 
         frame_portion = frame[t:b, l:r]
         image_portion = _image[dt: h_i-db+1, dl: w_i-dr+1]
