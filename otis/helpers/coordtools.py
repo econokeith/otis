@@ -192,7 +192,7 @@ def translate_box_coords(coords,
         cx = (l+r)//2
         cy = (t+b)//2
         h = (b-t)
-        w = (l-r)
+        w = (r-l)
         return cx, cy, h, w
 
     else:
@@ -239,16 +239,19 @@ def find_center_radius_from_box_coords(box_coords,
 
     return cx, cy, radius, radius
 
-def get_frame_portion(frame, coords, coord_format='cwh', ref=None):
+def get_frame_portion(frame, coords, coord_format='cwh', ref=None, copy=True):
 
-    r, t, l, b = translate_box_coords(coords[:2],
+    r, t, l, b = translate_box_coords(coords,
                                       in_format=coord_format,
                                       out_format='rtlb',
                                       ref=ref,
                                       dim=frame
                                       )
 
-    return frame[l:r, t:b]
+    if copy is True:
+        return frame[t:b, l:r].copy()
+    else:
+        return frame[t:b, l:r]
 
 
 

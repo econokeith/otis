@@ -1,6 +1,7 @@
 import signal
 import sys
 import cv2
+import numpy as np
 
 from otis import camera as camera
 from otis.helpers import multitools, cvtools
@@ -52,12 +53,25 @@ def target(shared, pargs):
 
         capture.show(frame)
 
-        shared.keyboard_input.value = cv2.waitKey(1) & 0xFF
+        keyboard_input = cv2.waitKey(1) & 0xFF
 
-        if shared.keyboard_input.value == ord('q'):
-            break
-        elif shared.keyboard_input.value == ord('1'):
-            show_info = not show_info
+        if shared.new_keyboard_input.value is False and keyboard_input != 255:
+            shared.keyboard_input.value = keyboard_input
+            shared.new_keyboard_input.value = True
+
+        elif shared.new_keyboard_input.value is True:
+
+            if shared.keyboard_input.value == ord('q'):
+                break
+
+            elif shared.keyboard_input.value == ord('1'):
+                show_info = not show_info
+
+            shared.key_input_received[0] = True
+
+        if np.count_nonzero(shared.key_input_received) == 3:
+            shared.new_keyboard_input.value = False
+            shared.key_input_received[:] = False
 
     capture.stop()
     sys.exit()

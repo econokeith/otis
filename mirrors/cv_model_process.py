@@ -95,9 +95,12 @@ def target(shared_data_object, args):
         shared.model_update_time.value = model_timer()
         shared.new_overlay.value = True # tell other process about new data
 
-        key_board_input = shared_data_object.keyboard_input.value
-        if key_board_input == ord('q'):
-            break
+        if shared.new_keyboard_input.value is True:
+            key_board_input = shared_data_object.keyboard_input.value
+            if key_board_input == ord('q'):
+                break
+
+            shared_data_object.key_input_received[1] = True
 
     sys.exit()
 

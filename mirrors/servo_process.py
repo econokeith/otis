@@ -23,7 +23,7 @@ def target(shared_data_object, args):
 
     signal.signal(signal.SIGTERM, mtools.close_gracefully)
     signal.signal(signal.SIGINT, mtools.close_gracefully)
-
+    shared = shared_data_object
     if args.servo is False:
         sys.exit()
 
@@ -89,32 +89,35 @@ def target(shared_data_object, args):
         shared_data_object.servo_position[0] = round(Servos[0].value, 2)
         shared_data_object.servo_position[1] = round(Servos[1].value, 2)
 
-        key_board_input = shared_data_object.keyboard_input.value
+        if shared.new_keyboard_input.value is True:
+            key_board_input = shared_data_object.keyboard_input.value
 
-        if key_board_input == ord('q'):
-            break
+            if key_board_input == ord('q'):
+                break
 
-        elif key_board_input == ord('e'):
-            SERVO_TRACKING = not SERVO_TRACKING
+            elif key_board_input == ord('e'):
+                SERVO_TRACKING = not SERVO_TRACKING
 
-        elif key_board_input == ord('a'):
-            Servos[0].value += KEYBOARD_MOVE_INCREMENT
-            SERVO_TRACKING = False
+            elif key_board_input == ord('a'):
+                Servos[0].value += KEYBOARD_MOVE_INCREMENT
+                SERVO_TRACKING = False
 
-        elif key_board_input == ord('d'):
-            Servos[0].value -= KEYBOARD_MOVE_INCREMENT
-            SERVO_TRACKING = False
+            elif key_board_input == ord('d'):
+                Servos[0].value -= KEYBOARD_MOVE_INCREMENT
+                SERVO_TRACKING = False
 
-        elif key_board_input == ord('w'):
-            Servos[1].value += KEYBOARD_MOVE_INCREMENT
-            SERVO_TRACKING = False
+            elif key_board_input == ord('w'):
+                Servos[1].value += KEYBOARD_MOVE_INCREMENT
+                SERVO_TRACKING = False
 
-        elif key_board_input == ord('s'):
-            Servos[1].value -= KEYBOARD_MOVE_INCREMENT
-            SERVO_TRACKING = False
+            elif key_board_input == ord('s'):
+                Servos[1].value -= KEYBOARD_MOVE_INCREMENT
+                SERVO_TRACKING = False
 
-        else:
-            pass
+            else:
+                pass
+
+            shared_data_object.key_input_received[2] = True
 
     Servos.close()
     sys.exit()

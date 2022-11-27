@@ -153,7 +153,7 @@ class AssetMover:
         self.coords[1] += self.velocity[1] / self.ups
         self._check_for_boundary_snags()
 
-    def write(self, frame, safe_delete=False):
+    def write(self, frame, safe_delete=False, **kwargs):
         if self.is_finished is True:
             return
 
@@ -163,11 +163,11 @@ class AssetMover:
         self.ups = 1. / self.real_time_elapsed()
         if safe_delete is True:
             try:
-                self.asset.write(frame)
+                self.asset.write(frame, **kwargs)
             except:
                 self.is_finished = True
         else:
-            self.asset.write(frame)
+            self.asset.write(frame, **kwargs)
 
     def _check_for_border_collisions(self):
 

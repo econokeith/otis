@@ -330,7 +330,7 @@ class TimerWriter(InfoWriter):
             t = 1 / t
 
         if self.moving_average is not None:
-            t = self.moving_average.update_velocity(t)
+            t = self.moving_average.update(t)
 
         if self.roundw == 0:
             t = int(t)

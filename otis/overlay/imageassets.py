@@ -116,19 +116,19 @@ class AssetWithImage(bases.AssetWriter):
                  hitbox_type = 'rectangle',
                  copy_updates = False,
                  mask_bit = 0,
+                 use_circle_mask = False
                  ):
 
         super().__init__()
 
         self.locs = None
 
-
-
         self.coords = np.zeros(4, dtype=int)
         self.coords[:2] = center
         self.resize_to = resize_to
         self.scale = scale
         self.resize_on_write = resize_on_write
+
         if self.resize_on_write is not None:
             self.copy_updates = False
             self.resize_to = self.resize_on_write
@@ -149,9 +149,17 @@ class AssetWithImage(bases.AssetWriter):
             self._image = None
 
         self.mask_bit = mask_bit
-        self.mask = mask
+        if use_circle_mask is True:
+            path_to_dir = os.path.abspath(os.path.dirname(__file__))
+            path_to_mask = os.path.join(path_to_dir, 'photo_assets/masks/circle_mask.jpg')
+            self.mask = cv2.imread(path_to_mask)
+
+        else:
+            self.mask = mask
+
         self.ref = ref
         self.hitbox_type = hitbox_type
+
 
 
     @property
@@ -226,7 +234,7 @@ class AssetWithImage(bases.AssetWriter):
         if self.resize_on_write is not None:
             return new_image
 
-        if (new_image is None) or (self._image is None) or (self.shape[:2] == self._image.shape[:2]):
+        if (new_image is None) or (self._image is None) or (new_image.shape[:2]==self._image.shape[:2]):
             return new_image
 
         if self.resize_to is not None:
@@ -255,7 +263,7 @@ class AssetWithImage(bases.AssetWriter):
 
         return self
 
-    def write(self, frame, image=None):
+    def write(self, frame, image=None, coords=None, ref=None):
 
         _image = self.image if image is None else image
 

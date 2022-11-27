@@ -1,11 +1,8 @@
 import copy
 import abc
 from collections import defaultdict
-
 import numpy as np
-
 from otis.overlay import bases, shapes, textwriters, assets
-
 from otis.helpers import coordtools, timers, colortools
 
 class BoundingAsset(bases.AssetHolderMixin):
@@ -95,13 +92,14 @@ class BoundingAsset(bases.AssetHolderMixin):
 
     @coords.setter
     def coords(self, new_coords):
-        self.asset._coords = new_coords
+        self.asset.coords = new_coords
         time_since = self.time_since_last_observed()
         if time_since > self.time_to_inactive:
             self._updates_since_inactive = 1
         else:
             self._updates_since_inactive += 1
         self.time_since_last_observed.reset(True)
+
 
     def write(self, frame):
         if self.show_self is True:
@@ -233,6 +231,7 @@ class BoundingManager:
 
             if self.n_boxes_active > 0:
                 servo_target = self.bbox_hash[self.primary_target].center
+
             else:
                 servo_target = self.args.video_center
 
