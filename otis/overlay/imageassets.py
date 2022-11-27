@@ -6,11 +6,8 @@ import numpy as np
 
 import otis.helpers.cvtools
 import otis.overlay.bases as base
-from otis.helpers import shapefunctions as shapes
-
-
-# Todo: make this more easily resizeable
-# Todo: need to better define ImageAsset BoundingShape
+from otis.helpers import shapefunctions as shapes, cvtools
+from otis.overlay import bases
 
 class ImageAsset(base.AssetWriter):
 
@@ -50,6 +47,7 @@ class ImageAsset(base.AssetWriter):
             self.mask[self.mask <128] = 0
             self.mask[self.mask >=128] = 255
             self.locs = np.asarray(np.nonzero(self.mask == self.bit))
+
         else:
             self.mask = None
             self.locs = None
@@ -104,24 +102,103 @@ def bbox_to_center(coords):
     t, r, b, l = coords
     return int((r+l)/2), int((t+b)/2)
 
+class AssetWithImage(bases.AssetWriter):
+
+    def __init__(self,
+                 image=None,
+                 mask=None,
+                 resize_to=None,
+                 scale = 1,
+                 center = (100, 100),
+                 ref = None,
+                 hitbox_type = 'rectangle'
+                 ):
+
+        super().__init__()
+
+        self.locs = None
+        self.resize_to = resize_to
+        self.scale = scale
+        self.image = image
+        self.mask = mask
+
+        self.coords = np.zeros(4, dtype=int)
+        self.coords[:2] = center
+
+        if resize_to is None:
+            self.coords[2:] = image.shape[:2][::-1]
+        else:
+            self.coords[2:] = resize_to
+
+        self.ref = ref
+        self.hitbox_type = hitbox_type
+
+    @property
+    def image(self):
+        return self._image
+
+    @image.setter
+    def image(self, new_image):
+        self._image = self.resize(new_image)
+
+    @property
+    def mask(self):
+        return self._mask
+
+    @mask.setter
+    def mask(self, new_mask):
+        self._mask = self.resize(new_mask)
+        self.mask[self.mask < 128] = 0
+        self.mask[self.mask >= 128] = 255
+
+    @property
+    def shape(self):
+        return self.hitbox_type
+
+    @property
+    def center(self):
+        return self.coords[:2]
+
+    @center.setter
+    def center(self, new_center):
+        self.coords[:2] = new_center
+
+    @property
+    def height(self):
+        return self.coords[3]
+
+    @property
+    def radius(self):
+        return self.coords[2]
+
+    @property
+    def width(self):
+        return self.coords[2]
+
+    def resize(self, new_image):
+        if self.resize_to is not None:
+            image = cv2.resize(new_image, self.resize_to)
+        elif isinstance(self.scale, (float, int)) and self.scale != 1:
+            image = cv2.resize(new_image, (0, 0), fx=self.scale, fy=self.scale)
+        elif isinstance(self.scale, (tuple, list, np.ndarray)):
+            image = cv2.resize(new_image, (0, 0), fx=self.scale[0], fy=self.scale[1])
+        else:
+            image = new_image
+
+        return image
+
+    def add_image_from_file(self, path_to_images):
+
+        abs_path = cvtools.abs_path_relative_to_calling_file(path_to_images)
+        files = os.listdir(abs_path)
+        image_file = min(files, key=len)
+        self.image = cv2.imread(os.path.join(abs_path, image_file))
+
+        if len(files) > 1:
+            mask_file = max(files, key=len)
+            self.mask = cv2.imread(os.path.join(abs_path, mask_file))
+            self.locs = np.asarray(np.nonzero(self.mask == 0))
+
+
 if __name__=='__main__':
-    import otis.camera as camera
-    Capture = camera.ThreadedCameraPlayer(0, dim=(1920, 1080)).start()
-    Pie = ImageAsset('./photo_asset_files/pie_asset')
-    time.sleep(3)
-
-    while True:
-        Capture.read()
-        frame = Capture.frame
-        tick = time.time()
-        Pie.write(frame, (860, 540))
-        tock = int(1000*(time.time() - tick))
-        shapes.write_text(frame, str(tock))
-        shapes.write_text(frame, str(Capture.latency), pos=(10, 200))
-
-        cv2.imshow('test', frame)
-
-        if otis.helpers.cvtools.cv2waitkey():
-            break
-
-    Capture.stop()
+    pass

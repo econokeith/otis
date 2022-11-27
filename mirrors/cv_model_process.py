@@ -16,7 +16,10 @@ MAX_FACE_DISTANCE = .65
 
 DEBUG = False
 if DEBUG:
-    logging.basicConfig(filename='text_files/logs/log.log', filemode='w', level=logging.INFO)
+    logging.basicConfig(filename='text_files/logs/log.log',
+                        filemode='w',
+                        level=logging.INFO
+                        )
 
 
 def target(shared_data_object, args):
@@ -42,6 +45,7 @@ def target(shared_data_object, args):
     max_faces = args.faces
     n_known_faces =  len(known_names)
     face_locator = timers.FunctionTimer(face_recognition.face_locations)
+
     # this was probably excessively complicated
     # counter dict just gives the order of unique names here
     # so we can have multiple pictures of the same person

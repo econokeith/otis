@@ -16,16 +16,18 @@ from otis.helpers.cvtools import cv2waitkey
 from otis.overlay import imageassets as imga, shapes
 import otis.camera as camera
 
+
 class Hitbox:
     asset: shapes.ShapeAsset
+
     def __init__(self,
-                 shape_type, # circle rectable
-                 dimensions=(0,0), # width, height
+                 shape_type,  # circle rectable
+                 dimensions=(0, 0),  # width, height
                  ):
         self.shape_type = shape_type
 
         if isinstance(dimensions, (int, float)):
-            self.dimensions = np.array((dimensions,)*2).astype(int)
+            self.dimensions = np.array((dimensions,) * 2).astype(int)
 
         else:
             self.dimensions = np.array(dimensions).astype(int)
@@ -41,21 +43,21 @@ class Hitbox:
 
 class AssetMover:
     movers = []
-    _n_movers= 0
+    _n_movers = 0
 
     def __init__(self,
                  asset,
-                 center=(0,0),
-                 velocity=(0,0),
-                 dim = (1280, 720),
+                 center=(0, 0),
+                 velocity=(0, 0),
+                 dim=(1280, 720),
                  x_range=None,
                  y_range=None,
                  border_collision=True,
-                 ups=30, #this needs to match frame_rate
+                 ups=30,  # this needs to match frame_rate
                  mass=None,
-                 velocity_format = 'mag_radians',
-                 gravity = 0,
-                 dampen = 0,
+                 velocity_format='mag_radians',
+                 gravity=0,
+                 dampen=0.,
                  ):
 
         self._coords = np.zeros(4)
@@ -68,14 +70,13 @@ class AssetMover:
         if velocity_format == 'mag_radians':
             mag, theta = velocity
             tan = np.tan(theta)
-            x = np.sqrt(mag**2/(1+tan**2))
+            x = np.sqrt(mag ** 2 / (1 + tan ** 2))
             self._coords[2:] = x, x * tan
         else:
             self._coords[2:] = velocity
 
-
         self.movers.append(self)
-        AssetMover._n_movers +=1
+        AssetMover._n_movers += 1
         self.id = AssetMover._n_movers
         self.scale = 1
         self.collision_hash = defaultdict(lambda: False)
@@ -95,11 +96,10 @@ class AssetMover:
 
         self.height = height
         self.width = width
-        self.radius = (width+height) / 2
+        self.radius = (width + height) / 2
 
         if self.border_collisions is True:
-
-            self.y_range += (height,-height)
+            self.y_range += (height, -height)
             self.x_range += (width, -width)
 
         self.ups = ups
@@ -108,11 +108,11 @@ class AssetMover:
         self.real_time_elapsed = timers.TimeSinceLast()
         self.real_time_elapsed()
         self.is_finished = False
-        self.mass = (height*width) if mass is None else mass
+        self.mass = (height * width) if mass is None else mass
         self._x_border_collision = False
         self._y_border_collision = False
         self.gravity = gravity
-        self.dampening = 1- dampen
+        self.dampening = 1. - dampen
 
     @property
     def coords(self):
@@ -164,7 +164,7 @@ class AssetMover:
             try:
                 self.asset.write(frame)
             except:
-                self.is_finished
+                self.is_finished = True
         else:
             self.asset.write(frame)
 
@@ -192,7 +192,6 @@ class AssetMover:
         else:
             pass
 
-
         if self._y_border_collision is True and self.border_collisions is False:
             self.is_finished = True
 
@@ -200,7 +199,6 @@ class AssetMover:
             self.velocity[1] *= -1 * self.dampening
         else:
             pass
-
 
     def _check_for_boundary_snags(self):
         # make sure nothing is snagged on a boundary
@@ -213,6 +211,7 @@ class AssetMover:
             self._coords[1] = self.y_range[0] + 1
         elif self._coords[1] > self.y_range[1]:
             self._coords[1] = self.y_range[1] - 1
+
 
 def remove_overlap(ball1, ball2):
     x1 = ball1.center
@@ -236,16 +235,17 @@ def remove_overlap(ball1, ball2):
         x2[0] += db * m2 / (m1 + m2)
         x1[1] -= db * m1 / (m1 + m2)
         x2[1] += da * m2 / (m1 + m2)
+
+
 #
 
 class CollidingAssetManager:
 
     def __init__(self,
-                 dim = (1920, 1080),
-                 collisions = False,
-                 border_collision = True,
+                 dim=(1920, 1080),
+                 collisions=False,
+                 border_collision=True,
                  ):
-
 
         self.collisions = collisions
         self.border_collision = border_collision
@@ -281,7 +281,7 @@ class CollidingAssetManager:
         if self.collisions is True and self.n >= 2:
 
             for i, m0 in enumerate(self.movers[:-1]):
-                for m1 in self.movers[1+i:]:
+                for m1 in self.movers[1 + i:]:
                     self.detector.collide(m0, m1)
                     remove_overlap(m0, m1)
 
@@ -289,15 +289,15 @@ class CollidingAssetManager:
             mover.update_velocity()
 
     def write(self, frame):
-        if self.border_collision is True:
+        if self.border_collision is False:
             self.remove_finished()
+
         for mover in self.movers:
             mover.write(frame)
 
-
     def move(self):
         for mover in self.movers:
-           mover.move()
+            mover.move()
 
 
 class CollisionDetector:
@@ -311,15 +311,15 @@ class CollisionDetector:
     def check(self, asset_0, asset_1, overlap=None, update=True):
         _overlap = overlap if overlap is not None else self.overlap
 
-        #if asset_0.shape == "circle" and asset_1.shape == 'circle':
+        # if asset_0.shape == "circle" and asset_1.shape == 'circle':
         return self._circle_to_circle_check(asset_0, asset_1, _overlap)
 
     def _circle_to_circle_check(self, a0, a1, overlap=None):
         r0 = a0.width
         r1 = a1.width
-        centers_distance = np.sqrt(np.square(a0.center-a1.center).sum())
+        centers_distance = np.sqrt(np.square(a0.center - a1.center).sum())
 
-        if (r1+r0) * (1-overlap) >= centers_distance:
+        if (r1 + r0) * (1 - overlap) >= centers_distance:
             return True
         else:
             return False
@@ -339,21 +339,18 @@ class CollisionDetector:
         r1 = circle_1.width
 
         d_center = c0 - c1
-        dist_2 = np.sum(d_center**2)
+        dist_2 = np.sum(d_center ** 2)
         distance = np.sqrt(dist_2)
 
         # collisions hash makes it so that balls don't interact until they have fully separated
         if distance <= (r0 + r1) and circle_0.collision_hash[circle_1.id] is False:
+
             d_velocity = v0 - v1
             dot_p0 = np.inner(d_velocity, d_center)
             dot_p1 = np.inner(-d_velocity, -d_center)
 
-            d_v0 = -2*m1/(m0+m1)*(dot_p0 / dist_2)*d_center
-            d_v1 = -2*m0/(m0+m1)*(dot_p1 / dist_2)*(-d_center)
-
-
-            print(f'{circle_0.id} = {d_v0}')
-            print(f'{circle_1.id} = {d_v1}')
+            d_v0 = -2 * m1 / (m0 + m1) * (dot_p0 / dist_2) * d_center
+            d_v1 = -2 * m0 / (m0 + m1) * (dot_p1 / dist_2) * (-d_center)
 
             circle_0.coords[2:] += d_v0
             circle_1.coords[2:] += d_v1
@@ -362,24 +359,19 @@ class CollisionDetector:
             circle_1.collision_hash[circle_0.id] = True
 
         elif distance <= (r0 + r1) and circle_0.collision_hash[circle_1.id] is True:
-            pass # no effect until they seperate
+            pass  # no effect until they seperate
 
         elif distance > (r0 + r1):
             circle_0.collision_hash[circle_1.id] = False
             circle_1.collision_hash[circle_0.id] = False
 
 
-
-
-
-
-
-if __name__=='__main__':
-     # Reading an image in default mode
+if __name__ == '__main__':
+    # Reading an image in default mode
     from otis.helpers.colortools import ColorCycle
     dim = (800, 800)
     fps = 60
-    frame = np.zeros(dim[0]*dim[1]*3).reshape((dim[1], dim[0], 3))
+    frame = np.zeros(dim[0] * dim[1] * 3).reshape((dim[1], dim[0], 3))
     colors = ColorCycle()
 
     def mover_function():
@@ -387,28 +379,24 @@ if __name__=='__main__':
         circle = shapes.Circle((0, 0), 60, color=colors())
         mover = AssetMover(circle,
                            center=(100, 100),
-                           velocity = (np.random.randint(200, 300), np.random.rand()*-np.pi/2),
+                           velocity=(np.random.randint(200, 300), np.random.rand() * -np.pi / 2),
                            dim=dim,
                            ups=fps,
                            border_collision=True,
                            gravity=-20,
-                           dampen=.02
-                       )
+                           dampen=.02,
+                           )
         return mover
 
-    fps_limiter = timers.SmartSleeper(1/fps)
+    fps_limiter = timers.SmartSleeper(1 / fps)
 
     manager = CollidingAssetManager(collisions=True)
-    # manager.append(mover_function())
+
     new_ball_timer = timers.CallFrequencyLimiter(1)
 
-
-
     while True:
-        frame[:,:,:] = 0
-        # ball.update_velocity()
-        # ball.move()
-        # ball.write(frame)
+        frame[:, :, :] = 0
+
         if manager.n < 4 and new_ball_timer():
             ball = mover_function()
             manager.movers.append(ball)
@@ -417,17 +405,10 @@ if __name__=='__main__':
         manager.move()
         manager.write(frame)
 
-        # manager.update_velocity()
-        # manager.move()
-        # manager.write(frame)
         fps_limiter()
-
         cv2.imshow('meh', frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
     cv2.destroyAllWindows()
-
-
-
