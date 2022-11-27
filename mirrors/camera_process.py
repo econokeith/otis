@@ -59,7 +59,7 @@ def target(shared, pargs):
             shared.keyboard_input.value = keyboard_input
             shared.new_keyboard_input.value = True
 
-        elif shared.new_keyboard_input.value is True:
+        if shared.new_keyboard_input.value is True:
 
             if shared.keyboard_input.value == ord('q'):
                 break
