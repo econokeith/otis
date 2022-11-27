@@ -13,11 +13,11 @@ import camera_process, cv_model_process
 parser = otistools.make_parser()
 pargs = parser.parse_args()
 pargs.video_center = np.array(pargs.dim) // 2
-pargs.PATH_TO_FACES = '/home/keith/Projects/robocam/mirrors/faces'
+pargs.PATH_TO_FACES = './faces'
 pargs.output_scale = 1.8
 pargs.servo = True
 pargs.cf = 2
-pargs.max_fps = 60
+pargs.max_fps = 30
 
 if pargs.servo is True:
     try:

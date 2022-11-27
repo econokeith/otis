@@ -87,9 +87,9 @@ def get_current_dir(file):
 
 
 
-def abs_path_relative_to_calling_file(relative_path,  layers_out=2, debug=False):
+def abs_path_relative_to_calling_file(relative_path,  file=None, layers_out=2):
     """
-    convenience function to avoid os.path type boiler plate in loading data functions
+    convenience function to avoid os.path type boilerplate in loading data functions
 
     includes workaround to work when running debuggers
     Args:
@@ -98,19 +98,25 @@ def abs_path_relative_to_calling_file(relative_path,  layers_out=2, debug=False)
     Returns:
         abs_path
     """
-    python_files = list_python_files(layers_out)
-    stack = inspect.stack()[::-1]
 
-    for frame in stack:
-        file_name = frame.filename
+    if file is None:
+        python_files = list_python_files(layers_out)
+        stack = inspect.stack()[::-1]
 
-        if file_name in python_files:
-            break
+        for frame in stack:
+            file_name = frame.filename
+
+            if file_name in python_files:
+                break
+
+        for frame in stack:
+            del frame
+    else:
+        file_name = file
 
     abs_dir =  os.path.dirname(file_name)
 
-    for frame in stack:
-        del frame
+
     return os.path.abspath(os.path.join(abs_dir, relative_path))
 
 # def abs_path_relative_to_calling_file(relative_path):
@@ -166,10 +172,10 @@ def list_python_files(layers_out=2):
 
 class NameTracker:
 
-    def __init__(self, path_to_faces):
+    def __init__(self, path_to_faces, file=None):
 
         if path_to_faces[0] == '.':
-            self.path_to_faces = abs_path_relative_to_calling_file(path_to_faces)
+            self.path_to_faces = abs_path_relative_to_calling_file(path_to_faces, file=file)
         else:
             self.path_to_faces = path_to_faces
 
@@ -244,11 +250,11 @@ class NameTracker:
             return ""
 
 
-def load_face_data(face_recognition, path_to_faces):
+def load_face_data(face_recognition, path_to_faces, file=None):
     #this  might have to change
     if path_to_faces[0] == '.':
 
-        path_to_faces = abs_path_relative_to_calling_file(path_to_faces)
+        path_to_faces = abs_path_relative_to_calling_file(path_to_faces, file=file)
 
     face_files = os.listdir(path_to_faces)
 

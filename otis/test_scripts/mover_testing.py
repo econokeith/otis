@@ -22,9 +22,8 @@ if __name__ == "__main__":
             pie = imageassets.AssetWithImage(center=(0, 0),
                                              resize_to = (50, 50),
                                              hitbox_type='circle',
-                                             use_circle_mask=True,
+                                             #use_circle_mask=True,
                                              )
-            #pie.add_image_from_file('../overlay/photo_assets/pie_asset')
 
             mover = AssetMover(pie,
                                center=(0, 0),
@@ -46,14 +45,15 @@ if __name__ == "__main__":
 
         while True:
             _, frame = capture.read()
-
             frame_portion = coordtools.get_frame_portion(frame, (0,0,*sizes), ref='c')
+
             if manager.n < n_bouncers and new_ball_timer():
                 ball = mover_function()
                 manager.movers.append(ball)
 
             manager.update_velocities()
             manager.move()
+
             for mover in manager.movers:
                 mover.asset.write(frame, frame_portion)
             capture.show()

@@ -10,16 +10,17 @@ import otis.overlay.bases as base
 from otis.helpers import shapefunctions as shapes, cvtools, misc, coordtools, timers
 from otis.overlay import bases
 
+
 class ImageAsset(base.AssetWriter):
 
     def __init__(self,
                  src,
-                 position = (100,100),
+                 position=(100, 100),
                  bit=0,
-                 scale = 1,
-                 #let's you flip the bit-mask 0, 1, or None
-                 size = None, #if none stays the same, otherwise change
-                 loc = (100, 100) #location of center
+                 scale=1,
+                 # let's you flip the bit-mask 0, 1, or None
+                 size=None,  # if none stays the same, otherwise change
+                 loc=(100, 100)  # location of center
                  ):
         """
         src is the path to a directory that contains exactly 2 image files. The image or bitmap to be used and a 2D
@@ -37,7 +38,7 @@ class ImageAsset(base.AssetWriter):
         self.bit = bit
         self.coords = None
 
-        if bit in [0, 1] and len(files)>1:
+        if bit in [0, 1] and len(files) > 1:
             self.mask = cv2.imread(os.path.join(src, files[1]))
 
             if scale != 1:
@@ -45,15 +46,15 @@ class ImageAsset(base.AssetWriter):
 
                 self.mask = cv2.resize(self.mask, (0, 0), fx=scale, fy=scale)
 
-            self.mask[self.mask <128] = 0
-            self.mask[self.mask >=128] = 255
+            self.mask[self.mask < 128] = 0
+            self.mask[self.mask >= 128] = 255
             self.locs = np.asarray(np.nonzero(self.mask == self.bit))
 
         else:
             self.mask = None
             self.locs = None
 
-        #this might be wrong
+        # this might be wrong
         self.center = self.img.shape[0] // 2, self.img.shape[1] // 2
         self.dim = self.img.shape[:2][::-1]
         self._position = position
@@ -65,7 +66,7 @@ class ImageAsset(base.AssetWriter):
         else:
             return self.position
 
-    #TODO THIS IS FLIPPING COORDINATEES
+    # TODO THIS IS FLIPPING COORDINATEES
     def _c_to_tl_on_frame(self, f_center):
         """
         find the coords of the frame that represents the top corner of hte image asset given
@@ -99,9 +100,11 @@ class ImageAsset(base.AssetWriter):
 
             frame[t + loc_y, l + loc_x] = self.img[loc_y, loc_x]
 
+
 def bbox_to_center(coords):
     t, r, b, l = coords
-    return int((r+l)/2), int((t+b)/2)
+    return int((r + l) / 2), int((t + b) / 2)
+
 
 class AssetWithImage(bases.AssetWriter):
 
@@ -109,14 +112,14 @@ class AssetWithImage(bases.AssetWriter):
                  image=None,
                  mask=None,
                  resize_to=None,
-                 resize_on_write = None,
-                 scale = 1,
-                 center = (100, 100),
-                 ref = None,
-                 hitbox_type = 'rectangle',
-                 copy_updates = False,
-                 mask_bit = 0,
-                 use_circle_mask = False
+                 resize_on_write=None,
+                 scale=1,
+                 center=(100, 100),
+                 ref=None,
+                 hitbox_type='rectangle',
+                 copy_updates=False,
+                 mask_bit=0,
+                 use_circle_mask=False
                  ):
 
         super().__init__()
@@ -125,7 +128,7 @@ class AssetWithImage(bases.AssetWriter):
 
         self.coords = np.zeros(4, dtype=int)
         self.coords[:2] = center
-        self.resize_to = resize_to
+        self._resize_to = resize_to
         self.scale = scale
         self.resize_on_write = resize_on_write
 
@@ -143,12 +146,13 @@ class AssetWithImage(bases.AssetWriter):
 
         elif image is None and resize_to is not None:
             w, h = self.coords[2:]
-            self._image = np.zeros(3*w*h, dtype='uint8').reshape((h, w, 3))
+            self._image = np.zeros(3 * w * h, dtype='uint8').reshape((h, w, 3))
 
         else:
             self._image = None
 
         self.mask_bit = mask_bit
+
         if use_circle_mask is True:
             path_to_dir = os.path.abspath(os.path.dirname(__file__))
             path_to_mask = os.path.join(path_to_dir, 'photo_assets/masks/circle_mask.jpg')
@@ -159,8 +163,6 @@ class AssetWithImage(bases.AssetWriter):
 
         self.ref = ref
         self.hitbox_type = hitbox_type
-
-
 
     @property
     def image(self):
@@ -178,7 +180,7 @@ class AssetWithImage(bases.AssetWriter):
             _image = self.resize_image(new_image)
 
         if self.copy_updates is True:
-            self._image[:,:,:] = _image
+            self._image[:, :, :] = _image
         else:
             self._image = _image
 
@@ -194,8 +196,8 @@ class AssetWithImage(bases.AssetWriter):
             _mask = self.resize_image(new_mask)
             _mask[_mask < 128] = 1
             _mask[_mask >= 128] = 0
-            self._mask = _mask.astype(bool)
-
+            bool_mask = _mask.astype(bool)
+            self._mask = bool_mask
     @property
     def shape(self):
         return self.hitbox_type
@@ -214,7 +216,7 @@ class AssetWithImage(bases.AssetWriter):
 
     @property
     def radius(self):
-        return self.coords[2]//2
+        return self.coords[2] // 2
 
     @property
     def width(self):
@@ -227,6 +229,7 @@ class AssetWithImage(bases.AssetWriter):
     @resize_to.setter
     def resize_to(self, new_size):
         self._resize_to = new_size
+
         if new_size is not None:
             self.coords[2:] = new_size
 
@@ -240,7 +243,7 @@ class AssetWithImage(bases.AssetWriter):
         if self.resize_on_write is not None:
             return new_image
 
-        if (new_image is None) or (self._image is None) or (new_image.shape[:2]==self._image.shape[:2]):
+        if (new_image is None) or (self._image is None) or (new_image.shape[:2] == self._image.shape[:2]):
             return new_image
 
         if self.resize_to is not None:
@@ -254,7 +257,7 @@ class AssetWithImage(bases.AssetWriter):
             else:
                 image = new_image
 
-            self.resize_to = image.shape[:2][::-1]
+            self._resize_to = image.shape[:2][::-1]
 
         return image
 
@@ -282,12 +285,12 @@ class AssetWithImage(bases.AssetWriter):
         else:
             _image = cv2.resize(_image, self.resize_on_write)
 
-        r,t,l,b = coordtools.translate_box_coords(_coords,
-                                                  in_format=in_format,
-                                                 out_format='rtlb',
-                                                 ref=_ref,
-                                                 dim=frame
-                                                 )
+        r, t, l, b = coordtools.translate_box_coords(_coords,
+                                                     in_format=in_format,
+                                                     out_format='rtlb',
+                                                     ref=_ref,
+                                                     dim=frame
+                                                     )
 
         dr = dt = dl = db = 0
         h_f, w_f, _ = frame.shape
@@ -311,25 +314,24 @@ class AssetWithImage(bases.AssetWriter):
             b = h_f
 
         frame_portion = frame[t:b, l:r]
-        image_portion = _image[dt: h_i-db+1, dl: w_i-dr+1]
+        image_portion = _image[dt: h_i - db + 1, dl: w_i - dr + 1]
 
         if self.mask is not None:
             # resize mask
-            _mask = self.mask[dt: h_i-db+1, dl: w_i-dr+1]
+            _mask = self.mask[dt: h_i - db + 1, dl: w_i - dr + 1]
             frame_portion[_mask] = image_portion[_mask]
         else:
-            frame_portion[:,:,:] = image_portion
+            frame_portion[:, :, :] = image_portion
 
     def center_width_height(self):
         cx, cy, w, h = self.coords
         if self.hitbox_type == 'circle':
-            return cx, cy, w//2, h//2
+            return cx, cy, w // 2, h // 2
         else:
             return cx, cy, w, h
 
 
-
-if __name__=='__main__':
+if __name__ == '__main__':
 
     dim = (800, 800)
     fps = 30
@@ -337,7 +339,7 @@ if __name__=='__main__':
     fps_limiter = timers.SmartSleeper(1 / fps)
     image_asset = AssetWithImage(center=(400, 400)).add_image_from_file('./photo_assets/pie_asset')
     while True:
-        frame[:,:,:] = 0
+        frame[:, :, :] = 0
         image_asset.write(frame)
         cv2.imshow('', frame)
 

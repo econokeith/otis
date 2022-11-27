@@ -16,8 +16,7 @@ def target(shared, pargs):
     signal.signal(signal.SIGTERM, multitools.close_gracefully)
     signal.signal(signal.SIGINT, multitools.close_gracefully)
 
-
-    manager = scenes.SceneManager(shared, pargs)
+    manager = scenes.SceneManager(shared, pargs, file=__file__)
     manager.capture.silent_sleep = False
     # boxes = scenes.BoundingManager(manager)
     boxes = boundingobjects.BoundingManager(manager)
@@ -78,14 +77,11 @@ def target(shared, pargs):
     capture.stop()
     sys.exit()
 
-
 #######################################################################################################################
 #######################################################################################################################
 #######################################################################################################################
-
 
 class MirrorEffects:
-
 
     def __init__(self,
                  manager
