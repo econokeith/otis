@@ -96,6 +96,7 @@ class AssetMover:
 
         self.height = height
         self.width = width
+
         self.radius = (width + height) / 2
 
         if self.border_collisions is True:
@@ -369,15 +370,18 @@ class CollisionDetector:
 if __name__ == '__main__':
     # Reading an image in default mode
     from otis.helpers.colortools import ColorCycle
+    from otis.overlay import imageassets
     dim = (800, 800)
-    fps = 60
-    frame = np.zeros(dim[0] * dim[1] * 3).reshape((dim[1], dim[0], 3))
+    fps = 30
+    frame = np.zeros(dim[0] * dim[1] * 3, dtype='uint8').reshape((dim[1], dim[0], 3))
     colors = ColorCycle()
 
     def mover_function():
 
-        circle = shapes.Circle((0, 0), 60, color=colors())
-        mover = AssetMover(circle,
+        pie = imageassets.AssetWithImage(center=(0,0), hitbox_type='circle')
+        pie.add_image_from_file('./photo_assets/pie_asset')
+
+        mover = AssetMover(pie,
                            center=(100, 100),
                            velocity=(np.random.randint(200, 300), np.random.rand() * -np.pi / 2),
                            dim=dim,
@@ -397,7 +401,7 @@ if __name__ == '__main__':
     while True:
         frame[:, :, :] = 0
 
-        if manager.n < 4 and new_ball_timer():
+        if manager.n < 2 and new_ball_timer():
             ball = mover_function()
             manager.movers.append(ball)
 

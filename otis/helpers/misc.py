@@ -1,6 +1,7 @@
-def update_save_attributes_on_write(obj, local_dict):
+def update_save_attributes_on_write(obj, local_dict, skip=2):
     """
     updates keyword arguments for writing and saved if saved=True
+    will not work with functions that use **kwargs
     ===================== use it like =================================
     class AssetWriter:
         ...
@@ -14,7 +15,7 @@ def update_save_attributes_on_write(obj, local_dict):
     output = []
     save_it = local_dict['save']
 
-    for key in variable_keys[2:-1]:
+    for key in variable_keys[skip:-1]:
         value = local_dict[key]
 
         if value is not None:

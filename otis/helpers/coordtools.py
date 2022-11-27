@@ -239,4 +239,17 @@ def find_center_radius_from_box_coords(box_coords,
 
     return cx, cy, radius, radius
 
+def get_frame_portion(frame, coords, coord_format='cwh', ref=None):
+
+    r, t, l, b = translate_box_coords(coords[:2],
+                                      in_format=coord_format,
+                                      out_format='rtlb',
+                                      ref=ref,
+                                      dim=frame
+                                      )
+
+    return frame[l:r, t:b]
+
+
+
 
