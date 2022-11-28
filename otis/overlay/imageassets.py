@@ -112,7 +112,6 @@ class AssetWithImage(bases.AssetWriter):
                  image=None,
                  mask=None,
                  resize_to=None,
-                 resize_on_write=None,
                  scale=1,
                  center=(100, 100),
                  ref=None,
@@ -124,19 +123,16 @@ class AssetWithImage(bases.AssetWriter):
 
         super().__init__()
 
+        self._image = None
         self.locs = None
-
         self.coords = np.zeros(4, dtype=int)
         self.coords[:2] = center
-        self._resize_to = resize_to
+        self.resize_to = resize_to
         self.scale = scale
-        self.resize_on_write = resize_on_write
 
-        if self.resize_on_write is not None:
-            self.copy_updates = False
-            self.resize_to = self.resize_on_write
-        else:
-            self.copy_updates = copy_updates
+
+
+        self.copy_updates = copy_updates
 
         if image is not None and self.copy_updates is True:
             self._image = copy.deepcopy(self.resize_image(image))
@@ -196,8 +192,8 @@ class AssetWithImage(bases.AssetWriter):
             _mask = self.resize_image(new_mask)
             _mask[_mask < 128] = 1
             _mask[_mask >= 128] = 0
-            bool_mask = _mask.astype(bool)
-            self._mask = bool_mask
+            self._mask = _mask.astype(bool)
+
     @property
     def shape(self):
         return self.hitbox_type
@@ -240,33 +236,31 @@ class AssetWithImage(bases.AssetWriter):
                 self._image = self.resize_image(self._image)
 
     def resize_image(self, new_image):
-        if self.resize_on_write is not None:
-            return new_image
 
         if (new_image is None) or (self._image is None) or (new_image.shape[:2] == self._image.shape[:2]):
             return new_image
 
         if self.resize_to is not None:
             image = cv2.resize(new_image, self.resize_to)
-            return image
-        else:
-            if isinstance(self.scale, (float, int)) and self.scale != 1:
-                image = cv2.resize(new_image, (0, 0), fx=self.scale, fy=self.scale)
-            elif isinstance(self.scale, (tuple, list, np.ndarray)):
-                image = cv2.resize(new_image, (0, 0), fx=self.scale[0], fy=self.scale[1])
-            else:
-                image = new_image
 
-            self._resize_to = image.shape[:2][::-1]
+        elif isinstance(self.scale, (float, int)) and self.scale != 1:
+            image = cv2.resize(new_image, (0, 0), fx=self.scale, fy=self.scale)
+        elif isinstance(self.scale, (tuple, list, np.ndarray)):
+            image = cv2.resize(new_image, (0, 0), fx=self.scale[0], fy=self.scale[1])
+        else:
+            image = new_image
+
+        self._resize_to = image.shape[:2][::-1]
 
         return image
 
-    def add_image_from_file(self, path_to_images):
+    def add_image_from_file(self, path_to_images, file=None):
 
-        abs_path = cvtools.abs_path_relative_to_calling_file(path_to_images)
+        abs_path = cvtools.abs_path_relative_to_calling_file(path_to_images, file=file)
         files = os.listdir(abs_path)
         image_file = min(files, key=len)
         self.image = cv2.imread(os.path.join(abs_path, image_file))
+        self.resize_to = self.image.shape[:2][::-1]
 
         if len(files) > 1:
             mask_file = max(files, key=len)
@@ -280,10 +274,7 @@ class AssetWithImage(bases.AssetWriter):
         _image = self.image if image is None else image
         _ref = self.ref if ref is None else ref
 
-        if self.resize_on_write is None:
-            _image = self.resize_image(_image)
-        else:
-            _image = cv2.resize(_image, self.resize_on_write)
+        _image = self.resize_image(_image)
 
         r, t, l, b = coordtools.translate_box_coords(_coords,
                                                      in_format=in_format,
@@ -322,7 +313,7 @@ class AssetWithImage(bases.AssetWriter):
             frame_portion[_mask] = image_portion[_mask]
         else:
             frame_portion[:, :, :] = image_portion
-
+        r
     def center_width_height(self):
         cx, cy, w, h = self.coords
         if self.hitbox_type == 'circle':
@@ -337,11 +328,11 @@ if __name__ == '__main__':
     fps = 30
     frame = np.zeros(dim[0] * dim[1] * 3, dtype='uint8').reshape((dim[1], dim[0], 3))
     fps_limiter = timers.SmartSleeper(1 / fps)
-    image_asset = AssetWithImage(center=(400, 400)).add_image_from_file('./photo_assets/pie_asset')
+    image_asset = AssetWithImage(center=(400, 400)).add_image_from_file('./photo_assets/pie_asset', file=__file__)
+
     while True:
         frame[:, :, :] = 0
         image_asset.write(frame)
         cv2.imshow('', frame)
-
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break

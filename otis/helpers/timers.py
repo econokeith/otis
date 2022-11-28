@@ -388,10 +388,13 @@ class TimedCycle:
             self.direction *= -1
 
 if __name__=="__main__":
-    sleeper = SmartSleeper()
+    updown = TimedCycle(min_i=50,
+                        max_i=1170,
+                        updown=True,
+                        cycle_t=5
+                        )
     tick = time.time()
     for i in range(400):
-        sleeper()
-        tock = time.time()
-        print(int((tock-tick)*1000))
-        tick = tock
+        time.sleep(.1)
+        print(updown())
+

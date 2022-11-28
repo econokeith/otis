@@ -2,11 +2,12 @@
 This is a very simple collisions detection class
 can be sped up
 """
-from collections import defaultdict
+from collections import defaultdict, deque
 import os
 import types
 import time
 import copy
+
 
 import numpy as np
 import cv2
@@ -238,7 +239,27 @@ def remove_overlap(ball1, ball2):
         x2[1] += da * m2 / (m1 + m2)
 
 
-#
+def remove_overlap_infinite(balli, ball):
+    ci = balli.center
+    c = ball.center
+    ri = balli.radius
+    r = balli.radius
+
+    # find sides
+    a, b = dx = c - ci
+    # check distance
+    r_sum = ri + r
+    c = np.hypot(*dx)
+
+    if c < r_sum:
+        # separate along line connecting centers
+        dc = r_sum - c + 1
+        da = a * (c + dc) / c - a
+        db = b * (c + dc) / c - b
+
+        c[0] += db
+
+        c[1] += da
 
 class CollidingAssetManager:
 
@@ -246,11 +267,12 @@ class CollidingAssetManager:
                  dim=(1920, 1080),
                  collisions=False,
                  border_collision=True,
+                 max_movers=None
                  ):
 
         self.collisions = collisions
         self.border_collision = border_collision
-        self.movers = []
+        self.movers = deque([], max_movers)
         self.dim = dim
         self.detector = CollisionDetector()
 
@@ -281,8 +303,10 @@ class CollidingAssetManager:
     def update_velocities(self):
         if self.collisions is True and self.n >= 2:
 
-            for i, m0 in enumerate(self.movers[:-1]):
-                for m1 in self.movers[1 + i:]:
+            for i in range(self.n-1):
+                m0 = self.movers[i]
+                for j in range(self.n):
+                    m1 = self.movers[j]
                     self.detector.collide(m0, m1)
                     remove_overlap(m0, m1)
 
@@ -344,7 +368,21 @@ class CollisionDetector:
         distance = np.sqrt(dist_2)
 
         # collisions hash makes it so that balls don't interact until they have fully separated
-        if distance <= (r0 + r1) and circle_0.collision_hash[circle_1.id] is False:
+        if distance <= (r0 + r1) and circle_0.mass == np.inf:
+            d_velocity = v0 - v1
+            dot_p1 = np.inner(-d_velocity, -d_center)
+            d_v1 = -2  * (dot_p1 / dist_2) * (-d_center)
+            circle_1.coords[2:] += d_v1
+            #remove_overlap_infinite(circle_0, circle_1)
+
+        elif distance <= (r0 + r1) and circle_1.mass ==np.inf:
+            d_velocity = v0 - v1
+            dot_p0 = np.inner(d_velocity, d_center)
+            d_v0 = -2 * (dot_p0 / dist_2) * d_center
+            circle_0.coords[2:] += d_v0
+            #remove_overlap_infinite(circle_1, circle_0)
+
+        elif distance <= (r0 + r1) and circle_0.collision_hash[circle_1.id] is False:
 
             d_velocity = v0 - v1
             dot_p0 = np.inner(d_velocity, d_center)
@@ -362,7 +400,7 @@ class CollisionDetector:
         elif distance <= (r0 + r1) and circle_0.collision_hash[circle_1.id] is True:
             pass  # no effect until they seperate
 
-        elif distance > (r0 + r1):
+        elif distance > (r0 + r1) and circle_0.mass != np.inf and circle_1.mass !=np.inf:
             circle_0.collision_hash[circle_1.id] = False
             circle_1.collision_hash[circle_0.id] = False
 
@@ -379,7 +417,7 @@ if __name__ == '__main__':
     def mover_function():
 
         pie = imageassets.AssetWithImage(center=(0,0), hitbox_type='circle')
-        pie.add_image_from_file('./photo_assets/pie_asset')
+        pie.add_image_from_file('./photo_assets/pie_asset', file=__file__)
 
         mover = AssetMover(pie,
                            center=(100, 100),
