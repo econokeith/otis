@@ -28,7 +28,7 @@ def iter_none(iterable):
 
 class CounterDict(dict):
     """
-    unnecesarily complicated means of making a list of unique names with indexes
+    unnecesarily complicated means of making a list of unique observed_names with indexes
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

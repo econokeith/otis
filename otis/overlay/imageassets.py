@@ -129,9 +129,6 @@ class AssetWithImage(bases.AssetWriter):
         self.coords[:2] = center
         self.resize_to = resize_to
         self.scale = scale
-
-
-
         self.copy_updates = copy_updates
 
         if image is not None and self.copy_updates is True:

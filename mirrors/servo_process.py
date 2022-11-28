@@ -119,5 +119,7 @@ def target(shared_data_object, args):
 
             shared_data_object.key_input_received[2] = True
 
+        shared_data_object.servo_tracking.value = SERVO_TRACKING
+
     Servos.close()
     sys.exit()

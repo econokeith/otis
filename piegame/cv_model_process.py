@@ -26,7 +26,7 @@ def target(shared_data_object, args):
     known_names, known_encodings = cvtools.load_face_data(face_recognition, args.PATH_TO_FACES)
     face_locator = timers.FunctionTimer(face_recognition.face_locations)
     # this was probably excessively complicated
-    # counter dict just gives the order of unique names here
+    # counter dict just gives the order of unique observed_names here
     # so we can have multiple pictures of the same person
     name_dict = dstructures.CounterDict()
     for name in known_names:
@@ -50,7 +50,7 @@ def target(shared_data_object, args):
             np.copyto(shared.bbox_coords[i,:], observed_boxes[i])
             face_distances = face_recognition.face_distance(known_encodings, observed_encodings[i])
             best_match_index = np.argmin(face_distances)
-            shared.names[i] = name_dict[known_names[best_match_index]]
+            shared.observed_names[i] = name_dict[known_names[best_match_index]]
 
         if DEBUG is True:
             log = '%i'

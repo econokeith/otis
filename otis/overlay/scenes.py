@@ -16,7 +16,7 @@ class SceneManager:
         self.pargs = pargs
         self.file = file
 
-        # if names is True:
+        # if observed_names is True:
         #
         #     try:
         #         self.name_tracker = cvtools.NameTracker(pargs.path_to_faces)
@@ -70,12 +70,12 @@ class BoundingManager:
         bbox_hash = self.bbox_hash
         tracker = self.manager.name_tracker
         # cache this stuff to avoid overwrites in the middle
-        # only update
+        # only updateq
         if shared.new_overlay.value:
 
             bbox_coords = shared.bbox_coords.copy()
             n_faces = self.shared.n_faces.value
-            self.names = [tracker[name] for name in shared.names[:n_faces]]
+            self.names = [tracker[name] for name in shared.observed_names[:n_faces]]
 
             for i, name in enumerate(self.names):
                 box = bbox_hash[name]

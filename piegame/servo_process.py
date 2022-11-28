@@ -40,7 +40,7 @@ def target(shared_data_object, args):
 
     while True:
         #make copies in order to avoid updates in the middle of a loop
-        names = list(np.array(shared.names[:shared.n_faces.value]))
+        names = list(np.array(shared.observed_names[:shared.n_faces.value]))
         primary = shared.primary_target.value
 
         if primary in names:

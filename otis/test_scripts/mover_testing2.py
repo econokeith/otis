@@ -11,18 +11,18 @@ if __name__ == "__main__":
 
         capture = camera.ThreadedCameraPlayer().start()
         sizes = (200, 200)
-        n_bouncers = 500
+        n_bouncers = 10
         gravity = -1
         dampen = 0
         collide = False
-        new_wait = .01
+        new_wait = 1
 
 
         def mover_function():
             pie = imageassets.AssetWithImage(center=(0, 0),
                                              resize_to = (50, 50),
                                              hitbox_type='circle',
-                                             use_circle_mask=True,
+                                             use_circle_mask=False,
                                              )
             #pie.add_image_from_file('../overlay/photo_assets/pie_asset')
 

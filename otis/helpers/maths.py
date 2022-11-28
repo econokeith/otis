@@ -40,6 +40,8 @@ class MovingAverage:
         self.ma = 0
 
     def __call__(self, x=None):
+        if x is not None:
+            self.update(x)
         return self.ma
 
     def update(self, x):

@@ -40,7 +40,7 @@ def target(shared_data_object, args):
     n_known_faces =  len(known_names)
     face_locator = timers.FunctionTimer(face_recognition.face_locations)
     # this was probably excessively complicated
-    # counter dict just gives the order of unique names here
+    # counter dict just gives the order of unique observed_names here
     # so we can have multiple pictures of the same person
     name_dict = utils.CounterDict()
     for name in known_names:

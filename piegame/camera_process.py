@@ -158,7 +158,7 @@ class BouncyScene:
 
             bbox_coords = shared.bbox_coords.copy()
             n_faces = self.shared.n_faces.value
-            self.names = [tracker[name] for name in shared.names[:n_faces]]
+            self.names = [tracker[name] for name in shared.observed_names[:n_faces]]
 
             for i, name in enumerate(self.names):
                 box = bbox_hash[name]

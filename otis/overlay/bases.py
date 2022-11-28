@@ -26,7 +26,8 @@ class AssetWriter:
         cls().make_list which instantiates a list of identical AssetWriter/subclass
         objects
         """
-
+        self.velocity = (0, 0)
+        self.mass = None
         self._color = (0,0,0)
         # self.thickness = thickness
         # self.ltype = ltype
@@ -118,6 +119,18 @@ class AssetHolderMixin:
     @color.setter
     def color(self, new_color):
         self.asset.color = new_color
+
+    @property
+    def radius(self):
+        return self.asset.radius
+
+    @property
+    def height(self):
+        return self.asset.height
+
+    @property
+    def width(self):
+        return self.asset.width
 
     @property
     def coord_format(self):

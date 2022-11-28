@@ -199,45 +199,45 @@ def translate_box_coords(coords,
         return r, t, l, b
 
 
-def find_center_radius_from_box_coords(box_coords,
-                                       radius_type='inner', #can be 'inner', 'outer', 'avg', 'diag'
-                                       box_format='circle',
-                                       ref=None,
-                                       dim=None
-                                       ):
-    """
-
-    Args:
-        box_coords:
-        radius_type: can be 'inner', 'outer', 'avg', 'diag'
-        box_format:
-        ref:
-        dim:
-
-    Returns:
-        (cx, cy, radius, radius)
-
-    """
-    if len(box_coords) == 3 or box_format == 'circle':
-        return *box_coords, box_coords[2]
-
-    cx, cy, w, h = translate_box_coords(box_coords,
-                                        in_format=box_format,
-                                        out_format='cwh',
-                                        ref=ref,
-                                        dim=dim
-                                        )
-
-    if radius_type == 'inner':
-        radius = min(w, h)//2
-    elif radius_type == 'outer':
-        radius = max(w, h)//2
-    elif radius_type == 'diag':
-        radius = np.sqrt(w**2 + h**2)
-    else:
-        radius = (w+h)//2
-
-    return cx, cy, radius, radius
+# def find_center_radius_from_box_coords(box_coords,
+#                                        radius_type='inner', #can be 'inner', 'outer', 'avg', 'diag'
+#                                        box_format='circle',
+#                                        ref=None,
+#                                        dim=None
+#                                        ):
+#     """
+#
+#     Args:
+#         box_coords:
+#         radius_type: can be 'inner', 'outer', 'avg', 'diag'
+#         box_format:
+#         ref:
+#         dim:
+#
+#     Returns:
+#         (cx, cy, radius, radius)
+#
+#     """
+#     if len(box_coords) == 3 or box_format == 'circle':
+#         return *box_coords, box_coords[2]
+#
+#     cx, cy, w, h = translate_box_coords(box_coords,
+#                                         in_format=box_format,
+#                                         out_format='cwh',
+#                                         ref=ref,
+#                                         dim=dim
+#                                         )
+#
+#     if radius_type == 'inner':
+#         radius = min(w, h)//4
+#     elif radius_type == 'outer':
+#         radius = max(w, h)//4
+#     elif radius_type == 'diag':
+#         radius = np.sqrt(w**2 + h**2)//2
+#     else:
+#         radius = (w+h)//4
+#
+#     return cx, cy, radius*2, radius
 
 def get_frame_portion(frame, coords, coord_format='cwh', ref=None, copy=True):
 

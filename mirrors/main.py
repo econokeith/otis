@@ -18,6 +18,8 @@ pargs.output_scale = 1.8
 pargs.servo = True
 pargs.cf = 2
 pargs.max_fps = 30
+pargs.record = True
+pargs.record_scale = 1
 
 if pargs.servo is True:
     try:
@@ -39,6 +41,7 @@ def main():
     shared_data_object.add_value('scene', 'i', 0)
     shared_data_object.add_value('keyboard_input', 'i', 0)
     shared_data_object.add_value('new_keyboard_input', ctypes.c_bool, False)
+    shared_data_object.add_value('servo_tracking', ctypes.c_bool, False)
 
     # add shared arrays
     shared_data_object.add_array('frame', ctypes.c_uint8, (pargs.dim[1], pargs.dim[0], 3)) # dims are backwards cause numpy
@@ -48,6 +51,7 @@ def main():
     shared_data_object.add_array('servo_target', ctypes.c_uint64, 2)
     shared_data_object.add_array('servo_position', ctypes.c_double, 2)
     shared_data_object.add_array('key_input_received', ctypes.c_bool, 3)
+
     # define Processes with shared data
     process_modules = [cv_model_process, camera_process]
     # if servos are true, add it to the process list

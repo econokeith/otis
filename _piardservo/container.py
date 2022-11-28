@@ -161,7 +161,7 @@ class ServoContainer:
             while True:
                 # read/decode 3 bytes of stdin
                 pushed_key = os.read(sys.stdin.fileno(), 3).decode()
-                # change special keys to more easily readable names
+                # change special keys to more easily readable observed_names
                 pushed_key = special_key_name_converter(pushed_key)
 
                 if pushed_key == 'esc':

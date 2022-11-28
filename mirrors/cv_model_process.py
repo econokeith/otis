@@ -37,7 +37,7 @@ def target(shared_data_object, args):
         args.cf = 1
     else:
         model = 'cnn'
-        args.cf = 2
+        args.cf = 1
 
     known_names, known_encodings = cvtools.load_face_data(face_recognition, args.PATH_TO_FACES, __file__)
     known_names.append('unknown')
@@ -47,7 +47,7 @@ def target(shared_data_object, args):
     face_locator = timers.FunctionTimer(face_recognition.face_locations)
 
     # this was probably excessively complicated
-    # counter dict just gives the order of unique names here
+    # counter dict just gives the order of unique observed_names here
     # so we can have multiple pictures of the same person
     name_dict = utils.CounterDict()
     for name in known_names:
@@ -104,8 +104,8 @@ def target(shared_data_object, args):
 
     sys.exit()
 
-if __name__=='__main__':
-    import face_recognition
-    image = face_recognition.load_image_file('/users/keithblackwell/documents/github\
-                                            /otis/mirrors/faces/keith_test.jpg')
-    print(face_recognition.face_locations(image))
+# if __name__=='__main__':
+#     import face_recognition
+#     image = face_recognition.load_image_file('/users/keithblackwell/documents/github\
+#                                             /otis/mirrors/faces/keith_test.jpg')
+#     print(face_recognition.face_locations(image))

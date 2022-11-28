@@ -21,12 +21,12 @@ class AssetGroup:
         return self.assets[i]
 
     def add(self, asset):
-        if not isinstance(asset, (list, tuple)):
-            asset = [asset]
-
-        for a in asset:
-            a.ref = self._coords
-            self.assets.append(a)
+        if isinstance(asset, (list, tuple)):
+            for a in asset:
+                self.add(a)
+        else:
+            asset.ref = self._coords
+            self.assets.append(asset)
 
         return self
 

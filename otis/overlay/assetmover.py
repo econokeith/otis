@@ -54,7 +54,7 @@ class AssetMover:
                  x_range=None,
                  y_range=None,
                  border_collision=True,
-                 ups=30,  # this needs to match frame_rate
+                 ups=60,  # this needs to match frame_rate
                  mass=None,
                  velocity_format='mag_radians',
                  gravity=0,
@@ -95,11 +95,6 @@ class AssetMover:
 
         _, _, width, height = asset.center_width_height()
 
-        self.height = height
-        self.width = width
-
-        self.radius = (width + height) / 2
-
         if self.border_collisions is True:
             self.y_range += (height, -height)
             self.x_range += (width, -width)
@@ -139,6 +134,18 @@ class AssetMover:
     @velocity.setter
     def velocity(self, new_velocity):
         self._coords[2:] = new_velocity
+
+    @property
+    def height(self):
+        return self.asset.height
+
+    @property
+    def width(self):
+        return self.asset.width
+
+    @property
+    def radius(self):
+        return self.asset.radius
 
     def update_velocity(self):
         # don't update if it's not time
@@ -233,33 +240,35 @@ def remove_overlap(ball1, ball2):
         dc = r_sum - c + 1
         da = a * (c + dc) / c - a
         db = b * (c + dc) / c - b
-        x1[0] -= da * m1 / (m1 + m2)
-        x2[0] += db * m2 / (m1 + m2)
-        x1[1] -= db * m1 / (m1 + m2)
-        x2[1] += da * m2 / (m1 + m2)
+        x1[0] -= da * m2 / (m1 + m2)
+        x2[0] += db * m1 / (m1 + m2)
+        x1[1] -= db * m2 / (m1 + m2)
+        x2[1] += da * m1 / (m1 + m2)
 
 
-def remove_overlap_infinite(balli, ball):
-    ci = balli.center
-    c = ball.center
-    ri = balli.radius
-    r = balli.radius
+def remove_overlap_w_no_mass(no_mass, has_mass, buffer=0):
+    x1 = no_mass.center
+    x2 = has_mass.center
+    r1 = no_mass.radius
+    r2 = has_mass.radius
 
     # find sides
-    a, b = dx = c - ci
+    a, b = dx = x2 - x1
     # check distance
-    r_sum = ri + r
-    c = np.hypot(*dx)
+    r_sum = r1 + r2
+    centers_distance = np.hypot(*dx)
 
-    if c < r_sum:
+    if centers_distance < r1:
+        has_mass.is_finished = True
+
+    elif centers_distance - buffer < r_sum:
         # separate along line connecting centers
-        dc = r_sum - c + 1
-        da = a * (c + dc) / c - a
-        db = b * (c + dc) / c - b
+        dc = r_sum - centers_distance + 1 + buffer
+        da = a * (centers_distance + dc) / centers_distance - a
+        db = b * (centers_distance + dc) / centers_distance - b
 
-        c[0] += db
-
-        c[1] += da
+        x2[0] += db
+        x2[1] += da
 
 class CollidingAssetManager:
 
@@ -267,14 +276,16 @@ class CollidingAssetManager:
                  dim=(1920, 1080),
                  collisions=False,
                  border_collision=True,
-                 max_movers=None
+                 max_movers=None,
+                 buffer=0,
                  ):
 
         self.collisions = collisions
         self.border_collision = border_collision
         self.movers = deque([], max_movers)
         self.dim = dim
-        self.detector = CollisionDetector()
+        self.detector = CollisionDetector(buffer=buffer)
+        self.max_movers = max_movers
 
     @property
     def n(self):
@@ -298,61 +309,65 @@ class CollidingAssetManager:
             else:
                 del mover
 
-        self.movers = living_movers
+        self.movers = deque(living_movers, self.max_movers)
 
     def update_velocities(self):
         if self.collisions is True and self.n >= 2:
 
             for i in range(self.n-1):
                 m0 = self.movers[i]
-                for j in range(self.n):
+                for j in range(i+1, self.n):
                     m1 = self.movers[j]
                     self.detector.collide(m0, m1)
-                    remove_overlap(m0, m1)
 
         for mover in self.movers:
             mover.update_velocity()
 
     def write(self, frame):
-        if self.border_collision is False:
-            self.remove_finished()
 
         for mover in self.movers:
             mover.write(frame)
 
     def move(self):
+        live_movers = deque([], self.max_movers)
         for mover in self.movers:
-            mover.move()
-
+            if mover.is_finished is False:
+                mover.move()
+                live_movers.append(mover)
+            else:
+                del mover
+        self.movers = live_movers
 
 class CollisionDetector:
     """
     currently only supports circles, currently not optimized for searches faster than O(n^2)
     """
 
-    def __init__(self, overlap=None):
-        self.overlap = overlap
+    def __init__(self, buffer=0):
+        self.buffer = buffer
 
-    def check(self, asset_0, asset_1, overlap=None, update=True):
-        _overlap = overlap if overlap is not None else self.overlap
+    def check(self, asset_0, asset_1, buffer=0, update=True):
+        _buffer = buffer if buffer is not None else self.buffer
 
         # if asset_0.shape == "circle" and asset_1.shape == 'circle':
-        return self._circle_to_circle_check(asset_0, asset_1, _overlap)
+        return self._circle_to_circle_check(asset_0, asset_1, _buffer)
 
-    def _circle_to_circle_check(self, a0, a1, overlap=None):
-        r0 = a0.width
-        r1 = a1.width
+    def _circle_to_circle_check(self, a0, a1, buffer):
+        r0 = a0.radius
+        r1 = a1.radius
         centers_distance = np.sqrt(np.square(a0.center - a1.center).sum())
 
-        if (r1 + r0) * (1 - overlap) >= centers_distance:
+        if (r1 + r0) + buffer >= centers_distance:
             return True
         else:
             return False
 
-    def collide(self, asset_0, asset_1):
-        self._two_circle_velocity_update(asset_0, asset_1)
+    def collide(self, asset_0, asset_1, buffer=None):
+        _buffer = buffer if buffer is not None else self.buffer
+        self._two_circle_velocity_update(asset_0, asset_1, _buffer)
 
-    def _two_circle_velocity_update(self, circle_0, circle_1):
+    def _two_circle_velocity_update(self, circle_0, circle_1, buffer):
+
 
         v0 = circle_0.velocity
         v1 = circle_1.velocity
@@ -360,29 +375,31 @@ class CollisionDetector:
         c1 = circle_1.center
         m0 = circle_0.mass
         m1 = circle_0.mass
-        r0 = circle_0.width
-        r1 = circle_1.width
+        r0 = circle_0.radius
+        r1 = circle_1.radius
 
         d_center = c0 - c1
         dist_2 = np.sum(d_center ** 2)
         distance = np.sqrt(dist_2)
 
+
         # collisions hash makes it so that balls don't interact until they have fully separated
-        if distance <= (r0 + r1) and circle_0.mass == np.inf:
+        # need to add
+        if distance <= (r0 + r1) + buffer and circle_0.mass is None:
             d_velocity = v0 - v1
             dot_p1 = np.inner(-d_velocity, -d_center)
             d_v1 = -2  * (dot_p1 / dist_2) * (-d_center)
             circle_1.coords[2:] += d_v1
-            #remove_overlap_infinite(circle_0, circle_1)
+            remove_overlap_w_no_mass(circle_0, circle_1)
 
-        elif distance <= (r0 + r1) and circle_1.mass ==np.inf:
+        elif distance <= (r0 + r1) + buffer and circle_1.mass is None:
             d_velocity = v0 - v1
             dot_p0 = np.inner(d_velocity, d_center)
             d_v0 = -2 * (dot_p0 / dist_2) * d_center
             circle_0.coords[2:] += d_v0
-            #remove_overlap_infinite(circle_1, circle_0)
+            remove_overlap_w_no_mass(circle_1, circle_0)
 
-        elif distance <= (r0 + r1) and circle_0.collision_hash[circle_1.id] is False:
+        elif distance <= (r0 + r1) + buffer and circle_0.collision_hash[circle_1.id] is False:
 
             d_velocity = v0 - v1
             dot_p0 = np.inner(d_velocity, d_center)
@@ -396,11 +413,12 @@ class CollisionDetector:
 
             circle_0.collision_hash[circle_1.id] = True
             circle_1.collision_hash[circle_0.id] = True
+            remove_overlap(circle_0, circle_1)
 
-        elif distance <= (r0 + r1) and circle_0.collision_hash[circle_1.id] is True:
+        elif distance <= (r0 + r1) + buffer and circle_0.collision_hash[circle_1.id] is True:
             pass  # no effect until they seperate
 
-        elif distance > (r0 + r1) and circle_0.mass != np.inf and circle_1.mass !=np.inf:
+        elif distance > (r0 + r1) +buffer and circle_0.mass is not None and circle_1.mass is not None:
             circle_0.collision_hash[circle_1.id] = False
             circle_1.collision_hash[circle_0.id] = False
 
