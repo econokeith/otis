@@ -60,6 +60,7 @@ def target(shared, pargs):
     while True:
 
         ############################### graphics ######################################################################
+
         check, frame = capture.read()
         shared.frame[:] = frame  # latest frame to shared frame
 
@@ -140,20 +141,19 @@ class BallSprinkler:
                  manager,
                  x_border=100,
                  frame_portion_scale=1):
+
         self.shared = manager.shared
         self.capture = manager.capture
         self.pargs = manager.pargs
-
         self.n_bouncers = 200
         self.gravity = -10
         self.dampen = .05
         self.new_ball_wait = .05
         self.time_since_ball = timers.TimeSinceLast()
-
         self.ball_buffer = 5
         self.circle_buffer = 5
         self.ball_collision = False
-        self.ball_diamter = 50
+        self.ball_diameter = 50
         self.box_collisions = True
         self.x_value_min = x_border
         self.x_value_max = self.capture.dim[0] - x_border
@@ -162,12 +162,11 @@ class BallSprinkler:
                                                  self.x_value_max,
                                                  updown=True,
                                                  cycle_t=self.cycle_time)
-
         self.circle = shapes.Circle((0, 0), 100, ref='c', dim=self.capture.dim, to_abs=True)
 
         def mover_function():
             pie = imageassets.AssetWithImage(center=(0, 0),
-                                             resize_to=(self.ball_diamter, self.ball_diamter),
+                                             resize_to=(self.ball_diameter, self.ball_diameter),
                                              hitbox_type='circle',
                                              use_circle_mask=True,
                                              )
@@ -186,7 +185,6 @@ class BallSprinkler:
             return mover
 
         self.mover_function = mover_function
-
         self.movement_manager = assetmover.CollidingAssetManager(collisions=self.ball_collision,
                                                                  max_movers=self.n_bouncers,
                                                                  buffer=self.ball_buffer)
@@ -195,6 +193,7 @@ class BallSprinkler:
         self.frame_portion_scale = frame_portion_scale
 
     def loop(self, frame, target):
+
         if target is None:
             w = self.circle.width
             h = self.circle.height
@@ -221,6 +220,7 @@ class BallSprinkler:
 
         movement_manager.move()
         try:
+            frame_portion = cv2.resize(frame_portion, (self.ball_diameter, self.ball_diameter))
             for mover in movement_manager.movers:
                 mover.asset.write(frame, frame_portion)
 

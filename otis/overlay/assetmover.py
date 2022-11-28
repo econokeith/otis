@@ -339,14 +339,14 @@ class CollidingAssetManager:
         self.movers = live_movers
 
 class CollisionDetector:
-    """
-    currently only supports circles, currently not optimized for searches faster than O(n^2)
-    """
 
     def __init__(self, buffer=0):
+        """
+        currently only supports circles, currently not optimized for searches faster than O(n^2)
+        """
         self.buffer = buffer
 
-    def check(self, asset_0, asset_1, buffer=0, update=True):
+    def check(self, asset_0, asset_1, buffer=0):
         _buffer = buffer if buffer is not None else self.buffer
 
         # if asset_0.shape == "circle" and asset_1.shape == 'circle':
@@ -368,7 +368,6 @@ class CollisionDetector:
 
     def _two_circle_velocity_update(self, circle_0, circle_1, buffer):
 
-
         v0 = circle_0.velocity
         v1 = circle_1.velocity
         c0 = circle_0.center
@@ -381,7 +380,6 @@ class CollisionDetector:
         d_center = c0 - c1
         dist_2 = np.sum(d_center ** 2)
         distance = np.sqrt(dist_2)
-
 
         # collisions hash makes it so that balls don't interact until they have fully separated
         # need to add
