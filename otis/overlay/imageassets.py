@@ -7,106 +7,10 @@ import numpy as np
 
 import otis.helpers.cvtools
 import otis.overlay.bases as base
-from otis.helpers import shapefunctions as shapes, cvtools, misc, coordtools, timers
+from otis.helpers import cvtools, misc, coordtools, timers
 from otis.overlay import bases
 
-
-class ImageAsset(base.AssetWriter):
-
-    def __init__(self,
-                 src,
-                 position=(100, 100),
-                 bit=0,
-                 scale=1,
-                 # let's you flip the bit-mask 0, 1, or None
-                 size=None,  # if none stays the same, otherwise change
-                 loc=(100, 100)  # location of center
-                 ):
-        """
-        src is the path to a directory that contains exactly 2 image files. The image or bitmap to be used and a 2D
-        bit-mask that directs
-        the writer which pixels to write and which to ignore. The naming convention is: name_of_image.jpg and
-        name_of_image_mask.jpg
-        :param src:S
-        """
-        files = os.listdir(src)
-        files.sort(key=len)
-        self.img = cv2.imread(os.path.join(src, files[0]))
-        if scale != 1:
-            self.img = cv2.resize(self.img, (0, 0), fx=scale, fy=scale)
-
-        self.bit = bit
-        self.coords = None
-
-        if bit in [0, 1] and len(files) > 1:
-            self.mask = cv2.imread(os.path.join(src, files[1]))
-
-            if scale != 1:
-                # triple_mask = np.stack([self.mask]*3, axix=-1)
-
-                self.mask = cv2.resize(self.mask, (0, 0), fx=scale, fy=scale)
-
-            self.mask[self.mask < 128] = 0
-            self.mask[self.mask >= 128] = 255
-            self.locs = np.asarray(np.nonzero(self.mask == self.bit))
-
-        else:
-            self.mask = None
-            self.locs = None
-
-        # this might be wrong
-        self.center = self.img.shape[0] // 2, self.img.shape[1] // 2
-        self.dim = self.img.shape[:2][::-1]
-        self._position = position
-
-    @property
-    def position(self):
-        if self.coords is not None:
-            return bbox_to_center(self.coords)
-        else:
-            return self.position
-
-    # TODO THIS IS FLIPPING COORDINATEES
-    def _c_to_tl_on_frame(self, f_center):
-        """
-        find the coords of the frame that represents the top corner of hte image asset given
-        the coords of the center of the asset on the frame
-        :return:
-        """
-        img_c = self.center
-        return f_center[0] - img_c[1], f_center[1] - img_c[0]
-
-    def write(self, frame, position=None, pos_type='c'):
-        """
-        loc type can either be 'c' for center or 'tl' for top right. must be given in absolute frame
-        coords
-        :param frame:
-        :param pos:
-        :param pos_type:
-        :return:
-        """
-        v, h, _ = self.img.shape
-        pos = self.position if position is None else position
-        t, l = pos_type if pos_type == 'tl' else self._c_to_tl_on_frame(pos[::-1])
-        b = t + v
-        r = l + h
-
-        if self.mask is None:
-            frame[t:b, l:r] = self.img
-
-        else:
-            loc_y = self.locs[0]
-            loc_x = self.locs[1]
-
-            frame[t + loc_y, l + loc_x] = self.img[loc_y, loc_x]
-
-
-def bbox_to_center(coords):
-    t, r, b, l = coords
-    return int((r + l) / 2), int((t + b) / 2)
-
-
-class AssetWithImage(bases.AssetWriter):
+class ImageAsset(bases.AssetWriter):
 
     def __init__(self,
                  image=None,
@@ -120,6 +24,23 @@ class AssetWithImage(bases.AssetWriter):
                  mask_bit=0,
                  use_circle_mask=False
                  ):
+        """
+
+        Args:
+            image: cv2 frame or portion, default = None
+            mask: mask to change the shape of the image, default is None
+            resize_to: resize the image to (x, y), default = None (will set itself to image size)
+            scale: increases dimensions (w, h) by scale, default = 1, has no effect if resize_to is set
+            center: (x,y) coords of the center of the object
+            ref: reference point for (x, y), if ref = None, (x, y) are absolute if None, else cartesian relative coords
+                 to the absolute reference point
+            hitbox_type: either circle or square.
+            copy_updates:
+            mask_bit:
+            use_circle_mask: loads, resizes, and uses a circle mask so only a circle centered at teh center of the image
+                             is copied onto the frame. The image needs to be perfectly square, otherise, the results can
+                             be unstable
+        """
 
         super().__init__()
 
@@ -163,6 +84,18 @@ class AssetWithImage(bases.AssetWriter):
 
     @image.setter
     def image(self, new_image):
+        """
+        1) if there isn't an image saved, it will save the image
+            - if resize_to is set, then it will resize the image
+            = otherwise it will set resize
+        2) if there's an image saved it will resize the image to that size
+        3) if copy_updates is True, it will copy it. otherwise it will save the reference
+
+        Args:
+            new_image: frame or frame portion
+        Returns:
+            N/A
+        """
         if self._image is None:
             self._image = self.resize_image(new_image)
             return
@@ -233,7 +166,12 @@ class AssetWithImage(bases.AssetWriter):
                 self._image = self.resize_image(self._image)
 
     def resize_image(self, new_image):
+        """
 
+        :param new_image:
+        :return:
+        returns image it's the same size as the one saved
+        """
         if (new_image is None) or (self._image is None) or (new_image.shape[:2] == self._image.shape[:2]):
             return new_image
 
@@ -252,6 +190,15 @@ class AssetWithImage(bases.AssetWriter):
         return image
 
     def add_image_from_file(self, path_to_images, file=None):
+        """
+        loads an image from file
+        Args:
+            path_to_images: path to images. if it is relative, there needs to be a ./ or ../ in the path
+            file: must always be used as __file__
+
+        Returns: self
+
+        """
 
         abs_path = cvtools.abs_path_relative_to_calling_file(path_to_images, file=file)
         files = os.listdir(abs_path)
@@ -265,13 +212,26 @@ class AssetWithImage(bases.AssetWriter):
 
         return self
 
-    def write(self, frame, image=None, coords=None, ref=None, in_format='cwh'):
+    def write(self, frame, image=None, coords=None, ref=None, in_format='cwh', resize=True):
+        """
 
+        Args:
+            frame: cv2 camera frame
+            image: if image is not None, will write/resize self.image,
+            coords:
+            ref:
+            in_format:
+            resize:
+
+        Returns:
+
+        """
         _coords = self.coords if coords is None else coords
         _image = self.image if image is None else image
         _ref = self.ref if ref is None else ref
 
-        _image = self.resize_image(_image)
+        if resize is True:
+            _image = self.resize_image(_image)
 
         r, t, l, b = coordtools.translate_box_coords(_coords,
                                                      in_format=in_format,
@@ -325,7 +285,7 @@ if __name__ == '__main__':
     fps = 30
     frame = np.zeros(dim[0] * dim[1] * 3, dtype='uint8').reshape((dim[1], dim[0], 3))
     fps_limiter = timers.SmartSleeper(1 / fps)
-    image_asset = AssetWithImage(center=(400, 400)).add_image_from_file('./photo_assets/pie_asset', file=__file__)
+    image_asset = ImageAsset(center=(400, 400)).add_image_from_file('./photo_assets/pie_asset', file=__file__)
 
     while True:
         frame[:, :, :] = 0

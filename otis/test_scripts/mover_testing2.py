@@ -19,11 +19,11 @@ if __name__ == "__main__":
 
 
         def mover_function():
-            pie = imageassets.AssetWithImage(center=(0, 0),
-                                             resize_to = (50, 50),
-                                             hitbox_type='circle',
-                                             use_circle_mask=False,
-                                             )
+            pie = imageassets.ImageAsset(center=(0, 0),
+                                         resize_to = (50, 50),
+                                         hitbox_type='circle',
+                                         use_circle_mask=False,
+                                         )
             #pie.add_image_from_file('../overlay/photo_assets/pie_asset')
 
             mover = AssetMover(pie,

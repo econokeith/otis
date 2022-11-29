@@ -116,7 +116,7 @@ class MirrorEffects:
         self.shared = manager.shared
         self.pargs = manager.pargs
         self.image_writers = []
-        self.image_writer = imageassets.AssetWithImage(copy_updates=True)
+        self.image_writer = imageassets.ImageAsset(copy_updates=True)
         self.sizes = [(300, 300)]
 
     def write(self, frame, image):
@@ -164,12 +164,13 @@ class BallSprinkler:
                                                  cycle_t=self.cycle_time)
         self.circle = shapes.Circle((0, 0), 100, ref='c', dim=self.capture.dim, to_abs=True)
 
+        # this function creates new bouncers
         def mover_function():
-            pie = imageassets.AssetWithImage(center=(0, 0),
-                                             resize_to=(self.ball_diameter, self.ball_diameter),
-                                             hitbox_type='circle',
-                                             use_circle_mask=True,
-                                             )
+            pie = imageassets.ImageAsset(center=(0, 0),
+                                         resize_to=(self.ball_diameter, self.ball_diameter),
+                                         hitbox_type='circle',
+                                         use_circle_mask=True,
+                                         )
 
             mover = AssetMover(pie,
                                center=(self.x_value_counter(), 50),
@@ -193,7 +194,7 @@ class BallSprinkler:
         self.frame_portion_scale = frame_portion_scale
 
     def loop(self, frame, target):
-
+        # if there is no target, the balls will focus on a circle in the middle of the screen
         if target is None:
             w = self.circle.width
             h = self.circle.height
@@ -219,6 +220,7 @@ class BallSprinkler:
                 assetmover.remove_overlap_w_no_mass(target, mover)
 
         movement_manager.move()
+
         try:
             frame_portion = cv2.resize(frame_portion, (self.ball_diameter, self.ball_diameter))
             for mover in movement_manager.movers:

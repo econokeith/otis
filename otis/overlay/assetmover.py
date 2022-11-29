@@ -432,7 +432,7 @@ if __name__ == '__main__':
 
     def mover_function():
 
-        pie = imageassets.AssetWithImage(center=(0,0), hitbox_type='circle')
+        pie = imageassets.ImageAsset(center=(0, 0), hitbox_type='circle')
         pie.add_image_from_file('./photo_assets/pie_asset', file=__file__)
 
         mover = AssetMover(pie,

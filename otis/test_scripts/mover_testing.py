@@ -30,11 +30,11 @@ if __name__ == "__main__":
 
 
     def mover_function():
-        pie = imageassets.AssetWithImage(center=(0, 0),
-                                         resize_to=(100, 100),
-                                         hitbox_type='circle',
-                                         use_circle_mask=True,
-                                         )
+        pie = imageassets.ImageAsset(center=(0, 0),
+                                     resize_to=(100, 100),
+                                     hitbox_type='circle',
+                                     use_circle_mask=True,
+                                     )
 
         mover = AssetMover(pie,
                            center=(640, 50),
