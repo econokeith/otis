@@ -91,13 +91,14 @@ class TimeSinceLast(Timer):
 
 class TimeSinceFirst(Timer):
 
-    def __init__(self, chop=False, rnd=False):
+    def __init__(self, start=False):
         """
         returns the time elapsed since the first call
         """
-        self._tick = None
-        self.chop = chop
-        self.rnd = rnd
+        if start is False:
+            self._tick = None
+        else:
+            self._tick = time.time()
         self.is_finished = False
 
     def reset(self, start=False):
@@ -115,23 +116,17 @@ class TimeSinceFirst(Timer):
             self._tick = time.time()
             return 0.
 
-        t_elapsed = time.time() - self._tick
-        if self.chop is False and self.rnd is False:
-            return t_elapsed
-        elif self.chop is True:
-            return int(t_elapsed)
-        else:
-            return round(t_elapsed, self.rnd)
+        return time.time() - self._tick
 
 class CountDownTimer(TimeSinceFirst):
 
-    def __init__(self, cd_start):
+    def __init__(self, cd_start, start=False):
         """
         counts down to zero then returns zero.
         Args:
             cd_start: length of countdown in seconds
         """
-        super().__init__()
+        super().__init__(start=start)
         self.cd_start = cd_start
         self.is_finished = False
 
@@ -175,8 +170,8 @@ class TimeElapsedBool(TimeSinceFirst):
     """
     return True if time since first call > wait else False
     """
-    def __init__(self, wait=1, *args,**kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, wait=1, start=False):
+        super().__init__(start=start)
         self.wait = wait
 
     def __call__(self):
@@ -188,12 +183,15 @@ class TimeElapsedBool(TimeSinceFirst):
 
 class CallFrequencyLimiter(Timer):
 
-    def __init__(self, wait=1 / 3, first=True):
+    def __init__(self, wait=1 / 3, freq=False):
         """
         returns true wait is over else returns False
         :param wait: float in seconds
         """
-        self.wait = wait
+        if freq is False:
+            self.wait = wait
+        else:
+            self.wait = 1/wait
         self._tick = 0
         self.first = True
 
@@ -205,6 +203,24 @@ class CallFrequencyLimiter(Timer):
             return True
         else:
             return False
+
+class RandomIntervalFrequencyLimiter(CallFrequencyLimiter):
+
+    def __init__(self, wait_range=(0, 1)):
+
+        self.wait_min = wait_range[0]
+        self.wait_max = wait_range[1]
+        super().__init__(self._next_wait_time(), freq = False)
+
+    def _next_wait_time(self):
+        w_min, w_max = self.wait_min, self.wait_max
+        return np.random.rand() * (w_max - w_min) + w_min
+
+    def __call__(self, wait=None):
+        times_up = super().__call__()
+        if times_up is True:
+            self.wait = self._next_wait_time()
+        return times_up
 
 
 class Blinker(Timer):
@@ -277,8 +293,26 @@ class Blinker(Timer):
 
             return False
 
-#todo 
-class TimedCycle:
+class Cursor(Blinker):
+
+    def __init__(self, cycle_time=.53, char_1='_', char_0=' '):
+        """
+        returns char_1 if on and char_0 if off
+        :param cycle_time: if float, [on_time, off_time] = [cycle, cycle], else on_time, off_time = cycle
+        :param char_1:
+        :param char_0:
+        """
+        super().__init__(cycle_time=cycle_time)
+        self.char_0 = char_0
+        self.char_1 = char_1
+
+    def __call__(self):
+        if super().__call__():
+            return self.char_1
+        else:
+            return self.char_0
+
+class TimedCycle(Timer):
 
     def __init__(self,
                  min_i=0,

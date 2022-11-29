@@ -193,7 +193,7 @@ class TextWriter(bases.AssetWriter):
             _color = 'w'
 
         shapefunctions.write_text(frame,
-                                  self.line,
+                                  _line,
                                   pos=justified_position,
                                   font=self.font,
                                   color=_color,
@@ -456,7 +456,7 @@ class TypeWriter(TextWriter):
 
     def type_line(self, frame, coords=None, ref=None):
         if coords is not None:
-            self.coords = coordtools.abs_point(coords, ref, frame.shape)
+            self.coords = coordtools.abs_point(coords, ref, frame)
         # if there's more in the name generator, it will continue to type new letters
         # then will show the full message for length of time self.end_pause
         # then finally stop shows
@@ -655,7 +655,7 @@ class MultiTypeWriter(TypeWriter):
         if coords is None:
             _coords = self.coords
         else:
-            _coords = coordtools.abs_point(coords, ref, frame.shape)
+            _coords = coordtools.abs_point(coords, ref, frame)
 
         if self._stub_iter.is_empty is False:
             # pause for a comma a tad

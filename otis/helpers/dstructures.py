@@ -2,20 +2,27 @@ class BoundIterator:
     """
     iter type object with
     """
-    def __init__(self, iterable):
-        self.n = len(iterable)
-        self.iterator = iter(iterable)
+    def __init__(self, iterable=None):
+        if iterable is not None:
+            self.n = len(iterable)
+            self.iterator = iter(iterable)
+        else:
+            self.n = 0
+            self.iterator = None
 
     @property
     def is_empty(self):
-        if self.n == 0:
+        if self.n <= 0:
             return True
         else:
             return False
 
     def __call__(self):
         self.n -= 1
-        return next(self.iterator)
+        try:
+            return next(self.iterator)
+        except:
+            return None
 
 def iter_none(iterable):
     """
