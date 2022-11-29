@@ -34,7 +34,7 @@ class BoundingBox(bases.AssetWriter):
         self.thickness = thickness
         self.font_scale = font_scale
         self.ltype = ltype
-        self.name_writer = textwriters.TextWriter(scale=font_scale, ltype=ltype, border=True)
+        self.name_writer = textwriters.TextWriter(scale=font_scale, ltype=ltype)
         self._name = name
         self.show_name = show_name
         self.name_line = name_line

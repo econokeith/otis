@@ -33,11 +33,11 @@ class SmartSleeper(Timer):
             wait: required wait between calls. default = 1/30
 
 
-        Usage: sleeper = SmartSleeper(wait=1/4)
+        Usage: fps_sleeper = SmartSleeper(wait=1/4)
                while True:
                     ....
                     ....
-                    sleeper() <---- ensures all while loops use the same amount of time in this case .25 seconds
+                    fps_sleeper() <---- ensures all while loops use the same amount of time in this case .25 seconds
                     ....
 
         """

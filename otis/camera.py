@@ -25,7 +25,7 @@ class CameraPlayer:
                  flip = False,
                  output_scale = 1,
                  record_scale = .5, # I need to fix this
-                 silent_sleep = True
+
                  ):
         """
 
@@ -69,10 +69,11 @@ class CameraPlayer:
         self._max_fps = max_fps
         self.capture.set(cv2.CAP_PROP_FPS, max_fps)
 
+        # set up smart sleeper to ensure constant fps
         if self.max_fps is not None:
-            self.sleeper = timers.SmartSleeper(1 / self._max_fps)
+            self.fps_sleeper = timers.SmartSleeper(1 / self._max_fps)
         else:
-            self.sleeper = timers.SmartSleeper(0.)
+            self.fps_sleeper = timers.SmartSleeper(0.)
 
         self.fps_writer = writers.FPSWriter((10, int(self.dim[1] - 40)))
         self.latency = 0.001
@@ -87,7 +88,7 @@ class CameraPlayer:
         self.record = record
         self.flip = flip
         self.output_scale = output_scale
-        self.silent_sleep = silent_sleep
+
 
 
     @property
@@ -105,7 +106,7 @@ class CameraPlayer:
     @max_fps.setter
     def max_fps(self, new_fps):
         self._max_fps = new_fps
-        self.sleeper.wait = 1/self._max_fps
+        self.fps_sleeper.wait = 1 / self._max_fps
 
     @property
     def record(self):
@@ -149,9 +150,9 @@ class CameraPlayer:
         _frame = self.frame if frame is None else frame
         _scale = self.output_scale if scale is None else scale
 
-        # run sleeper to limit fps
+        # run fps_sleeper to limit fps
         if self.max_fps is not None:
-            self.sleeper()
+            self.fps_sleeper()
 
 
         # show fps on screen

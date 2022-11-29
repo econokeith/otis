@@ -10,6 +10,7 @@ import otis.overlay.bases as base
 from otis.helpers import cvtools, misc, coordtools, timers
 from otis.overlay import bases
 
+
 class ImageAsset(bases.AssetWriter):
 
     def __init__(self,
@@ -34,7 +35,7 @@ class ImageAsset(bases.AssetWriter):
             center: (x,y) coords of the center of the object
             ref: reference point for (x, y), if ref = None, (x, y) are absolute if None, else cartesian relative coords
                  to the absolute reference point
-            hitbox_type: either circle or square.
+            hitbox_type: either 'circle' or 'rectangle'.
             copy_updates:
             mask_bit:
             use_circle_mask: loads, resizes, and uses a circle mask so only a circle centered at teh center of the image
@@ -51,6 +52,7 @@ class ImageAsset(bases.AssetWriter):
         self.resize_to = resize_to
         self.scale = scale
         self.copy_updates = copy_updates
+        self._coord_format = 'cwh'
 
         if image is not None and self.copy_updates is True:
             self._image = copy.deepcopy(self.resize_image(image))
@@ -67,6 +69,7 @@ class ImageAsset(bases.AssetWriter):
 
         self.mask_bit = mask_bit
 
+        # loads a saved circlular mask for writing
         if use_circle_mask is True:
             path_to_dir = os.path.abspath(os.path.dirname(__file__))
             path_to_mask = os.path.join(path_to_dir, 'photo_assets/masks/circle_mask.jpg')
@@ -79,17 +82,27 @@ class ImageAsset(bases.AssetWriter):
         self.hitbox_type = hitbox_type
 
     @property
+    def coord_format(self):
+        return self._coord_format
+
+    @coord_format.setter
+    def coord_format(self, new):
+        raise RuntimeError("ImageAsset can not have its coord_format value changed from 'cwh'")
+
+    @property
     def image(self):
         return self._image
 
     @image.setter
     def image(self, new_image):
+        # Todo ImageAsset - need to change the image update to be able to not resize when resize is set
         """
         1) if there isn't an image saved, it will save the image
             - if resize_to is set, then it will resize the image
             = otherwise it will set resize
         2) if there's an image saved it will resize the image to that size
         3) if copy_updates is True, it will copy it. otherwise it will save the reference
+        4) if we don't want a resize on a new image, set self. resize = None before adding the image
 
         Args:
             new_image: frame or frame portion
@@ -162,6 +175,7 @@ class ImageAsset(bases.AssetWriter):
             if self._image is None:
                 w, h = new_size
                 self._image = np.zeros(3 * w * h, dtype='uint8').reshape((h, w, 3))
+                
             else:
                 self._image = self.resize_image(self._image)
 
@@ -185,7 +199,7 @@ class ImageAsset(bases.AssetWriter):
         else:
             image = new_image
 
-        self._resize_to = image.shape[:2][::-1]
+        self.resize_to = image.shape[:2][::-1]
 
         return image
 
@@ -272,24 +286,4 @@ class ImageAsset(bases.AssetWriter):
             frame_portion[:, :, :] = image_portion
         r
     def center_width_height(self):
-        cx, cy, w, h = self.coords
-        if self.hitbox_type == 'circle':
-            return cx, cy, w // 2, h // 2
-        else:
-            return cx, cy, w, h
-
-
-if __name__ == '__main__':
-
-    dim = (800, 800)
-    fps = 30
-    frame = np.zeros(dim[0] * dim[1] * 3, dtype='uint8').reshape((dim[1], dim[0], 3))
-    fps_limiter = timers.SmartSleeper(1 / fps)
-    image_asset = ImageAsset(center=(400, 400)).add_image_from_file('./photo_assets/pie_asset', file=__file__)
-
-    while True:
-        frame[:, :, :] = 0
-        image_asset.write(frame)
-        cv2.imshow('', frame)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+        return self.coords

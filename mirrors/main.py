@@ -18,7 +18,7 @@ pargs.output_scale = 1.8
 pargs.servo = True
 pargs.cf = 2
 pargs.max_fps = 30
-pargs.record = True
+pargs.record = False
 pargs.record_scale = 1
 
 if pargs.servo is True:

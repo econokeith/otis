@@ -18,21 +18,22 @@ class TextWriter(bases.AssetWriter):
     outliner: shapes.ShapeAsset
 
     def __init__(self,
-                 coords=(0, 0),  # coords
+                 coords=(0, 0),
                  font='duplex',
-                 color='r',  # must be either string in color hash or bgr value
-                 scale=1,  # font scale,
+                 color='r',
+                 scale=1,
                  ltype=1,
                  thickness=1,
                  ref=None,
                  line="",
-                 line_spacing=.5,  # % of font_height for vertical space around
-                 v_space = 5,
-                 h_space = 5,
+                 line_spacing=.5,
+                 v_space=5,
+                 h_space=5,
                  jtype='l',
-                 underline = False,
-                 border=False,
-                 outliner = None,
+                 outliner=None,
+                 o_ltype=None,
+                 o_thickness=1,
+                 invert_border=False
                  ):
 
         super().__init__()
@@ -50,38 +51,57 @@ class TextWriter(bases.AssetWriter):
         self._line_spacing = line_spacing
         self.thickness = thickness
         self.jtype = jtype
-        self.underline = underline
-        self.border = border
+
         self.h_space = h_space
         self.v_space = v_space
 
-        if outliner is not None:
-            self.outliner = copy.deepcopy(outliner)
+        self.o_ltype = o_ltype
+        self.o_thickness = o_thickness
 
-        elif self.border is True:
-            self.outliner = shapes.Rectangle((0, 0, 0, 0),
+        if invert_border is True:
+            self.outliner = 'border'
+            self.outliner.thickness = -1
+        else:
+            self.outliner = outliner
+
+        self.invert_border = invert_border
+
+    @property
+    def outliner(self):
+        return self._outliner
+
+    @outliner.setter
+    def outliner(self, new_style):
+
+        if new_style is None:
+            self._outliner = None
+
+        elif new_style == 'border':
+            self._outliner = shapes.Rectangle((0, 0, 0, 0),
                                              color=self.color,
-                                             thickness=1,
-                                             ltype=None,
+                                             thickness=self.o_thickness,
+                                             ltype=self.o_ltype,
                                              ref=None,
                                              dim=None,
                                              coord_format='lbwh',
                                              update_format=None,
-                                             collisions = False,
                                              )
 
-        elif self.underline is True:
-            self.outliner = shapes.Line((0, 0, 0, 0),
+        elif new_style == 'underline':
+            self._outliner = shapes.Line((0, 0, 0, 0),
                                         color=self.color,
-                                        thickness=1,
-                                        ltype=None,
+                                        thickness=self.o_thickness,
+                                        ltype=self.o_ltype,
                                         ref=None,
                                         dim=None,
                                         coord_format='points',
                                         )
 
+        elif isinstance(new_style, (shapes.Rectangle, shapes.Line)):
+            self._outliner = copy.deepcopy(new_style)
+
         else:
-            self.outliner = None
+            pass
 
     @property
     def line(self):
@@ -148,18 +168,6 @@ class TextWriter(bases.AssetWriter):
 
         justified_position = coordtools.abs_point(justified_position, _ref, dim=frame)
 
-        shapefunctions.write_text(frame,
-                                  self.line,
-                                  pos=justified_position,
-                                  font=self.font,
-                                  color=_color,
-                                  scale=self.scale,
-                                  thickness=self.thickness,
-                                  ltype=self.ltype,
-                                  ref=None,
-                                  jtype='l'
-                                  )
-
         if isinstance(self.outliner, shapes.Rectangle):
 
             l = justified_position[0] - self.h_space
@@ -181,7 +189,20 @@ class TextWriter(bases.AssetWriter):
         else:
             pass
 
+        if self.invert_border is True:
+            _color = 'w'
 
+        shapefunctions.write_text(frame,
+                                  self.line,
+                                  pos=justified_position,
+                                  font=self.font,
+                                  color=_color,
+                                  scale=self.scale,
+                                  thickness=self.thickness,
+                                  ltype=self.ltype,
+                                  ref=None,
+                                  jtype='l'
+                                  )
     def write_fun(self, frame, *args, **kwargs):
         self.line = self.text_fun(*args, **kwargs)
         self.write(frame)
@@ -239,12 +260,12 @@ class NameTag(TextWriter):
         x, y, w, h = self.attached_to.center_width_height()
 
         if self.box_reference == 'l':
-            ref = (x-w//2, y+h//2)
+            ref = (x-w//2, y-h//2)
 
         elif self.box_reference == 'r':
-            ref = (x+w//2, y+h//2)
+            ref = (x+w//2, y-h//2)
         else:
-            ref = (x, y+h//2)
+            ref = (x, y-h//2)
 
         super().write(frame,
                       line=name,
@@ -253,6 +274,12 @@ class NameTag(TextWriter):
                       ref=ref,
                       save=False
                       )
+        shapefunctions.draw_line(frame,
+                                 ref,
+                                 (ref[0], ref[1]-self.v_offset + self.v_space),
+                                 thickness=1,
+                                 color=color
+                                 )
 
 
 class InfoWriter(TextWriter):
@@ -262,7 +289,7 @@ class InfoWriter(TextWriter):
                  *args,
                  **kwargs
                  ):
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
         self.text_fun = text_fun
 
     def write(self, frame, *args, line=None, **kwargs):
@@ -361,14 +388,7 @@ class TypeWriter(TextWriter):
                  **kwargs
                  ):
 
-        super().__init__(coords=coords,
-                         line=line,
-                         font=font,
-                         color=color,
-                         scale=scale,
-                         ltype=ltype,
-                         ref=ref,
-                         **kwargs)
+        super().__init__(coords=coords, font=font, color=color, scale=scale, ltype=ltype, ref=ref, line=line, **kwargs)
 
         self.dt = dt
         self._key_wait = key_wait
@@ -463,13 +483,13 @@ class TypeWriter(TextWriter):
 
             self.line_complete = True
 
-            self.end_timer.reset()
+            self.end_timer.reset(True)
 
 
 class FPSWriter(TextWriter):
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
         self.clock = timers.TimeSinceLast()
         self.clock()
         self.text_fun = lambda: f'FPS = {int(1 / self.clock())}'
@@ -562,7 +582,7 @@ class MultiTypeWriter(TypeWriter):
         # end pause will change for the current line but revert if it isn't updated
         self.end_timer.wait = self.end_pause if pause is None else pause
 
-        ts = self.get_text_size(text)[0][0]
+        ts = self.get_text_size(text)[0]
         stubs = []
 
         while ts > self.llength:
@@ -576,7 +596,7 @@ class MultiTypeWriter(TypeWriter):
 
             stubs.append(split_proposal[:split_pos - i])
             text = text[split_pos - i:].strip(' ')
-            ts = self.get_text_size(text)[0][0]
+            ts = self.get_text_size(text)[0]
 
         stubs.append(text)
 
@@ -671,18 +691,18 @@ class ScriptTypeWriter(MultiTypeWriter):
     def type_line(self, frame, **kwargs):
         if self.line_complete is False:
             super().type_line(frame)
-            return
 
-        if not self.script_queue.empty():
+        elif self.line_complete is True and not self.script_queue.empty():
             new_line = self.script_queue.get()
+            print(new_line)
             self.add_line(new_line)
             super().type_line(frame)
 
 
 class OTIS(ScriptTypeWriter):
-    def __init__(self, line_length, *args, **kwargs):
+    def __init__(self, line_length, *args, coords=(450, 900), **kwargs):
         super().__init__(line_length,
-                         (450, 900),
+                         coords=coords,
                          scale=2,
                          end_pause=3,
                          color='g',
@@ -703,7 +723,7 @@ class OTIS(ScriptTypeWriter):
             p[0] + l + 2 * v
         )
 
-    def speaks(self, frame, box=True):
+    def type_line(self, frame, box=True):
         gls = self.gls
 
         if box is True:
@@ -711,18 +731,19 @@ class OTIS(ScriptTypeWriter):
             grey = cv2.cvtColor(portion, cv2.COLOR_BGR2GRAY) * .25
             portion[:, :, 0] = portion[:, :, 1] = portion[:, :, 2] = grey.astype('uint8')
             colortools.frame_portion_to_grey(portion)
+
         self.type_line(frame)
 
 if __name__=='__main__':
     from otis import camera
-    capture = camera.ThreadedCameraPlayer().start()
-    writer = TextWriter((100, 100), border=True)
-    writer.line = "is this bordered?"
-
+    capture = camera.ThreadedCameraPlayer(max_fps=30).start()
+    writer = TypeWriter(coords=(100, 100))
+    writer.line = "HELLO MY NAME IS OTIS I WOULD LIKE TO BE YOUR FRIENDS"
+    time.sleep(5)
     while True:
 
         capture.read()
-        writer.write(capture.frame, "aaaahhhhhh")
+        writer.write(capture.frame)
         capture.show()
 
         if cvtools.cv2waitkey() is True:

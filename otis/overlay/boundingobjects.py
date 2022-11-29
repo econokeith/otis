@@ -9,7 +9,7 @@ from otis.helpers import coordtools, timers, colortools, maths
 class BoundingAsset(bases.AssetHolderMixin, bases.AssetWriter):
 
     def __init__(self,
-                 asset,
+                 asset=None,
                  name=None,
                  name_tagger=None,
                  show_name=True,
@@ -18,8 +18,13 @@ class BoundingAsset(bases.AssetHolderMixin, bases.AssetWriter):
                  color='r',
                  moving_average = None,
                  scale = 1,
+                 dimensions = None,
+                 update_format = 'trbl',
+                 stabilizer = None,
+                 name_tag_outliner = None,
+                 name_tag_inverted = False
                  ):
-        super().__init__()
+
         """
         Bounding asset functionality to shape assets for use in displaying bounding objects
         Args:
@@ -32,10 +37,19 @@ class BoundingAsset(bases.AssetHolderMixin, bases.AssetWriter):
             thickness:
             ltype:
         """
+        super().__init__()
 
-        self.asset = copy.deepcopy(asset)
-        self.asset.color = color
-        self.last_coords = self.coords.copy()
+        self._color = color
+        self.scale = scale
+        self.old_coords = np.zeros(4, int)
+
+        if isinstance(dimensions, int):
+            self.dimensions = (dimensions, dimensions)
+        else:
+            self.dimensions = dimensions
+
+        self.asset = asset
+        self.update_format = update_format
         self.show_name = show_name
         self.show_self = show_self
         self._name = name
@@ -47,11 +61,14 @@ class BoundingAsset(bases.AssetHolderMixin, bases.AssetWriter):
         self._is_active = False # becomes active if updates >= min_updates until active
         self._updates_since_inactive = 0 # number of updates
         self._min_updates_until_active = 8
+        self.stabilizer = stabilizer
 
         # setup NameTag object
         if name_tagger is None:
             self.name_tag = textwriters.NameTag(name=name,
-                                                attached_to=self)
+                                                attached_to=self,
+                                                outliner=name_tag_outliner,
+                                                invert_border=name_tag_inverted)
         else:
             assert isinstance(name_tagger, textwriters.NameTag)
             if self.name_tag.attached_to is not None:
@@ -59,14 +76,28 @@ class BoundingAsset(bases.AssetHolderMixin, bases.AssetWriter):
             self.name_tag = copy.deepcopy(name_tagger)
             self.name_tag.attached_to = self
 
+
         if moving_average is not None:
-            self.moving_average = BoxMovingAverage(*moving_average,
-                                                   in_format=self.asset.update_format,
-                                                   out_format=self.asset.update_format,
-                                                   scale=scale
-                                                   )
+            self.moving_average = BoxMovingAverage(in_format='cwh', out_format='cwh')
         else:
             self.moving_average = None
+
+    @property
+    def asset(self):
+        return self._asset
+
+    @asset.setter
+    def asset(self, new_asset):
+        if new_asset is not None:
+            self._asset = copy.deepcopy(new_asset)
+            self._asset.coord_format = 'cwh'
+            self._asset.update_format = 'cwh'
+            self._asset.color = self._color
+            if self.dimensions is not None:
+                self._asset.coords[2:] = self.dimensions
+            self.old_coords = self._asset.coords.copy()
+        else:
+            self._asset = None
 
     @property
     def time_to_inactive(self):
@@ -103,17 +134,45 @@ class BoundingAsset(bases.AssetHolderMixin, bases.AssetWriter):
 
     @coords.setter
     def coords(self, new_coords):
-        if self.moving_average is not None:
-            self.asset.coords = self.moving_average.update_coords(new_coords)
-        else:
-            self.asset.coords = new_coords
-
+        _new_coords = coordtools.translate_box_coords(new_coords,
+                                                      in_format=self.update_format,
+                                                      out_format='cwh'
+                                                      )
+        # update the metrics to determine self.is_active
         if self.is_active is False and self.time_since_last_observed() > self.time_to_inactive:
             self._updates_since_inactive = 1
         elif self.is_active is False:
             self._updates_since_inactive += 1
-        self.time_since_last_observed.reset(True)
+        self.time_since_last_observed.reset(start=True)
 
+        # update moving averages
+
+
+        # update size
+        if self.dimensions is not None:
+            _new_coords = _new_coords[:2] + self.dimensions # if dimensions are set, w, h are always set to them
+        elif self.scale != 1: # scale has no effect if dimensions are set
+            _new_coords = *_new_coords[:2], self.scale*_new_coords[2], self.scale*_new_coords[3]
+
+        if self.moving_average is not None:
+            _new_coords = self.moving_average.update(_new_coords)
+
+        if self.stabilizer is not None:
+            # find distance between update center and current center
+            center_move = maths.linear_distance(_new_coords[:2], self.asset.coords[:2])
+
+            if isinstance(self.stabilizer, int): # int, it's taken as a value in pixel
+                min_move_size = self.stabilizer
+            elif isinstance(self.stabilizer, float): # floats, it's taken as % of the box size
+                min_move_size = sum(self.asset.coords[2:]) * self.stabilizer / 2
+            else:
+                min_move_size = 0.
+
+            if center_move > min_move_size: # if the move is smaller than min, don't update the center coords
+                self.asset.coords = _new_coords # update
+
+        else:
+            self.asset.coords = _new_coords # update
 
     def write(self, frame):
         if self.show_self is True:
@@ -128,10 +187,10 @@ class BoundingManager:
                  manager,
                  threshold=.1,
                  base_asset = None,
+                 box_fun = None, # box_fun is stored as a lambda function so that it will work with a defaultdict
                  moving_average=None,
                  scale=1
                  ):
-
 
         self.manager = manager
         self.shared = manager.shared
@@ -152,12 +211,15 @@ class BoundingManager:
         else:
             self.base_asset = base_asset
 
-        self.box_fun = lambda: BoundingAsset(self.base_asset,
-                                             color=self.color_cycle(),
-                                             show_name=True,
-                                             moving_average = moving_average,
-                                             scale=scale,
-                                             )
+        if box_fun is None:
+            self.box_fun = lambda: BoundingAsset(self.base_asset,
+                                                 color=self.color_cycle(),
+                                                 show_name=True,
+                                                 moving_average = moving_average,
+                                                 scale=scale,
+                                                 )
+        else:
+            self.box_fun = box_fun
 
         self.bbox_hash = defaultdict(self.box_fun)
 
@@ -222,8 +284,6 @@ class BoundingManager:
             if box.is_active is True:
                 self.n_boxes_active += 1
                 self.active_names.append(box.name)
-                # if box.name != 'Keith':
-                #     print(box.name, 1000*box.time_since_last_observed()//1, box.is_active, box._updates_since_inactive)
 
         self.shared.n_boxes_active.value = self.n_boxes_active
 
@@ -279,29 +339,39 @@ class BoundingManager:
 
 class BoxMovingAverage:
 
-    def __init__(self, x_ma=None, y_ma=None, h_ma=None, w_ma=None, in_format='cwh', out_format=None, scale=1):
+    def __init__(self, c0_ma=None, c1_ma=None, c2_ma=None, c3_ma=None, in_format='cwh', out_format=None):
+        """
+        This is a somewhat brutish attempt to stabilize the dimension changes of bounding boxes
+        Args:
+            c0_ma: (int) value of moving average on coord_0 default = None
+            c1_ma: (int) value of moving average on coord_1 default = None
+            c2_ma: (int) value of moving average on coord_2 default = None
+            c3_ma: (int) value of moving average on coord_3 default = None
+            in_format: coord format of update default = 'cwh'
+            out_format: coord format of output, if None, in_format is used. default = None
+        """
 
         self.identity_fun = lambda x: x
         # set the moving averages
-        if x_ma is not None:
-            self.x_ma =  maths.MovingAverage(x_ma)
+        if c0_ma is not None and c0_ma != 0:
+            self.c0_ma =  maths.MovingAverage(c0_ma)
         else:
-            self.x_ma = self.identity_fun
+            self.c0_ma = self.identity_fun
 
-        if y_ma is not None:
-            self.y_ma = maths.MovingAverage(y_ma)
+        if c1_ma is not None and c1_ma != 0:
+            self.c1_ma = maths.MovingAverage(c1_ma)
         else:
-            self.y_ma = self.identity_fun
+            self.c1_ma = self.identity_fun
 
-        if w_ma is not None:
-            self.w_ma = maths.MovingAverage(w_ma)
+        if c2_ma is not None and c2_ma != 0:
+            self.c2_ma = maths.MovingAverage(c3_ma)
         else:
-            self.w_ma = self.identity_fun
+            self.c2_ma = self.identity_fun
 
-        if h_ma is not None:
-            self.h_ma = maths.MovingAverage(h_ma)
+        if c3_ma is not None and c3_ma != 0:
+            self.c3_ma = maths.MovingAverage(c2_ma)
         else:
-            self.h_ma = self.identity_fun
+            self.c3_ma = self.identity_fun
 
         self.in_format = in_format
         if out_format is not None:
@@ -309,14 +379,19 @@ class BoxMovingAverage:
         else:
             self.out_format = self.in_format
 
-        self.scale = scale
 
-    def update_coords(self, coords):
+
+    def update(self, coords):
+        """
+        outputs coords taking into moving averages determined at instantiation
+        Args:
+            coords: (c0, c1, c2, c3) box coordinates
+
+        Returns:
+            moving averages of coordinates (ma_c0, ma_c1, ma_c2, ma_c3)
+        """
         _coords = coordtools.translate_box_coords(coords, in_format=self.in_format, out_format='cwh')
-        _coords = list(_coords)
-        _coords[3] *= self.scale
-        _coords[2] *= self.scale
-        moving_averages = [self.x_ma, self.y_ma, self.w_ma, self.h_ma]
+        moving_averages = [self.c0_ma, self.c1_ma, self.c2_ma, self.c3_ma]
         new_coords = []
         for c, ma in zip(_coords, moving_averages):
             new_coords.append(ma(c))

@@ -96,10 +96,7 @@ class BasicInfoGroup(AssetGroup):
 
         if show_dim is True:
             dim_text = f'resolution : {self.args.dim}'
-            dim_writer = textwriters.TextWriter(coords= (offsets[0], offsets[1] - self.spacing * i),
-                                                line=dim_text,
-                                                scale = self.scale,
-                                                color = self.color
-                                                )
+            dim_writer = textwriters.TextWriter(coords=(offsets[0], offsets[1] - self.spacing * i), color=self.color,
+                                                scale=self.scale, line=dim_text)
 
             self.add(dim_writer)

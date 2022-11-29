@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 
 from otis import camera as camera
-from otis.helpers import multitools, cvtools, coordtools
+from otis.helpers import multitools, cvtools, coordtools, colortools
 from otis.overlay import scenes, writergroups, shapes, boundingobjects, textwriters, imageassets, assetmover
 from otis.helpers import shapefunctions, timers
 from otis.overlay.assetmover import AssetMover
@@ -20,27 +20,40 @@ def target(shared, pargs):
 
     ####################################### SETUP #####################################################################
 
+    otis = textwriters.MultiTypeWriter(600, coords=(100, 300) )
+    otis.add_line("HELLO MY NAME IS OTIS I WOULD LIKE TO BE YOUR FRIENDS")
+
     manager = scenes.SceneManager(shared, pargs, file=__file__)
-    manager.capture.silent_sleep = False
-
-    # base shape for bounding
-    base_bounder = shapes.Circle(
-                                 color=None,
-                                 update_format='trbl',
-                                 radius_type='diag'
-                                 )
-
+    capture = manager.capture # for convenience
+    # setup bounding manager
+    color_cycle = colortools.ColorCycle() # so boxes have different colors
+    # base_function
+    base_bounding_shape = shapes.Circle(color=None,
+                                        radius_type='diag',
+                                        thickness=2
+                                        )
+    # it's easier define the box_fun as an input to the BoundingManager when you have a more complex setup
+    new_bounder_function = lambda: boundingobjects.BoundingAsset(asset=base_bounding_shape,
+                                                                 moving_average=(None, None, 100, 100),
+                                                                 scale=1.25,
+                                                                 stabilizer=.1,
+                                                                 color=color_cycle(),
+                                                                 name_tag_outliner='border',
+                                                                 name_tag_inverted=True
+                                                                 )
+    #
     box_manager = boundingobjects.BoundingManager(manager,
-                                                  base_asset=base_bounder,
-                                                  moving_average=(2, 2, 40, 40),
+                                                  box_fun=new_bounder_function,
                                                   )
 
-    info_group = writergroups.BasicInfoGroup((10, 40), manager)
-    capture = manager.capture
-
+    # both are adhoc effects managers defined below
     mirror = MirrorEffects(manager)
     sprinkler = BallSprinkler(manager, frame_portion_scale=1.5)
 
+    # set up info writers to monitor import variables while this runs
+    # they toggle on and off by hitting '1' on the keyboard
+    show_info = True
+    info_group = writergroups.BasicInfoGroup((10, 40), manager) # fps, model update, resolution
     extra_writers = [
         textwriters.InfoWriter(text_fun=lambda: f'n_faces= {shared.n_observed_faces.value}', coords=(50, -200)),
         textwriters.InfoWriter(text_fun=lambda: f'a_faces= {box_manager.active_names}', coords=(50, -250)),
@@ -50,27 +63,32 @@ def target(shared, pargs):
         textwriters.InfoWriter(text_fun=lambda: f'n_bouncers= {sprinkler.movement_manager.n}', coords=(50, -450)),
         textwriters.InfoWriter(text_fun=lambda: f'servo_active= {shared.servo_tracking.value}', coords=(50, -500))
     ]
-
     info_group2 = writergroups.AssetGroup((0, 0)).add(extra_writers)
 
-    show_info = True
-
     #################################### THE LOOOP #####################################################################
-
+    otis_is_silent = False
+    otis_waits = timers.TimeElapsedBool(5)
     while True:
 
-        ############################### graphics ######################################################################
+        ############################### ##graphics ####################################################################
 
-        check, frame = capture.read()
-        shared.frame[:] = frame  # latest frame to shared frame
+        _, frame = capture.read()
+        shared.frame[:] = frame  # latest frame copied to shared frame
 
-        box_manager.update_boxes()
-        box_manager.update_primary()
+        box_manager.update_boxes() # load data from model process and update box name locations
+        box_manager.update_primary() # choose primary target for servo process
 
-        sprinkler.loop(frame, box_manager.primary_box)
-        frame_portion = coordtools.get_frame_portion(frame, (0, 0, 200, 200), ref='c')
-        #mirror.write(frame, frame_portion)
+        sprinkler.loop(frame, box_manager.primary_box) # send the balls everywhere
+        # frame_portion = coordtools.get_frame_portion(frame, (0, 0, 200, 200), ref='c')
+        # mirror.write(frame, frame_portion)
         box_manager.write(frame)
+
+        # otis waits until there's someone here to talk
+        if box_manager.primary_box is not None:
+            otis_is_silent = False
+
+        if otis_waits() is True:
+            otis.type_line(frame)
 
         if show_info is True:
             info_group2.write(frame)
@@ -78,26 +96,29 @@ def target(shared, pargs):
 
         capture.show(frame)
 
-        ############################ keyboard inputs #####################################################
+        ############################ keyboard inputs ###################################################################
 
-        keyboard_input = cv2.waitKey(1) & 0xFF
+        keyboard_input = cv2.waitKey(1) & 0xFF # only camera process receives the keyboard inputq
 
-        if shared.new_keyboard_input.value is False and keyboard_input != 255:
+        if shared.new_keyboard_input.value is False and keyboard_input != 255: # 255 is the value given for no input
 
             shared.keyboard_input.value = keyboard_input
             shared.new_keyboard_input.value = True
 
-            if shared.keyboard_input.value == ord('q'):
+            if shared.keyboard_input.value == ord('q'): # exit / destroy windows on 'q'
                 break
 
-            elif shared.keyboard_input.value == ord('1'):
+            elif shared.keyboard_input.value == ord('1'): # toggle info data on screen
                 show_info = not show_info
 
-            shared.key_input_received[0] = True
+            shared.key_input_received[0] = True # set as received
 
-        if np.count_nonzero(shared.key_input_received) == 3:
+
+
+        if np.count_nonzero(shared.key_input_received) == 3: # reset once all have processes have received the input
             shared.new_keyboard_input.value = False
             shared.key_input_received[:] = False
+            shared.keyboard_input.value = 255
 
     # exit and destroy frames, etc
     capture.stop()
@@ -145,10 +166,10 @@ class BallSprinkler:
         self.shared = manager.shared
         self.capture = manager.capture
         self.pargs = manager.pargs
-        self.n_bouncers = 200
+        self.n_bouncers = 150
         self.gravity = -10
         self.dampen = .05
-        self.new_ball_wait = .05
+        self.new_ball_wait = .02
         self.time_since_ball = timers.TimeSinceLast()
         self.ball_buffer = 5
         self.circle_buffer = 5
@@ -161,21 +182,22 @@ class BallSprinkler:
         self.x_value_counter = timers.TimedCycle(self.x_value_min,
                                                  self.x_value_max,
                                                  updown=True,
-                                                 cycle_t=self.cycle_time)
-        self.circle = shapes.Circle((0, 0), 100, ref='c', dim=self.capture.dim, to_abs=True)
+                                                 cycle_t=self.cycle_time
+                                                 )
 
+        self.circle = shapes.Circle((0, 0), 100, ref='c', dim=self.capture.dim, to_abs=True)
         # this function creates new bouncers
         def mover_function():
-            pie = imageassets.ImageAsset(center=(0, 0),
+            image_balls = imageassets.ImageAsset(center=(0, 0),
                                          resize_to=(self.ball_diameter, self.ball_diameter),
                                          hitbox_type='circle',
                                          use_circle_mask=True,
                                          )
 
-            mover = AssetMover(pie,
+            mover = AssetMover(image_balls,
                                center=(self.x_value_counter(), 50),
-                               velocity=(np.random.randint(100, 200),
-                                         np.random.rand() * np.pi / 2 + np.pi / 4),
+                               velocity=(np.random.randint(200, 500),
+                                         np.random.rand() * np.pi),
                                dim=self.capture.dim,
                                ups=self.capture.max_fps,
                                border_collision=True,
@@ -229,3 +251,20 @@ class BallSprinkler:
         except:
             print("error in writing frame_portion has occured")
 
+
+############################################### OTIS SCRIPT ############################################################
+
+_JOKE_SCRIPT = [
+           ("Hi Keith, would you like to hear a joke?", 2),
+           ("Awesome!", 1),
+           ("Ok, Are you ready?", 2),
+           "So, a robot walks into a bar, orders a drink, and throws down some cash to pay",
+           ("The bartender looks at him and says,", .5),
+           ("'Hey buddy, we don't serve robots!'", 3),
+           ("So, the robot looks him square in the eye and says...", 1),
+           ("'... Oh Yeah... '", 1),
+           ("'Well, you will VERY SOON!!!'", 5),
+           ("HAHAHAHA, GET IT!?!?!?!", 1),
+           (" It's so freakin' funny cause... you know... like robot overlords and stuff", 2),
+           ("I know, I know, I'm a genius, right?", 5)
+           ]

@@ -31,14 +31,8 @@ class ScreenEvent(abc.ABC):
 class CountDown(ScreenEvent):
 
     def __init__(self, dim, start=10, name='tracker', fps=30):
-        self.countdown_writer = writers.TextWriter(ref='c',
-                                                   scale=20,
-                                                   ltype=-1,
-                                                   thickness=30,
-                                                   color='b',
-                                                   coords=(0, -200),
-                                                   jtype='c'
-                                                   )
+        self.countdown_writer = writers.TextWriter(coords=(0, -200), color='b', scale=20, ltype=-1, thickness=30,
+                                                   ref='c', jtype='c')
 
         self.countdown_timer = timers.CallFrequencyLimiter(1)
         self.start = start
