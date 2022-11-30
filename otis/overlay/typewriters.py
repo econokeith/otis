@@ -26,7 +26,7 @@ class SingleLineTypeWriter(TextWriter):
                  end_pause=1,
                  loop=False,
                  ref=None,
-                 line=None,
+                 text=None,
                  **kwargs
                  ):
 
@@ -36,7 +36,7 @@ class SingleLineTypeWriter(TextWriter):
                          scale=scale,
                          ltype=ltype,
                          ref=ref,
-                         line=line,
+                         text=text,
                          **kwargs
                          )
 
@@ -48,26 +48,26 @@ class SingleLineTypeWriter(TextWriter):
         self.loop = loop
         self.line_iterator = dstructures.BoundIterator()
         self._typing_complete = True
-        self._line_complete = True
-        self.line = line
+        self._text_complete = True
+        self.text = text
         self._output = ""
         self.cursor = Cursor()
         self.key_press_timer = timers.RandomIntervalFrequencyLimiter(self.key_wait_range)
         self.total_timer = timers.TimeSinceFirst(start=True)
 
     @property
-    def line(self):
-        return self._line
+    def text(self):
+        return self._text
 
-    @line.setter
-    def line(self, new_text):
+    @text.setter
+    def text(self, new_text):
         # updates text_generator when name is updated
         self._line = new_text
         self.tick = time.time()
 
         if new_text is None:
             self.line_iterator = dstructures.BoundIterator()
-            self._line_complete = True
+            self._text_complete = True
             self._typing_complete = True
             self._output = ""
             return
@@ -77,27 +77,27 @@ class SingleLineTypeWriter(TextWriter):
             self.end_pause = wait
 
         self.line_iterator = dstructures.BoundIterator(new_text)
-        self._line_complete = False
+        self._text_complete = False
         self._typing_complete = False
         self._output = ""
         self.end_pause_timer.reset(start=False)
 
     @property
-    def line_complete(self):
-        return self._line_complete
+    def text_complete(self):
+        return self._text_complete
 
     @property
     def typing_complete(self):
         return self._typing_complete
 
-    def write(self, frame, coords=None, ref=None, **kwargs):
+    def write(self, frame, text=None, coords=None, color=None, ref=None, **kwargs):
 
         if self.typing_complete is True and self.end_pause_timer() is True:
-            self._line_complete = True
+            self._text_complete = True
             return
 
-        if coords is not None:
-            self.coords = coordtools.abs_point(coords, ref, frame)
+        if text is not None:
+            self.coords = coordtools.abs_point(text, ref, frame)
         # if there's more in the name generator, it will continue to type new letters
         # then will show the full message for length of time self.end_pause
         # then finally stop shows
@@ -105,7 +105,7 @@ class SingleLineTypeWriter(TextWriter):
             if self.key_press_timer():
                 self._output += self.line_iterator()
 
-        # if the line is done, but the end pause is still going. write whole line with cursor
+        # if the text is done, but the end pause is still going. write whole text with cursor
         if self.line_iterator.is_empty is True and self.end_pause_timer() is False:
             self._typing_complete = True
 
@@ -145,7 +145,7 @@ class MultiTypeWriter(SingleLineTypeWriter):
 
     def add_line(self, text, pause=None):
         """
-        break up a long line into multiples that fit within self.line_length
+        break up a long text into multiples that fit within self.line_length
         :param text:
         :return:
         """
@@ -153,8 +153,7 @@ class MultiTypeWriter(SingleLineTypeWriter):
         if isinstance(text, (tuple, list)):
             self.add_line(*text)
             return
-
-        # end pause will change for the current line but revert if it isn't updated
+        # end pause will change for the current text but revert if it isn't updated
         self.end_pause_timer.wait = self.end_pause if pause is None else pause
 
         ts = self.get_text_size(text)[0]
@@ -164,7 +163,7 @@ class MultiTypeWriter(SingleLineTypeWriter):
 
             split_pos = int(self.llength / ts * len(text))
             split_proposal = text[:split_pos + 1]
-            # break at last space in the shortened line
+            # break at last space in the shortened text
             for i in range(split_pos + 1):
                 if split_proposal[-1 - i] == ' ':
                     break
@@ -195,15 +194,15 @@ class MultiTypeWriter(SingleLineTypeWriter):
         n_fin = len(self._used_stubs)
         [p0, p1] = self.coords
 
-        # do nothing if the line is complete
+        # do nothing if the text is complete
         if self.line_complete is True:
             return
 
         if self._stub_complete is False:
             # print is_finished lines as static
             for i in range(n_fin):
-                self.write(frame, self._used_stubs[i], coords=(p0, p1 + i * v_move))
-            # then type out current line
+                self.write(frame, self._used_stubs[i])
+            # then type out current text
             self._type_stub(frame, coords=(p0, p1 + n_fin * v_move))
             return
 
@@ -214,14 +213,14 @@ class MultiTypeWriter(SingleLineTypeWriter):
         else:  # same as above but the first check of the tiemr will start it.
             if self.end_pause_timer() is False:
                 for i in range(n_fin):
-                    self.write(frame, self._used_stubs[i], coords=(p0, p1 + i * v_move))
+                    self.write(frame, self._used_stubs[i])
                 self._type_stub(frame, coords=(p0, p1 + (n_fin) * v_move))
             else:
                 self.line_complete = True
 
     def _type_stub(self, frame, coords=None, ref=None):
         """
-        single line stochastic typer just to clean things up.
+        single text stochastic typer just to clean things up.
         :param frame:
         :param coords:
         :param ref:
@@ -242,11 +241,11 @@ class MultiTypeWriter(SingleLineTypeWriter):
             if self.key_press_timer(cpf * self.key_wait):
                 self._output += self._stub_iter()
 
-            self.write(frame, self._output, coords=_coords)
+            self.write(frame, self._output)
 
-        # if the line is done, but the end pause is still going. write whole line with cursor
+        # if the text is done, but the end pause is still going. write whole text with cursor
         else:
-            self.write(frame, line=self._output + self.cursor(), coords=_coords)
+            self.write(frame, text=self._output + self.cursor())
 
             self._stub_complete = True
 
@@ -277,7 +276,7 @@ if __name__=='__main__':
     from otis import camera
     capture = camera.ThreadedCameraPlayer(max_fps=30).start()
     writer = SingleLineTypeWriter(coords=(100, 100))
-    writer.line = "HELLO MY NAME IS OTIS I WOULD LIKE TO BE YOUR FRIENDS"
+    writer.text = "HELLO MY NAME IS OTIS I WOULD LIKE TO BE YOUR FRIENDS"
     while True:
 
         capture.read()

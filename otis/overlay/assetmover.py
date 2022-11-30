@@ -236,7 +236,7 @@ def remove_overlap(ball1, ball2):
     c = np.hypot(*dx)
 
     if c < r_sum:
-        # separate along line connecting centers
+        # separate along text connecting centers
         dc = r_sum - c + 1
         da = a * (c + dc) / c - a
         db = b * (c + dc) / c - b
@@ -262,7 +262,7 @@ def remove_overlap_w_no_mass(no_mass, has_mass, buffer=0):
         has_mass.is_finished = True
 
     elif centers_distance - buffer < r_sum:
-        # separate along line connecting centers
+        # separate along text connecting centers
         dc = r_sum - centers_distance + 1 + buffer
         da = a * (centers_distance + dc) / centers_distance - a
         db = b * (centers_distance + dc) / centers_distance - b

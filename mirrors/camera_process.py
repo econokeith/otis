@@ -20,8 +20,8 @@ def target(shared, pargs):
 
     ####################################### SETUP #####################################################################
 
-    otis = textwriters.MultiTypeWriter(600, coords=(100, 300) )
-    otis.add_line("HELLO MY NAME IS OTIS I WOULD LIKE TO BE YOUR FRIENDS")
+    otis = textwriters.OTIS(pargs.dim[0]-200, coords=(100, 500), scale=1.5)
+    otis.add_script(_JOKE_SCRIPT)
 
     manager = scenes.SceneManager(shared, pargs, file=__file__)
     capture = manager.capture # for convenience
@@ -66,8 +66,8 @@ def target(shared, pargs):
     info_group2 = writergroups.AssetGroup((0, 0)).add(extra_writers)
 
     #################################### THE LOOOP #####################################################################
-    otis_is_silent = False
-    otis_waits = timers.TimeElapsedBool(5)
+    otis_is_silent = True
+
     while True:
 
         ############################### ##graphics ####################################################################
@@ -87,7 +87,7 @@ def target(shared, pargs):
         if box_manager.primary_box is not None:
             otis_is_silent = False
 
-        if otis_waits() is True:
+        if otis_is_silent is False:
             otis.type_line(frame)
 
         if show_info is True:

@@ -75,7 +75,7 @@ class RectangleType(ShapeObject, metaclass=abc.ABCMeta):
 
 
 class LineType(ShapeObject, metaclass=abc.ABCMeta):
-    _asset_shape = 'line'
+    _asset_shape = 'text'
     pass
 
 

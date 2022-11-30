@@ -51,7 +51,7 @@ def draw_line(frame,
               ref=None,
               ):
     """
-    draw a line
+    draw a text
     :param frame:
     :param pt1:
     :param pt2:
@@ -68,7 +68,7 @@ def draw_line(frame,
 
 def draw_cal_line(frame, center, angle, length, color='r', thickness=1, ltype=None, ref=None):
     """
-    draw a line from the center angle and length
+    draw a text from the center angle and length
     :param frame:
     :param center:
     :param angle:
@@ -85,7 +85,7 @@ def draw_cal_line(frame, center, angle, length, color='r', thickness=1, ltype=No
 
 def draw_pal_line(frame, point, angle, length, color='r', thickness=1, ltype=None, ref=None):
     """
-    draw a line from point angle and length
+    draw a text from point angle and length
     :param frame:
     :param point:
     :param angle:

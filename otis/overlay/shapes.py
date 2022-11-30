@@ -365,7 +365,7 @@ class Line(bases.AssetWriter, LineType):
             self.color = _color
             self.ref = _ref
 
-        # depending on the line coord format, choose a different drawing function
+        # depending on the text coord format, choose a different drawing function
         if self.coord_format == 'pal':
             shapefunctions.draw_pal_line(frame, _coords[:2], _coords[2], _coords[3],
                                          color=_color, thickness=self.thickness, ltype=self.ltype, ref=_ref)

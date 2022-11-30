@@ -54,7 +54,7 @@ class CountDown(ScreenEvent):
         
         if self.i >= 1:
             frame[:, :, :] = self.color_counter()
-            self.countdown_writer.write(frame, line=str(self.i))
+            self.countdown_writer.write(frame, text=str(self.i))
 
             if self.countdown_timer() is True:
                 self.i -= 1

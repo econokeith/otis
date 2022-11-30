@@ -18,7 +18,7 @@ class BoundingBox(bases.AssetWriter):
                  color='r',  # must be either string in color hash or bgr value
                  font_scale=1,  # font scale,
                  thickness=2,
-                 ltype=1,# line type
+                 ltype=1,# text type
                  show_me = True,
                  name = "",
                  show_name = True,
@@ -50,7 +50,7 @@ class BoundingBox(bases.AssetWriter):
     @name.setter
     def name(self, new_name):
         self._name = new_name
-        self.name_writer.line = new_name
+        self.name_writer.text = new_name
 
     @property
     def center(self):
@@ -118,7 +118,7 @@ class BoundingBox(bases.AssetWriter):
     def name_tag(self, frame, name=None):
         t, r, b, l = self.coords
         _name = self.name if name is None else name
-        self.name_writer.write(frame, line=_name, coords=(0, 20), ref=(l, t))
+        self.name_writer.write(frame, text=_name, coords=(0, 20), ref=(l, t))
         # if self.name_line is True:
         #     shapefunctions.draw_line(frame, (0, 0), (0, 15), self.color, 1, ref=(l + 15, t))
 
@@ -174,7 +174,7 @@ class BoundingCircle(BoundingBox):
         [x, y]  = list(self.center)
 
         _name = name if name is not None else self.name
-        self.name_writer.write(frame, line=_name, coords=(0, self.radius + 20), ref=(x, y))
+        self.name_writer.write(frame, text=_name, coords=(0, self.radius + 20), ref=(x, y))
         # if self.name_line is True:
         #     shapes.draw_line(frame, (0, 0), (0, 15), self.color, 1, ref=(coords[0], coords[1]-5))
 
