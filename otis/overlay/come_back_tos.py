@@ -41,6 +41,8 @@
 #     def write(self, frame, ):
 #         if self.set_dim is not None:
 #             cx, cy, _, _ = 1, 2, 3, 4
+import copy
+
 
 # class BoundingAsset(bases.AssetHolderMixin):
 #
@@ -84,3 +86,33 @@
 #                 self.name_tag.attached_to = None
 #             self.name_tag = copy.deepcopy(name_tagger)
 #             self.name_tag.attached_to = self
+class LineOfText:
+
+    def __init__(self,
+                 text=None,
+                 font=None,
+                 color=None,
+                 scale=None,
+                 ltype=None,
+                 end_pause=None):
+        """
+        I think some kind of container object will be important eventually
+        :param text:
+        :param font:
+        :param color:
+        :param scale:
+        :param ltype:
+        :param end_pause:
+        """
+
+        self.font = font
+        self.color = color
+        self.scale = scale
+        self.ltype = ltype
+        self.end_pause = end_pause
+        self.complete = True
+        self.length = 0
+        self.text = text
+
+    def copy(self):
+        return copy.copy(self)

@@ -67,7 +67,7 @@ class ImageAsset(base.AssetWriter):
         loc type can either be 'c' for center or 'tl' for top right. must be given in absolute frame
         coords
         :param frame:
-        :param pos:
+        :param coords:
         :param pos_type:
         :return:
         """

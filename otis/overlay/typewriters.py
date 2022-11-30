@@ -13,21 +13,33 @@ from otis.helpers import timers, colortools, shapefunctions, texttools, \
 from otis.overlay import bases, shapes
 from otis.overlay.textwriters import TextWriter
 
-class SingleLineTypeWriter(TextWriter):
+
+class TypeWriter(TextWriter):
 
     def __init__(self,
-                 coords=(0, 0),  # coords
+                 coords=(0, 0),
                  font='duplex',
-                 color='r',  # must be either string in color hash or bgr value
-                 scale=1,  # font scale,
-                 ltype=2,
-                 dt=None,
-                 key_wait_range=(.5, .75),
-                 end_pause=1,
-                 loop=False,
+                 color='r',
+                 scale=1,
+                 ltype=1,
+                 thickness=1,
                  ref=None,
                  text=None,
-                 **kwargs
+                 line_spacing=.5,
+                 max_line_length=None,
+                 line_length_format='pixels',
+                 n_lines=None,
+                 border_spacing=(5, 5),
+                 jtype='l',
+                 outliner=None,
+                 o_ltype=None,
+                 o_thickness=1,
+                 invert_border=False,
+                 one_border=False,
+                 # unique to typewriter starts here
+                 key_wait_range=(.05, .1),
+                 end_pause=1,
+                 loop=False,
                  ):
 
         super().__init__(coords=coords,
@@ -35,25 +47,37 @@ class SingleLineTypeWriter(TextWriter):
                          color=color,
                          scale=scale,
                          ltype=ltype,
+                         thickness=thickness,
                          ref=ref,
-                         text=text,
-                         **kwargs
+                         text=None,
+                         line_spacing=line_spacing,
+                         max_line_length=max_line_length,
+                         line_length_format=line_length_format,
+                         n_lines=n_lines,
+                         border_spacing=border_spacing,
+                         jtype=jtype,
+                         outliner=outliner,
+                         o_ltype=o_ltype,
+                         o_thickness=o_thickness,
+                         invert_border=invert_border,
+                         one_border=one_border,
                          )
 
         self.is_waiting = True
-        self.dt = dt
         self.key_wait_range = key_wait_range
         self.end_pause = end_pause
         self.end_pause_timer = timers.TimeElapsedBool(end_pause, start=False)
         self.loop = loop
         self.line_iterator = dstructures.BoundIterator()
-        self._typing_complete = True
-        self._text_complete = True
-        self.text = text
+        self.text_complete = True
+        self._current_stub = None
         self._output = ""
-        self.cursor = Cursor()
+        self.cursor = timers.Cursor()
         self.key_press_timer = timers.RandomIntervalFrequencyLimiter(self.key_wait_range)
         self.total_timer = timers.TimeSinceFirst(start=True)
+        self.completed_stubs = []
+
+        self.text = text
 
     @property
     def text(self):
@@ -62,220 +86,111 @@ class SingleLineTypeWriter(TextWriter):
     @text.setter
     def text(self, new_text):
         # updates text_generator when name is updated
-        self._line = new_text
-        self.tick = time.time()
-
-        if new_text is None:
-            self.line_iterator = dstructures.BoundIterator()
-            self._text_complete = True
-            self._typing_complete = True
-            self._output = ""
-            return
-
         if isinstance(new_text, (tuple, list)):
-            new_text, wait = new_text
-            self.end_pause = wait
+            new_text, end_pause = new_text
+            self.end_pause = end_pause
+            self.end_pause_timer = timers.TimeElapsedBool(wait=self.end_pause, start=False)
 
-        self.line_iterator = dstructures.BoundIterator(new_text)
-        self._text_complete = False
-        self._typing_complete = False
-        self._output = ""
-        self.end_pause_timer.reset(start=False)
+        # this is straight from:
+        # https://stackoverflow.com/questions/10810369/python-super-and-setting-parent-class-property
+        super(self.__class__, self.__class__).text.fset(self, new_text)
+
+        self.stub_queue = Queue()
+        if new_text is not None:
+            self.text_complete = False
+            for stub in self.text_stubs:
+                self.stub_queue.put(stub)
+
+            self.current_stub = self.stub_queue.get()
+            self._output = ""
+            self.completed_stubs = []
+
+        return
 
     @property
-    def text_complete(self):
-        return self._text_complete
+    def current_stub(self):
+        return self._current_stub
 
-    @property
-    def typing_complete(self):
-        return self._typing_complete
-
-    def write(self, frame, text=None, coords=None, color=None, ref=None, **kwargs):
-
-        if self.typing_complete is True and self.end_pause_timer() is True:
-            self._text_complete = True
-            return
-
-        if text is not None:
-            self.coords = coordtools.abs_point(text, ref, frame)
-        # if there's more in the name generator, it will continue to type new letters
-        # then will show the full message for length of time self.end_pause
-        # then finally stop shows
-        if self.line_iterator.is_empty is False:
-            if self.key_press_timer():
-                self._output += self.line_iterator()
-
-        # if the text is done, but the end pause is still going. write whole text with cursor
-        if self.line_iterator.is_empty is True and self.end_pause_timer() is False:
-            self._typing_complete = True
-
-        print(self._output + self.cursor(), round(1000*self.total_timer()))
-        super().write(frame, self._output + self.cursor())
-
-
-
-
-
-
-
-
-
-
-
-class MultiTypeWriter(SingleLineTypeWriter):
-
-    def __init__(self, line_length, *args, **kwargs):
-
-        super().__init__(*args, **kwargs)
-
-        self.llength = line_length
-        self._used_stubs = []
-        self._stub_queue = Queue()
-        self._stub = ""
-        self._stub_iter = dstructures.BoundIterator(self._stub)
-        self._stub_complete = True
-        self.comma_pause_factor = 3
-
-    def next_stub(self):
-        self._used_stubs.append(self._stub)
-        self._stub = self._stub_queue.get()
-        self._stub_iter = dstructures.BoundIterator(self._stub)
-        self._stub_complete = False
+    @current_stub.setter
+    def current_stub(self, new_stub):
+        old_stub = self.current_stub
+        self._current_stub = new_stub
         self._output = ""
+        self.line_iterator = dstructures.BoundIterator(self.current_stub)
+        self.completed_stubs.append(old_stub)
 
-    def add_line(self, text, pause=None):
-        """
-        break up a long text into multiples that fit within self.line_length
-        :param text:
-        :return:
-        """
-        # allow input to be a tuple so we can change the pacing of the pauses
-        if isinstance(text, (tuple, list)):
-            self.add_line(*text)
-            return
-        # end pause will change for the current text but revert if it isn't updated
-        self.end_pause_timer.wait = self.end_pause if pause is None else pause
+    def write_line_of_text(self, frame, coords=None, show_outline = True, **kwargs):
 
-        ts = self.get_text_size(text)[0]
-        stubs = []
+        # if self.typing_complete is True and (not self.stub_queue.empty() or self.end_pause_timer() is True):
+        #     self._stub_complete = True
+        #     return
 
-        while ts > self.llength:
-
-            split_pos = int(self.llength / ts * len(text))
-            split_proposal = text[:split_pos + 1]
-            # break at last space in the shortened text
-            for i in range(split_pos + 1):
-                if split_proposal[-1 - i] == ' ':
-                    break
-
-            stubs.append(split_proposal[:split_pos - i])
-            text = text[split_pos - i:].strip(' ')
-            ts = self.get_text_size(text)[0]
-
-        stubs.append(text)
-
-        # set first stub
-        self._stub = stubs[0]
-        self._stub_iter = dstructures.BoundIterator(self._stub)
-
-        # set stub que
-        for stub in stubs[1:]:
-            self._stub_queue.put(stub)
-
-        # do some resets
-        self._used_stubs = []
-        self.line_complete = False
-        self.end_pause_timer.reset()
-        self._stub_complete = False
-        self._output = ''
-
-    def type_line(self, frame, **kwargs):
-        v_move = self.line_spacing
-        n_fin = len(self._used_stubs)
-        [p0, p1] = self.coords
-
-        # do nothing if the text is complete
-        if self.line_complete is True:
+        if self.text_complete is True:
             return
 
-        if self._stub_complete is False:
-            # print is_finished lines as static
-            for i in range(n_fin):
-                self.write(frame, self._used_stubs[i])
-            # then type out current text
-            self._type_stub(frame, coords=(p0, p1 + n_fin * v_move))
+        _coords = self.coords if coords is None else coords
+        iter_empty = self.line_iterator.is_empty
+        queue_empty = self.stub_queue.empty()
+
+        if iter_empty is False and self.key_press_timer() is True:
+            self._output += self.line_iterator()
+
+        elif iter_empty is False and self.key_press_timer() is False:
+            pass
+
+        elif iter_empty is True and queue_empty is False:
+            self.current_stub = self.stub_queue.get()
+            # don't miss a frame if we need to refill
+            # self.write_line_of_text(frame)
+
+        elif iter_empty is True and queue_empty is True and self.end_pause_timer() is True:
+            self.text_complete = True
+
+        else:
+            pass  # this can't happenn
+
+        super().write_line_of_text(frame,
+                                   text=self._output + self.cursor(),
+                                   coords=_coords,
+                                   show_outline=False
+                                   )
+
+    def write(self, frame, **kwargs):
+
+        if self.text_complete is True and self.loop is False:
             return
+        elif self.text_complete is True:
+            self.text = self._text
 
-        # refill and keep going
-        if self._stub_complete is True and self._stub_queue.empty() is False:
-            self.next_stub()
+        if self.one_border:
+            self._write_one_border(frame, self.coords, self.color, self.ref)
 
-        else:  # same as above but the first check of the tiemr will start it.
-            if self.end_pause_timer() is False:
-                for i in range(n_fin):
-                    self.write(frame, self._used_stubs[i])
-                self._type_stub(frame, coords=(p0, p1 + (n_fin) * v_move))
-            else:
-                self.line_complete = True
+        down_space = self.line_spacing + self.font_height
 
-    def _type_stub(self, frame, coords=None, ref=None):
-        """
-        single text stochastic typer just to clean things up.
-        :param frame:
-        :param coords:
-        :param ref:
-        :return:
-        """
-        if coords is None:
-            _coords = self.coords
-        else:
-            _coords = coordtools.abs_point(coords, ref, frame.shape)
+        if self.ref is not None:
+            down_space *= -1
 
-        if self._stub_iter.is_empty is False:
-            # pause for a comma a tad
-            if len(self._output) > 0 and self._output[-1] == ',':
-                cpf = self.comma_pause_factor
-            else:
-                cpf = 1
+        i = 0
+        x, y = self.coords
+        for stub in self.completed_stubs:
+            super().write_line_of_text(frame,
+                                       stub,
+                                       (x, y + i * down_space),
+                                       self.color,
+                                       self.ref,
+                                       show_outline=False,
+                                       )
+            i += 1
 
-            if self.key_press_timer(cpf * self.key_wait):
-                self._output += self._stub_iter()
-
-            self.write(frame, self._output)
-
-        # if the text is done, but the end pause is still going. write whole text with cursor
-        else:
-            self.write(frame, text=self._output + self.cursor())
-
-            self._stub_complete = True
+        self.write_line_of_text(frame, coords=(x, y + i * down_space))
 
 
-class Cursor(timers.Blinker):
-
-    def __init__(self, cycle_time=.53, char_1='_', char_0=' '):
-        """
-        returns char_1 if on and char_0 if off
-        :param cycle_time: if float, [on_time, off_time] = [cycle, cycle], else on_time, off_time = cycle
-        :param char_1:
-        :param char_0:
-        """
-        super().__init__(cycle_time=cycle_time)
-        self.char_0 = char_0
-        self.char_1 = char_1
-
-    def __call__(self):
-        if super().__call__():
-            return self.char_1
-        else:
-            return self.char_0
-
-
-
-if __name__=='__main__':
+if __name__ == '__main__':
 
     from otis import camera
+
     capture = camera.ThreadedCameraPlayer(max_fps=30).start()
-    writer = SingleLineTypeWriter(coords=(100, 100))
+    writer = TypeWriter(coords=(100, 100), invert_border=True, max_line_length=300, one_border=True)
     writer.text = "HELLO MY NAME IS OTIS I WOULD LIKE TO BE YOUR FRIENDS"
     while True:
 
@@ -286,5 +201,3 @@ if __name__=='__main__':
         if cvtools.cv2waitkey() is True:
             capture.stop()
             break
-
-

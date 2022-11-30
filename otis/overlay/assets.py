@@ -16,7 +16,7 @@ class BoundingBox(bases.AssetWriter):
 
     def __init__(self,
                  color='r',  # must be either string in color hash or bgr value
-                 font_scale=1,  # font scale,
+                 font_scale=1,  # _font scale,
                  thickness=2,
                  ltype=1,# text type
                  show_me = True,
