@@ -28,17 +28,20 @@ class TextWriter(bases.AssetWriter):
                  max_line_length = None,
                  line_length_format = 'pixels',
                  n_lines = None,
-                 border_spacing = (5, 5),
                  jtype='l',
-                 outliner=None,
-                 o_ltype=None,
-                 o_thickness=1,
+                 u_spacing = .1,
+                 u_ltype = None,
+                 u_thickness = 1,
+                 underliner = False,
+                 border=False,
+                 border_spacing=(5, 5),
+                 b_ltype=None,
+                 b_thickness=1,
                  invert_border=False,
-                 one_border = False
+                 one_border=False,
                  ):
 
         super().__init__()
-
 
         self.font = font # property
         self.color = color # property
@@ -50,44 +53,62 @@ class TextWriter(bases.AssetWriter):
         self.max_line_length = max_line_length
         self.line_length_format = line_length_format
         self.n_lines = n_lines
-        self.n_split_plus = 1
         self.line_spacing = line_spacing
         self.thickness = thickness
         self.jtype = jtype
-        self.border_spacing = border_spacing # property
-        ### new
-        self.u_spacing = 1
-        self.u_ltype = 1
-        self.u_thickness = 1
 
-        self.underliner = shapes.Line((0, 0, 0, 0),
-                                        color=self.color,
-                                        thickness=self.u_thickness,
-                                        ltype=self.u_ltype,
-                                        ref=None,
-                                        dim=None,
-                                        coord_format='points',
-                                        )
+        ### underliner ###########################################
+        self.u_spacing = self._int_or_float_times_font_size(u_spacing)
+        self.u_ltype = u_ltype
+        self.u_thickness = u_thickness
 
+        if isinstance(underliner, shapes.Line) or underliner is False:
+            self.underliner = underliner
+        else:
+            self.underliner = shapes.Line((0, 0, 0, 0),
+                                            color=self.color,
+                                            thickness=self.u_thickness,
+                                            ltype=self.u_ltype,
+                                            ref=None,
+                                            dim=None,
+                                            coord_format='points',
+                                            )
 
-        self.b_ltype = 1
-        self.b_thickness = 1
-        ###
-        self.o_ltype = o_ltype
-        self.o_thickness = o_thickness
+        #### border ####################################################
+        if one_border is True and border is False:
+            border = True
+
+        if invert_border is True and border is False:
+            border = True
+            b_thickness = -1
+
+        self.b_spacing = border_spacing  # property
+        self.b_ltype = b_ltype
+        self.b_thickness = b_thickness
+
+        if isinstance(border, shapes.Rectangle) or border is False:
+            self.border = border
+        else:
+            self.border = shapes.Rectangle((0, 0, 0, 0),
+                                             color=self.color,
+                                             thickness=self.b_thickness,
+                                             ltype=self.b_ltype,
+                                             ref=None,
+                                             dim=None,
+                                             coord_format='lbwh',
+                                             update_format=None,
+                                             )
+
         self.one_border = one_border
+        self.invert_border = invert_border
 
-        if invert_border is True:
-            self.outliner = 'border'
-            self.outliner.thickness = -1
-        elif self.one_border is True:
-            self.outliner = 'border'
+        if self.one_border is True:
             self.outliner.coord_format = 'ltwh'
 
-        else:
-            self.outliner = outliner
+        if self.invert_border is True:
+            self.border.thickness = -1
+        ################ Text Set UP #################################################################
 
-        self.invert_border = invert_border
         self.text_stubs = []
         self.text = text  # property
         self.text_fun = None
@@ -134,44 +155,6 @@ class TextWriter(bases.AssetWriter):
 
         self.total_height = n_stubs * self.font_height + (n_stubs-1) * self.line_spacing
 
-
-
-    @property
-    def outliner(self):
-        return self._outliner
-
-    @outliner.setter
-    def outliner(self, new_style):
-
-        if new_style is None:
-            self._outliner = None
-
-        elif new_style == 'border':
-            self._outliner = shapes.Rectangle((0, 0, 0, 0),
-                                             color=self.color,
-                                             thickness=self.o_thickness,
-                                             ltype=self.o_ltype,
-                                             ref=None,
-                                             dim=None,
-                                             coord_format='lbwh',
-                                             update_format=None,
-                                             )
-
-        elif new_style == 'underline':
-            self._outliner = shapes.Line((0, 0, 0, 0),
-                                        color=self.color,
-                                        thickness=self.o_thickness,
-                                        ltype=self.o_ltype,
-                                        ref=None,
-                                        dim=None,
-                                        coord_format='points',
-                                        )
-
-        elif isinstance(new_style, (shapes.Rectangle, shapes.Line)):
-            self._outliner = copy.deepcopy(new_style)
-
-        else:
-            pass
 
     @property
     def font_height(self):
@@ -350,6 +333,14 @@ class TextWriter(bases.AssetWriter):
 
     def write_fun(self, frame, *args, **kwargs):
         self.write(frame, self.text_fun(*args, **kwargs))
+
+    def _int_or_float_times_font_size(self, value):
+
+        if isinstance(value, float):
+            return int(value * self.font_height)
+        else:
+            return value
+
 
 
 
