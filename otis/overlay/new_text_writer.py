@@ -39,7 +39,7 @@ class TextWriter(bases.AssetWriter):
 
         super().__init__()
 
-        self._text = text
+
         self.font = font # property
         self.color = color # property
         self.ref = ref
@@ -55,6 +55,24 @@ class TextWriter(bases.AssetWriter):
         self.thickness = thickness
         self.jtype = jtype
         self.border_spacing = border_spacing # property
+        ### new
+        self.u_spacing = 1
+        self.u_ltype = 1
+        self.u_thickness = 1
+
+        self.underliner = shapes.Line((0, 0, 0, 0),
+                                        color=self.color,
+                                        thickness=self.u_thickness,
+                                        ltype=self.u_ltype,
+                                        ref=None,
+                                        dim=None,
+                                        coord_format='points',
+                                        )
+
+
+        self.b_ltype = 1
+        self.b_thickness = 1
+        ###
         self.o_ltype = o_ltype
         self.o_thickness = o_thickness
         self.one_border = one_border
@@ -69,9 +87,8 @@ class TextWriter(bases.AssetWriter):
         else:
             self.outliner = outliner
 
-
         self.invert_border = invert_border
-        self._text_stubs = []
+        self.text_stubs = []
         self.text = text  # property
         self.text_fun = None
 
@@ -110,7 +127,11 @@ class TextWriter(bases.AssetWriter):
         else:
             self.total_length = self.max_line_length
 
-        n_stubs = len(self.text_stubs)
+        if self.n_lines is None:
+            n_stubs = len(self.text_stubs)
+        else:
+            n_stubs = self.n_lines
+
         self.total_height = n_stubs * self.font_height + (n_stubs-1) * self.line_spacing
 
 
@@ -205,7 +226,7 @@ class TextWriter(bases.AssetWriter):
                            coords=None,
                            color=None,
                            ref=None,
-                           jtype='l',
+                           jtype=None,
                            show_outline=True,
                            ):
         """
@@ -287,7 +308,12 @@ class TextWriter(bases.AssetWriter):
         _ref = self.ref if ref is None else ref
 
         if text is not None:
-            self.write_line_of_text(frame, text, coords, color, ref)
+            self.write_line_of_text(frame,
+                                    text=text,
+                                    coords=_coords,
+                                    color=color,
+                                    ref=_ref
+                                    )
 
         else:
             if self.one_border:
@@ -298,11 +324,9 @@ class TextWriter(bases.AssetWriter):
             for i, stub in enumerate(self.text_stubs):
                 x, y = _coords
                 self.write_line_of_text(frame,
-                                        stub,
-                                        (x, y+i*down_space),
-                                        color,
-                                        _ref,
-                                        jtype=None,
+                                        text=stub,
+                                        coords=(x, y+i*down_space),
+                                        ref=_ref,
                                         show_outline=(not self.one_border),
                                         )
 
@@ -326,6 +350,9 @@ class TextWriter(bases.AssetWriter):
 
     def write_fun(self, frame, *args, **kwargs):
         self.write(frame, self.text_fun(*args, **kwargs))
+
+
+
 
 
 def main():
