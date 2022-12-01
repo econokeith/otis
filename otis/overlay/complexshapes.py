@@ -7,13 +7,17 @@ from otis.overlay.bases import CircleType, RectangleType, LineType
 
 class CircleWithLineToCenter(shapes.Circle):
 
-    def __init__(self, *args, thickness=2, **kwargs):
+    def __init__(self, *args,
+                 thickness=2,
+                 threshold=1,
+                 **kwargs):
 
         super().__init__(*args,
                          thickness=thickness,
                          **kwargs
                          )
 
+        self.threshold = threshold
         self.line_to_center = shapes.Line(color='c',
                                           thickness=2,
                                           coord_format='points'
@@ -37,7 +41,7 @@ class CircleWithLineToCenter(shapes.Circle):
 
         _color = 'g'
 
-        if dist_to_center > self.radius:
+        if dist_to_center > self.radius * self.threshold:
             _color = 'r'
 
             # line to center

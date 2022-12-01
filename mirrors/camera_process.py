@@ -8,7 +8,7 @@ import numpy as np
 
 from otis.helpers import multitools, cvtools, coordtools, colortools
 from otis.overlay import scenes, writergroups, shapes, boundingobjects, textwriters, imageassets, assetmover, \
-    typewriters
+    typewriters, complexshapes
 from otis.helpers import shapefunctions, timers
 from otis.overlay.assetmover import AssetMover
 
@@ -35,11 +35,13 @@ def target(shared, pargs):
     # setup bounding manager
     color_cycle = colortools.ColorCycle()  # so boxes have different colors
     # base_function
-    base_bounding_shape = shapes.Circle(color=None,
-                                        radius_type='diag',
-                                        thickness=2,
-                                        ltype=2
-                                        )
+    # base_bounding_shape = shapes.Circle(color=None,
+    #                                     radius_type='diag',
+    #                                     thickness=2,
+    #                                     ltype=2
+    #                                     )
+    base_bounding_shape = complexshapes.CircleWithLineToCenter(threshold=.5)
+
     # it's easier define the box_fun as an input to the BoundingManager when you have a more complex setup
     new_bounder_function = lambda: boundingobjects.BoundingAsset(asset=base_bounding_shape,
                                                                  moving_average=(None, None, 100, 100),
