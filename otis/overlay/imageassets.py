@@ -275,12 +275,25 @@ class ImageAsset(bases.AssetWriter):
             db = b - h_f + 1
             b = h_f
 
-        frame_portion = frame[t:b, l:r]
+        frame_portion = frame[t:b+1, l:r+1]
+        # image_portion = _image[dt: h_i - db, dl: w_i - dr]
         image_portion = _image[dt: h_i - db + 1, dl: w_i - dr + 1]
+
+        mismatch = False
+        if frame_portion.shape != image_portion.shape: #somethign happens here with the resizing that causes lots of errors
+            # this just makes sure there any shape mismatches
+            x_dim = min(frame_portion.shape[1], image_portion.shape[1])
+            y_dim = min(frame_portion.shape[0], image_portion.shape[0])
+            frame_portion = frame_portion[:y_dim, :x_dim]
+            image_portion = image_portion[:y_dim, :x_dim]
+            mismatch = True
 
         if self.mask is not None:
             # resize mask
             _mask = self.mask[dt: h_i - db + 1, dl: w_i - dr + 1]
+            # check for mismatches
+            if mismatch is True:
+                _mask = _mask[:y_dim, :x_dim]
             frame_portion[_mask] = image_portion[_mask]
         else:
             frame_portion[:, :, :] = image_portion

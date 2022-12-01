@@ -40,6 +40,7 @@ class TextWriter(bases.AssetWriter):
                  invert_border=False,
                  one_border=False,
                  transparent_background=0.,
+                 perma_border = False,
                  ):
 
         super().__init__()
@@ -120,6 +121,24 @@ class TextWriter(bases.AssetWriter):
         self.text = text  # property
         self.text_fun = lambda : ""
 
+
+        if self.n_lines is None:
+            n_stubs = len(self.text_stubs)
+        else:
+            n_stubs = self.n_lines
+        self.total_height = n_stubs * self.font_height + (n_stubs - 1) * self.line_spacing
+
+        try:
+            if self.line_length_format != 'pixels':
+                longest_stub = max(self.text_stubs, key=lambda stub: self.get_text_size(stub)[0])
+                self.total_length = self.get_text_size(longest_stub)[0]
+            else:
+                self.total_length = self.max_line_length
+        except:
+            pass
+
+        self.perma_border = perma_border
+
     ############################# PROPERTIES ##########################################################
     @property
     def font(self):
@@ -150,18 +169,20 @@ class TextWriter(bases.AssetWriter):
                                                           )
 
         # for determining borders. all in pixels
-        if self.max_line_length != 'pixels':
-            longest_stub = max(self.text_stubs, key=lambda stub: self.get_text_size(stub)[0])
-            self.total_length = self.get_text_size(longest_stub)[0]
-        else:
-            self.total_length = self.max_line_length
 
-        if self.n_lines is None:
-            n_stubs = len(self.text_stubs)
-        else:
-            n_stubs = self.n_lines
+        if self.perma_border is False:
+            if self.max_line_length != 'pixels':
+                longest_stub = max(self.text_stubs, key=lambda stub: self.get_text_size(stub)[0])
+                self.total_length = self.get_text_size(longest_stub)[0]
+            else:
+                self.total_length = self.max_line_length
 
-        self.total_height = n_stubs * self.font_height + (n_stubs - 1) * self.line_spacing
+            if self.n_lines is None:
+                n_stubs = len(self.text_stubs)
+            else:
+                n_stubs = self.n_lines
+
+            self.total_height = n_stubs * self.font_height + (n_stubs - 1) * self.line_spacing
 
     @property
     def font_height(self):

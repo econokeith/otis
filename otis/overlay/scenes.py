@@ -2,7 +2,7 @@ from collections import defaultdict
 
 import numpy as np
 
-from otis import camera2 as camera
+from otis import camera as camera
 from otis.helpers import cvtools, colortools
 from otis.overlay import assets
 

@@ -730,7 +730,7 @@ class MultiTypeWriter(TypeWriter):
         if self._stub_complete is True and self._stub_queue.empty() is False:
             self.next_stub()
 
-        else:  # same as above but the first check of the tiemr will start it.
+        else:  # same as above but the first check of the tiemr will begin_at it.
             if self.end_timer() is False:
                 for i in range(n_fin):
                     self.write(frame, self._used_stubs[i], coords=(p0, p1 + i * v_move))

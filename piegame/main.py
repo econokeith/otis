@@ -74,7 +74,7 @@ def main():
         process = multi.Process(target=module.target,
                                 args=(shared_data_object, pargs))
         processes.append(process)
-    # start
+    # begin_at
     for process in processes:
         process.start()
     # join processes

@@ -45,7 +45,8 @@ class TypeWriter(new_text_writer.TextWriter):
                  key_wait_range=(.05, .1),
                  end_pause=1,
                  loop=False,
-                 perma_background=True
+                 perma_background=True,
+                 **kwargs
                  ):
 
         super().__init__(coords=coords,
@@ -71,7 +72,8 @@ class TypeWriter(new_text_writer.TextWriter):
                          border=border,
                          b_ltype=b_ltype,
                          b_thickness=b_thickness,
-                         transparent_background=transparent_background
+                         transparent_background=transparent_background,
+                         **kwargs
                          )
 
         self.is_waiting = True

@@ -255,15 +255,15 @@ def remove_overlap_w_no_mass(no_mass, has_mass, buffer=0):
     # find sides
     a, b = dx = x2 - x1
     # check distance
-    r_sum = r1 + r2
+    r_sum = r1 + r2 + buffer
     centers_distance = np.hypot(*dx)
 
     if centers_distance < r1:
         has_mass.is_finished = True
 
-    elif centers_distance - buffer < r_sum:
+    elif centers_distance < r_sum:
         # separate along text connecting centers
-        dc = r_sum - centers_distance + 1 + buffer
+        dc = r_sum - centers_distance + 1
         da = a * (centers_distance + dc) / centers_distance - a
         db = b * (centers_distance + dc) / centers_distance - b
 
@@ -362,7 +362,7 @@ class CollisionDetector:
         else:
             return False
 
-    def collide(self, asset_0, asset_1, buffer=None):
+    def collide(self, asset_0, asset_1, buffer=0):
         _buffer = buffer if buffer is not None else self.buffer
         self._two_circle_velocity_update(asset_0, asset_1, _buffer)
 

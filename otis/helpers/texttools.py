@@ -22,7 +22,7 @@ def get_text_size(text, font='simplex', scale=1, thickness=None):
 
 def find_justified_start(text, coords, font, scale=1, thickness=1, jtype='l', ref=None, dim=None):
     """
-    finds the cv2 start position for writing justified text
+    finds the cv2 begin_at position for writing justified text
     Args:
         text:
         coords:

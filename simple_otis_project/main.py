@@ -89,7 +89,7 @@ def main():
         processes.append(process)
 
 
-    # start
+    # begin_at
     for process in processes:
         process.start()
     # join processes

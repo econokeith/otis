@@ -78,7 +78,7 @@ class BoundingAsset(bases.AssetHolderMixin, bases.AssetWriter):
 
 
         if moving_average is not None:
-            self.moving_average = BoxMovingAverage(in_format='cwh', out_format='cwh')
+            self.moving_average = BoxMovingAverage(*moving_average, in_format='cwh', out_format='cwh')
         else:
             self.moving_average = None
 

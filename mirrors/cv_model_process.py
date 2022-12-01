@@ -37,7 +37,7 @@ def target(shared_data_object, args):
         args.cf = 1
     else:
         model = 'cnn'
-        args.cf = 1
+
 
     known_names, known_encodings = cvtools.load_face_data(face_recognition, args.PATH_TO_FACES, __file__)
     known_names.append('unknown')

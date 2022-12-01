@@ -12,17 +12,17 @@ import camera_process, cv_model_process
 
 parser = otistools.make_parser()
 pargs = parser.parse_args()
-pargs.crop_to = (720, 720)
+pargs.c_dim = (1920, 1080)
+pargs.crop_to = (1080, 1080)
 pargs.f_dim = pargs.crop_to
 pargs.video_center = np.array(pargs.crop_to) // 2
 pargs.PATH_TO_FACES = './faces'
-pargs.output_scale = 1.8
+pargs.output_scale = 1
 pargs.servo = True
 pargs.cf = 2
-pargs.max_fps = 30
+pargs.max_fps = 60
 pargs.record = False
 pargs.record_scale = 1
-
 
 if pargs.servo is True:
     try:
@@ -69,7 +69,7 @@ def main():
                                           args=(shared_data_object, pargs)
                                           )
         processes.append(process)
-    # start
+    # begin_at
     for process in processes:
         process.start()
     # join processes
