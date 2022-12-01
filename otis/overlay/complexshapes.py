@@ -7,7 +7,11 @@ from otis.overlay.bases import CircleType, RectangleType, LineType
 
 class CircleWithLineToCenter(shapes.Circle):
 
-    def __init__(self, *args, thickness=2, **kwargs):
+    def __init__(self,
+                 *args,
+                 thickness=2,
+                 ltc_thickness = 2,
+                 **kwargs):
 
         super().__init__(*args,
                          thickness=thickness,
@@ -15,7 +19,7 @@ class CircleWithLineToCenter(shapes.Circle):
                          )
 
         self.line_to_center = shapes.Line(color='c',
-                                          thickness=2,
+                                          thickness=ltc_thickness,
                                           coord_format='points'
                                           )
 
@@ -43,18 +47,21 @@ class CircleWithLineToCenter(shapes.Circle):
             # line to center
             self.line_to_center.write(frame, coords= tuple(self.center) + frame_center)
 
+            # small circles on frame and box centers
             self.small_circle.write(frame, center=self.center, color='r')
             self.small_circle.write(frame, center=frame_center, color='r')
 
+            # little up/down lines on the tiny circles
             self.cross_lines.write(frame, (*frame_center, 90, 20))
             self.cross_lines.write(frame, (*frame_center, 0, 20))
-
-            self.cross_lines.write(frame, (*self.center, 45, 2 * self.radius * 1.1))
-            self.cross_lines.write(frame, (*self.center, -45, 2 * self.radius * 1.1))
-
             self.cross_lines.write(frame, (*self.center, 90, 20))
             self.cross_lines.write(frame, (*self.center, 0, 20))
 
+            # longer lines across the bounding circle
+            self.cross_lines.write(frame, (*self.center, 45, 2 * self.radius * 1.1))
+            self.cross_lines.write(frame, (*self.center, -45, 2 * self.radius * 1.1))
+
+        # print bounding circle
         super().write(frame, color=_color)
 
 
