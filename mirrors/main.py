@@ -12,7 +12,9 @@ import camera_process, cv_model_process
 
 parser = otistools.make_parser()
 pargs = parser.parse_args()
-pargs.video_center = np.array(pargs.dim) // 2
+pargs.crop_to = (720, 720)
+pargs.f_dim = pargs.crop_to
+pargs.video_center = np.array(pargs.crop_to) // 2
 pargs.PATH_TO_FACES = './faces'
 pargs.output_scale = 1.8
 pargs.servo = True
@@ -20,6 +22,7 @@ pargs.cf = 2
 pargs.max_fps = 30
 pargs.record = False
 pargs.record_scale = 1
+
 
 if pargs.servo is True:
     try:
@@ -42,9 +45,10 @@ def main():
     shared_data_object.add_value('keyboard_input', 'i', 0)
     shared_data_object.add_value('new_keyboard_input', ctypes.c_bool, False)
     shared_data_object.add_value('servo_tracking', ctypes.c_bool, False)
+    shared_data_object.add_array('key_input_receivedv', 'i', 0)
 
     # add shared arrays
-    shared_data_object.add_array('frame', ctypes.c_uint8, (pargs.dim[1], pargs.dim[0], 3)) # dims are backwards cause numpy
+    shared_data_object.add_array('frame', ctypes.c_uint8, (pargs.crop_to[1], pargs.crop_to[0], 3)) # dims are backwards cause numpy
     shared_data_object.add_array('bbox_coords', ctypes.c_int64, (pargs.faces, 4))         # is reversed
     shared_data_object.add_array('error', ctypes.c_double, 2)
     shared_data_object.add_array('observed_names', ctypes.c_uint8, pargs.faces)

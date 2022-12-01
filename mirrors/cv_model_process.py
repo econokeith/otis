@@ -54,7 +54,7 @@ def target(shared_data_object, args):
         x = name_dict[name]
 
     model_timer = timers.TimeSinceLast()
-    frame_copy = np.zeros((args.dim[1], args.dim[0], 3), dtype='uint8')
+    frame_copy = np.zeros((args.crop_to[1], args.crop_to[0], 3), dtype='uint8')
     face_distances = np.zeros((n_known_faces)*(max_faces), dtype=float).reshape((max_faces, n_known_faces))
     face_distances[:, -1] = MAX_FACE_DISTANCE
 

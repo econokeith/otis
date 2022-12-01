@@ -19,7 +19,7 @@ class AssetWriter:
                  # thickness=1,
                  # ltype=None,
                  # ref = None,
-                 # dim = None
+                 # c_dim = None
                  ):
         """
         AssetWriter is basically just a fancy mixin to add the class method
@@ -32,7 +32,7 @@ class AssetWriter:
         # self.thickness = thickness
         # self.ltype = ltype
         # self.ref = ref
-        # self.dim = dim
+        # self.c_dim = c_dim
 
     @property
     def color(self):

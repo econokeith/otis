@@ -18,22 +18,21 @@ class CameraPlayer:
     def __init__(self,
                  src=0,
                  name='otis',
-                 dim=(1280, 720),
+                 c_dim=(1280, 720),
+                 f_dim=None,
                  max_fps=60,
                  record = False,
                  record_to = 'cam.avi',
                  flip = False,
                  output_scale = 1,
-                 record_scale = .5, # I need to fix this
-                 crop_to = None,
-
+                 record_scale = .5,  # I need to fix this
                  ):
         """
 
         Args:
             src:
             name:
-            dim:
+            c_dim:
             max_fps:
             record:
             record_to:
@@ -50,40 +49,38 @@ class CameraPlayer:
         else:
             self.capture = cv2.VideoCapture(src)
 
-        if dim is not None:
-            self._dim = dim
-            self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, dim[0])
-            self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, dim[1])
+        if c_dim is not None:
+            self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, c_dim[0])
+            self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, c_dim[1])
+            self.c_dim = c_dim
+        else:
+            self.c_dim = self.capture.get(cv2.CAP_PROP_FRAME_WIDTH), self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
+
+        self.c_dim = np.array(self.c_dim, dtype=int)
+        self.c_center = np.array((self.c_dim[0] // 2, self.c_dim[1] // 2), dtype=int)
+
+        if f_dim is None:
+            self.f_dim = self.c_dim
+            self.f_center = self.c_center
+            self.cropped = False
 
         else:
-            self._dim = self.capture.get(cv2.CAP_PROP_FRAME_WIDTH), self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
-            self._dim = [int(d) for d in self.dim]
-
-        self.feed_dim = self.dim
-
-        assert crop_to is None or (crop_to[0] <= self.dim[0] and crop_to[1] <= self.dim[1])
-        self.center = self.dim[0] // 2, self.dim[1] // 2
-
-        self.crop_to = crop_to
-        if crop_to is not None:
-
-            dx1, dy1 = crop_to
-            cx0, cy0 = self.center
+            assert f_dim[0] <= self.c_dim[0] and f_dim[1] <= self.c_dim[1]
+            self.f_dim = np.array(f_dim, dtype=int)
+            dx1, dy1 = f_dim
+            cx0, cy0 = self.c_center
             x1_min = cx0 - dx1//2
             x1_max = cx0 + dx1//2
             y1_min = cy0 - dy1//2
             y1_max = cy0 + dy1//2
+            self._crop_points = (x1_min, x1_max, y1_min, y1_max)
+            self.f_center = np.array((dx1//2, dy1//2), dtype=int)
+            self.cropped=True
 
-            self.crop_points = (x1_min, x1_max, y1_min, y1_max)
-            self._dim = crop_to
-            self.center = dx1//2, dy1//2
+        self.blank_frame = np.zeros((self.f_dim[1], self.f_dim[0], 3), dtype="uint8")
 
-
-        self.blank_frame = np.zeros(self.dim[0]*self.dim[1]*3, dtype="uint8").reshape((self.dim[1], self.dim[0], 3))
-
-
-        self._frame = np.empty((*self.dim[::-1], 3), dtype='uint8')
-        self._cached_frame = np.array(self._frame)
+        self._frame = self.blank_frame.copy()
+        self._cached_frame = self._frame.copy()
         self.grabbed = True
         self.name = name
         self.stopped = False
@@ -96,7 +93,7 @@ class CameraPlayer:
         else:
             self.fps_sleeper = timers.SmartSleeper(0.)
 
-        self.fps_writer = writers.FPSWriter((10, int(self.dim[1] - 40)))
+        self.fps_writer = writers.FPSWriter((10, int(self.f_dim[1] - 40)))
         self.latency = 0.001
         self.limit_fps = True
         self.exit_warning = writers.TextWriter((10, 40), color='u')
@@ -110,9 +107,6 @@ class CameraPlayer:
         self.flip = flip
         self.output_scale = output_scale
 
-    @property
-    def dim(self):
-        return self._dim
 
     @property
     def frame(self):
@@ -143,7 +137,7 @@ class CameraPlayer:
             self.recorder = cv2.VideoWriter(self.record_to,
                                            cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'),
                                            self.max_fps,
-                                           self.dim * self.record_scale
+                                           self.f_dim * self.record_scale
                                            )
         else:
             self._record = new
@@ -161,12 +155,12 @@ class CameraPlayer:
         tick = time.time()
         self.grabbed, self.frame = self.capture.read()
 
-        if self.crop_to is not None:
-            x0, x1, y0, y1 = self.crop_points
-            self.frame = self.frame[y0:y1, x0:x1]
+        if self.cropped is not None:
+            x0, x1, y0, y1 = self._crop_points
+            self._frame = self.frame[y0:y1, x0:x1]
 
         if self.flip is True:
-            self.frame[:, :, :] = self.frame[:, ::-1, :]
+            self._frame[:, :, :] = self._frame[:, ::-1, :]
 
         self.latency = int(1000*(time.time()-tick))
 
@@ -180,7 +174,6 @@ class CameraPlayer:
         # run fps_sleeper to limit fps
         if self.max_fps is not None:
             self.fps_sleeper()
-
 
         # show fps on screen
         if fps is True:
@@ -211,7 +204,7 @@ class CameraPlayer:
         :return:
         """
         dim_writer = writers.TextWriter((10, 120), color='g')
-        dim_writer.text = f'c_dim = {self.dim[0]} x {self.dim[1]}'
+        dim_writer.text = f'f_dim = {self.f_dim[0]} x {self.f_dim[1]}'
 
         while True:
             self.read()
@@ -238,7 +231,7 @@ class CameraPlayer:
 #TODO maybe put in a wait until next frame option
 class ThreadedCameraPlayer(CameraPlayer):
 
-    def __init__(self, *args, cache=True, **kwargs):
+    def __init__(self, *args, cache=True, start=True, **kwargs):
         """
         separates the VideoCapture.read() and
         cv2.imshow functions into separate threads.
@@ -250,6 +243,9 @@ class ThreadedCameraPlayer(CameraPlayer):
         self.cache = cache
         self._frame = None
         self._cached_frame = np.copy(self.blank_frame)
+        self.started = False
+        if start is True:
+            self.start()
 
     @property
     def frame(self):
@@ -259,7 +255,9 @@ class ThreadedCameraPlayer(CameraPlayer):
             return self._frame
 
     def start(self):
-        Thread(target=self.update, args=()).start()
+        if self.started is False:
+            Thread(target=self.update, args=()).start()
+            self.started = True
         return self
 
     def update(self):
@@ -288,8 +286,8 @@ class ThreadedCameraPlayer(CameraPlayer):
 
             try:
 
-                if self.crop_to is not None:
-                    x0, x1, y0, y1 = self.crop_points
+                if self.cropped is True:
+                    x0, x1, y0, y1 = self._crop_points
                     self._cached_frame[:,:,:] = self._frame[y0:y1, x0:x1]
                 else:
                     self._cached_frame[:,:,:] = self._frame
@@ -299,7 +297,7 @@ class ThreadedCameraPlayer(CameraPlayer):
 
             except:
                 frame_dim = self._frame.shape[:2][::-1]
-                raise RuntimeError(f'Video feed {frame_dim} does not match specified dimensions {self.dim}. This '
+                raise RuntimeError(f'Video feed {frame_dim} does not match specified dimensions {self.f_dim}. This '
                                    'usually occurs because your camera is unable to record at the speficied frame size. '
                                    'Check hardware limitations and camera setting or change camera.c_dim to a smaller size'
                                    )
@@ -310,3 +308,10 @@ class ThreadedCameraPlayer(CameraPlayer):
             #     self._cached_frame[:, :, :] = self._frame
 
             return self.grabbed, self.frame
+
+
+if __name__=='__main__':
+    capture = ThreadedCameraPlayer(c_dim=(1080, 720), f_dim=(720, 720))
+    capture.read()
+    print(capture.frame.shape)
+    capture.test()

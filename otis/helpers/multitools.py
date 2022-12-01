@@ -34,7 +34,7 @@ class SharedDataObject:
         Add shared arrays and values as follows:
 
         shared_data = DataShare()
-        shared_data.add_array(array_name, c_type, dim)
+        shared_data.add_array(array_name, c_type, c_dim)
         shared_data.add_value(value_name, c_type, value)
 
         shared arrays are accessed as np.frombuffer arrays

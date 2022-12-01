@@ -3,7 +3,7 @@ import argparse
 
 def make_parser():
     parser = argparse.ArgumentParser(description='options for this otis project')
-    parser.add_argument('-d', '--dim',type=tuple, default=(1280, 720),
+    parser.add_argument('-d', '--c_dim',type=tuple, default=(1280, 720),
                         help='set video dimensions. default is (1920, 1080)')
     parser.add_argument('-m', '--max_fps', type=int, default=30,
                         help='set max fps Default is 60')
@@ -37,7 +37,7 @@ class ArgParser:
         if parser is None:
             parser = argparse.ArgumentParser(description=description, **kwargs)
 
-        parser.add_argument('-d', '--dim', type=tuple, default=(1280, 720),
+        parser.add_argument('-d', '--c_dim', type=tuple, default=(1280, 720),
                             help='set video dimensions. default is (1280, 720)')
         parser.add_argument('-m', '--max_fps', type=int, default=30,
                             help='set max fps Default is 30')

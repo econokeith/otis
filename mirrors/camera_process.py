@@ -20,7 +20,7 @@ def target(shared, pargs):
 
     ####################################### SETUP #####################################################################
 
-    otis = textwriters.OTIS(pargs.dim[0]-200, coords=(100, 500), scale=1.5)
+    otis = textwriters.OTIS(pargs.f_dim[0]-200, coords=(100, 500), scale=1.5)
     otis.add_script(_JOKE_SCRIPT)
 
     manager = scenes.SceneManager(shared, pargs, file=__file__)
@@ -84,21 +84,21 @@ def target(shared, pargs):
         box_manager.write(frame)
 
         # otis waits until there's someone here to talk
-        if box_manager.primary_box is not None:
-            otis_is_silent = False
-
-        if otis_is_silent is False:
-            otis.type_line(frame)
-
-        if show_info is True:
-            info_group2.write(frame)
-            info_group.write(frame)
-
+        # if box_manager.primary_box is not None:
+        #     otis_is_silent = False
+        #
+        # if otis_is_silent is False:
+        #     otis.type_line(frame)
+        #
+        # if show_info is True:
+        #     info_group2.write(frame)
+        #     info_group.write(frame)
+        #
         capture.show(frame)
 
         ############################ keyboard inputs ###################################################################
 
-        keyboard_input = cv2.waitKey(1) & 0xFF # only camera process receives the keyboard inputq
+        keyboard_input = cv2.waitKey(1) & 0xFF # only camera process receives the keyboard input
 
         if shared.new_keyboard_input.value is False and keyboard_input != 255: # 255 is the value given for no input
 
@@ -177,7 +177,7 @@ class BallSprinkler:
         self.ball_diameter = 50
         self.box_collisions = True
         self.x_value_min = x_border
-        self.x_value_max = self.capture.dim[0] - x_border
+        self.x_value_max = self.capture.f_dim[0] - x_border
         self.cycle_time = 4
         self.x_value_counter = timers.TimedCycle(self.x_value_min,
                                                  self.x_value_max,
@@ -185,7 +185,7 @@ class BallSprinkler:
                                                  cycle_t=self.cycle_time
                                                  )
 
-        self.circle = shapes.Circle((0, 0), 100, ref='c', dim=self.capture.dim, to_abs=True)
+        self.circle = shapes.Circle((0, 0), 100, ref='c', dim=self.capture.f_dim, to_abs=True)
         # this function creates new bouncers
         def mover_function():
             image_balls = imageassets.ImageAsset(center=(0, 0),
@@ -198,7 +198,7 @@ class BallSprinkler:
                                center=(self.x_value_counter(), 50),
                                velocity=(np.random.randint(200, 500),
                                          np.random.rand() * np.pi),
-                               dim=self.capture.dim,
+                               dim=self.capture.f_dim,
                                ups=self.capture.max_fps,
                                border_collision=True,
                                gravity=self.gravity,

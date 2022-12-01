@@ -15,7 +15,7 @@ __FRAME_HASH['cr'] = lambda s: (s[1], int(s[0] / 2))
 __FRAME_HASH['ct'] = lambda s: (int(s[1] / 2), 0)
 __FRAME_HASH['cb'] = lambda s: (int(s[1] / 2), s[0])
 
-# todo: clean up the dim variable to make it consistent between np.shape and regular dims. basically need to switch
+# todo: clean up the c_dim variable to make it consistent between np.shape and regular dims. basically need to switch
 def absolute_point(relative_point,
                    reference=None,
                    dim=None
@@ -35,7 +35,7 @@ def absolute_point(relative_point,
     if not isinstance(reference, str):
         ref = reference
 
-    elif isinstance(reference, str) and isinstance(dim, np.ndarray):
+    elif isinstance(reference, str) and isinstance(dim, np.ndarray) and len(dim.shape)>1:
         _dim = dim.shape
         ref = __FRAME_HASH[reference](_dim)
 

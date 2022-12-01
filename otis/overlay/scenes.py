@@ -2,7 +2,7 @@ from collections import defaultdict
 
 import numpy as np
 
-from otis import camera
+from otis import camera2 as camera
 from otis.helpers import cvtools, colortools
 from otis.overlay import assets
 
@@ -10,7 +10,7 @@ from otis.overlay import assets
 class SceneManager:
     capture: camera.ThreadedCameraPlayer
 
-    def __init__(self, shared, pargs, capture=None, names=True, file=None):
+    def __init__(self, shared, pargs, capture=None, names=True, file=None,**kwargs):
 
         self.shared = shared
         self.pargs = pargs
@@ -27,12 +27,14 @@ class SceneManager:
         if capture is None:
             self.capture = camera.ThreadedCameraPlayer(0,
                                                   max_fps=pargs.max_fps,
-                                                  dim=pargs.dim,
+                                                  c_dim=pargs.c_dim,
                                                   flip=True,
                                                   record=pargs.record,
                                                   record_to=pargs.record_to,
                                                   output_scale=pargs.output_scale,
-                                                  record_scale=pargs.record_scale
+                                                  record_scale=pargs.record_scale,
+                                                  f_dim=pargs.crop_to,
+                                                  **kwargs
                                                   ).start()
         else:
             self.capture = capture

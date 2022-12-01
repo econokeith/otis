@@ -226,7 +226,7 @@ class BoundingManager:
         self.is_updated = True
         self.flash_event = False
 
-        self.frame = np.zeros((self.args.dim[1], self.args.dim[0], 3), dtype='uint8')
+        self.frame = np.zeros((self.args.f_dim[1], self.args.f_dim[0], 3), dtype='uint8')
         self._primary_target = None
         self.primary_timer_range = [5, 20]
         self.time_for_new_primary = timers.TimeElapsedBool()
