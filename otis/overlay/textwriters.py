@@ -316,7 +316,7 @@ class TextWriter(bases.AssetWriter):
 
     def _write_one_border(self, frame, coords, color, ref):
         if isinstance(self.outliner, shapes.Rectangle):
-            x, y = coordtools.abs_point(coords, ref, frame)
+            x, y = coordtools.absolute_point(coords, ref, frame)
             v_space, h_space = self.border_spacing
             h = self.total_height + 2 * v_space
             w = self.total_length + 2 * h_space
@@ -582,7 +582,7 @@ class TypeWriter(TextWriter):
 
     def type_line(self, frame, coords=None, ref=None):
         if coords is not None:
-            self.coords = coordtools.abs_point(coords, ref, frame)
+            self.coords = coordtools.absolute_point(coords, ref, frame)
         # if there's more in the name generator, it will continue to type new letters
         # then will show the full message for length of time self.end_pause
         # then finally stop shows
@@ -749,7 +749,7 @@ class MultiTypeWriter(TypeWriter):
         if coords is None:
             _coords = self.coords
         else:
-            _coords = coordtools.abs_point(coords, ref, frame)
+            _coords = coordtools.absolute_point(coords, ref, frame)
 
         if self._stub_iter.is_empty is False:
             # pause for a comma a tad

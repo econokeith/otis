@@ -1,13 +1,12 @@
 import cv2
 import numpy as np
 import abc
-from otis.helpers import shapefunctions, coordtools
+from otis.helpers import shapefunctions, coordtools, misc
 from otis.overlay import bases
 from otis.overlay.bases import CircleType, RectangleType, LineType
 
 
 class ShapeAsset(bases.AssetWriter, abc.ABC):
-
 
     def __init__(self,
                  coords=None,
@@ -18,9 +17,9 @@ class ShapeAsset(bases.AssetWriter, abc.ABC):
                  dim=None,
                  coord_format='rtlb',
                  update_format=None,
-                 collisions = False,
-                 lock_dimensions = False,
-                 to_abs = False,
+                 collisions=False,
+                 lock_dimensions=False,
+                 to_abs=False,
                  ):
 
         super().__init__()
@@ -49,11 +48,9 @@ class ShapeAsset(bases.AssetWriter, abc.ABC):
 
     @coords.setter
     def coords(self, new_coords):
-
         self._coords[:] = coordtools.translate_box_coords(new_coords,
                                                           in_format=self.update_format,
                                                           out_format=self.coord_format,
-
                                                           )
 
     @property
@@ -88,11 +85,11 @@ class ShapeAsset(bases.AssetWriter, abc.ABC):
 
         """
         self._coords[:] = coordtools.translate_box_coords(self._coords,
-                                                       in_format=self.coord_format,
-                                                       out_format=self.coord_format,
-                                                       ref=self.ref,
-                                                       dim=self.dim
-                                                       )
+                                                          in_format=self.coord_format,
+                                                          out_format=self.coord_format,
+                                                          ref=self.ref,
+                                                          dim=self.dim
+                                                          )
         self.ref = None
 
 
@@ -104,7 +101,7 @@ class Circle(ShapeAsset, CircleType):
                  radius_type='inner',
                  coords=None,
                  update_format='cwh',
-                 to_abs = False,
+                 to_abs=False,
                  **kwargs
                  ):
         """
@@ -116,10 +113,9 @@ class Circle(ShapeAsset, CircleType):
             radius_type:
             **kwargs:
         """
-
         ShapeAsset.__init__(self,
                             coords=None,
-                            update_format = update_format,
+                            update_format=update_format,
                             coord_format='cwh',
                             **kwargs)
 
@@ -138,14 +134,12 @@ class Circle(ShapeAsset, CircleType):
         if to_abs is True:
             self.convert_to_abs()
 
-
     @property
     def coords(self):
         return super().coords
 
     @coords.setter
     def coords(self, new_coords):
-
 
         cx, cy, w, h = coordtools.translate_box_coords(new_coords,
                                                        in_format=self.update_format,
@@ -172,11 +166,11 @@ class Circle(ShapeAsset, CircleType):
 
     @property
     def radius(self):
-        return self._coords[2]/2
+        return self._coords[2] / 2
 
     @radius.setter
     def radius(self, new_radius):
-        self._coords[2] = self._coords[3] = new_radius*2
+        self._coords[2] = self._coords[3] = new_radius * 2
 
     @property
     def center(self):
@@ -209,7 +203,6 @@ class Circle(ShapeAsset, CircleType):
             self.color = _color
             self.ref = _ref
 
-
         shapefunctions.draw_circle(frame,
                                    _center,
                                    _radius,
@@ -220,12 +213,10 @@ class Circle(ShapeAsset, CircleType):
                                    )
 
 
-# todo: need to think of a way to efficiently update center and find height/width
-
 class Rectangle(ShapeAsset, RectangleType):
 
     def __init__(self,
-                 coords=(0,0,0,0),
+                 coords=(0, 0, 0, 0),
                  **kwargs,
                  ):
 
@@ -260,7 +251,6 @@ class Rectangle(ShapeAsset, RectangleType):
                                                              out_format=self.coord_format
                                                              )
             self._coords[:] = coords_updated
-
 
     @property
     def center(self):
@@ -298,7 +288,6 @@ class Rectangle(ShapeAsset, RectangleType):
                                                      out_format='cwh')
         return w
 
-
     def write(self, frame, coords=None, color=None, ref=None, save=False):
         """
         :type frame: np.array
@@ -309,7 +298,6 @@ class Rectangle(ShapeAsset, RectangleType):
         _ref = self.ref if ref is None else ref
 
         if save is True:
-
             self.coords = _coords
             self.color = _color
             self.ref = _ref
@@ -323,14 +311,16 @@ class Rectangle(ShapeAsset, RectangleType):
                                       ref=_ref,
                                       )
 
+
 class Line(bases.AssetWriter, LineType):
 
     def __init__(self,
-                 coords = (0, 0, 0, 0),
-                 color = 'r',
+                 coords=(0, 0, 0, 0),
+                 color='r',
                  thickness=2,
                  ltype=None,
-                 coord_format='points',# points (x1, y1, x2, y2), 'pal': (x1, y1, angle, length), 'cal' center angle length
+                 coord_format='points',
+                 # points (x1, y1, x2, y2), 'pal': (x1, y1, angle, length), 'cal' center angle length
                  ref=None,
                  dim=None
                  ):
@@ -360,43 +350,78 @@ class Line(bases.AssetWriter, LineType):
         _ref = self.ref if ref is None else ref
 
         if save is True:
-
             self.coords = _coords
             self.color = _color
             self.ref = _ref
 
         # depending on the text coord format, choose a different drawing function
         if self.coord_format == 'pal':
-            shapefunctions.draw_pal_line(frame, _coords[:2], _coords[2], _coords[3],
-                                         color=_color, thickness=self.thickness, ltype=self.ltype, ref=_ref)
+            shapefunctions.draw_pal_line(frame,
+                                         _coords[:2],
+                                         _coords[2],
+                                         _coords[3],
+                                         color=_color,
+                                         thickness=self.thickness,
+                                         ltype=self.ltype,
+                                         ref=_ref
+                                         )
+
         elif self.coord_format == 'cal':
-            shapefunctions.draw_cal_line(frame, _coords[:2], _coords[2], _coords[3],
-                                         color=_color, thickness=self.thickness, ltype=self.ltype, ref=_ref)
+            shapefunctions.draw_cal_line(frame,
+                                         _coords[:2],
+                                         _coords[2],
+                                         _coords[3],
+                                         color=_color,
+                                         thickness=self.thickness,
+                                         ltype=self.ltype,
+                                         ref=_ref
+                                         )
+
         else:
-            point0 = coordtools.abs_point(_coords[:2], ref, frame)
-            point1 = coordtools.abs_point(_coords[2:], ref, frame)
-
-            cv2.line(frame, point0, point1, _color, self.thickness, self.ltype)
-
+            shapefunctions.draw_line(frame,
+                                     _coords[:2],
+                                     _coords[2:],
+                                     color=_color,
+                                     thickness=self.thickness,
+                                     ltype=self.ltype,
+                                     ref=_ref,
+                                     )
 
 class TransparentBackground(RectangleType):
 
     def __init__(self,
                  coords=(0, 0, 0, 0),
                  transparency=.25,
-                 coord_format= 'rtlb',
-                 ref=None):
+                 coord_format='rtlb',
+                 ref=None,
+                 ):
 
         super().__init__()
+
         self.coords = coords
         self.transparency = transparency
         self.coord_format = coord_format
         self.ref = ref
 
-    def write(self, frame):
+    def write(self,
+              frame,
+              coords=None,
+              transparency=None,
+              ref=None,
+              color=None
+              ):
+
+        _coords, _transparency, _ref = misc.update_save_keywords(self,
+                                                                 locals(),
+                                                                 ['coords',
+                                                                  'transparency',
+                                                                  'ref'
+                                                                  ]
+                                                                 )
+
         shapefunctions.write_transparent_background(frame,
-                                                    coords=self.coords,
+                                                    coords=_coords,
                                                     coord_format=self.coord_format,
-                                                    transparency=self.transparency,
-                                                    ref=self.ref
+                                                    transparency=_transparency,
+                                                    ref=_ref
                                                     )

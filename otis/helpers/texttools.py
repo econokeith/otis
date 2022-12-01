@@ -45,7 +45,7 @@ def find_justified_start(text, coords, font, scale=1, thickness=1, jtype='l', re
     else:
         justified_start = coords
 
-    return coordtools.abs_point(justified_start, ref, dim)
+    return coordtools.absolute_point(justified_start, ref, dim)
 
 def split_text_into_lines(text,
                           max_line_length=None,

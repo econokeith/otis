@@ -9,7 +9,7 @@ from otis.helpers import dstructures, colortools
 def draw_circle(frame, center, radius, color='r', thickness=1, ltype=None, ref=None):
     _color = colortools.color_function(color)
 
-    c = coordtools.abs_point(center, ref, dim=frame)
+    c = coordtools.absolute_point(center, ref, dim=frame)
 
     cv2.circle(frame, c, int(radius), _color, int(thickness), ltype)
 
@@ -61,10 +61,29 @@ def draw_line(frame,
     :return:
     """
     _color = colortools.color_function(color)
-    _pt1 = coordtools.abs_point(pt1, ref, frame)
-    _pt2 = coordtools.abs_point(pt2, ref, frame)
+    _pt1 = coordtools.absolute_point(pt1, ref, frame)
+    _pt2 = coordtools.absolute_point(pt2, ref, frame)
     cv2.line(frame, _pt1, _pt2, _color, thickness, ltype)
 
+def draw_line(frame, point0, point1, color='r', thickness=1, ltype=None, ref=None):
+    """
+
+    Args:
+        frame:
+        point0:
+        point1:
+        color:
+        thickness:
+        ltype:
+        ref:
+
+    Returns:
+
+    """
+    _color = colortools.color_function(color)
+    _point0 = coordtools.absolute_point(point0, ref, frame)
+    _point1 = coordtools.absolute_point(point1, ref, frame)
+    cv2.line(frame, _point0, _point1, _color, thickness, ltype)
 
 def draw_cal_line(frame, center, angle, length, color='r', thickness=1, ltype=None, ref=None):
     """
@@ -115,7 +134,7 @@ def write_text(frame,
                ):
 
     _color = colortools.color_function(color)
-    _pos = coordtools.abs_point(pos, ref, frame)
+    _pos = coordtools.absolute_point(pos, ref, frame)
     _font = cv2.FONT_HERSHEY_DUPLEX if font is None else font
     _pos = texttools.find_justified_start(text, _pos, _font, scale, ltype, jtype)
 
@@ -148,7 +167,7 @@ def write_bordered_text(frame,
 
     _color = colortools.color_function(color)
     _bcolor = colortools.color_function(b_color)
-    _pos = otis.helpers.coordtools.abs_point(pos, ref, frame)
+    _pos = otis.helpers.coordtools.absolute_point(pos, ref, frame)
     _font = cv2.FONT_HERSHEY_DUPLEX if font is None else font
     _pos = otis.helpers.texttools.find_justified_start(text, _pos, _font, scale, ltype, jtype)
 

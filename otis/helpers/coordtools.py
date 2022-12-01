@@ -16,10 +16,10 @@ __FRAME_HASH['ct'] = lambda s: (int(s[1] / 2), 0)
 __FRAME_HASH['cb'] = lambda s: (int(s[1] / 2), s[0])
 
 # todo: clean up the dim variable to make it consistent between np.shape and regular dims. basically need to switch
-def abs_point(relative_point,
-              reference=None,
-              dim=None
-              ):
+def absolute_point(relative_point,
+                   reference=None,
+                   dim=None
+                   ):
 
     """
     returns the absolute pixel location when given a cartesian relative point to there
@@ -89,7 +89,7 @@ def translate_box_coords(coords,
 
     elif in_format == 'cwh':
         cx, cy, w, h = coords
-        cx, cy = abs_point((cx, cy), ref, dim)
+        cx, cy = absolute_point((cx, cy), ref, dim)
         abs_point_used = True
         t = cy- h//2
         b = cy+ h//2
@@ -98,35 +98,35 @@ def translate_box_coords(coords,
 
     elif in_format == 'ltwh':
         l, t, w, h = coords
-        l, t = abs_point((l,t), ref, dim)
+        l, t = absolute_point((l, t), ref, dim)
         abs_point_used = True
         b = t+h
         r = l+w
 
     elif in_format == 'lbwh':
         l, b, w, h = coords
-        l, b = abs_point((l,b), ref, dim)
+        l, b = absolute_point((l, b), ref, dim)
         abs_point_used = True
         t = b - h
         r = l + w
 
     elif in_format == 'rtwh':
         r, t, w, h = coords
-        r, t = abs_point((r,t), ref, dim)
+        r, t = absolute_point((r, t), ref, dim)
         abs_point_used = True
         l = r-w
         b = t+h
 
     elif in_format == 'rbwh':
         r, b, w, h = coords
-        r, b = abs_point((r,b), ref, dim)
+        r, b = absolute_point((r, b), ref, dim)
         abs_point_used = True
         l = r-w
         t = b-h
 
     elif in_format == 'ctwh':
         cx, cy, w, h = coords
-        cx, cy = abs_point((cx, cy), ref, dim)
+        cx, cy = absolute_point((cx, cy), ref, dim)
         abs_point_used = True
         r = cx - w//2
         l = cx + w//2
@@ -135,7 +135,7 @@ def translate_box_coords(coords,
 
     elif in_format == 'cbwh':
         cx, cy, w, h = coords
-        cx, cy = abs_point((cx, cy), ref, dim)
+        cx, cy = absolute_point((cx, cy), ref, dim)
         abs_point_used = True
         r = cx - w//2
         l = cx + w//2
@@ -144,7 +144,7 @@ def translate_box_coords(coords,
 
     elif in_format == 'crwh':
         cx, cy, w, h = coords
-        cx, cy = abs_point((cx, cy), ref, dim)
+        cx, cy = absolute_point((cx, cy), ref, dim)
         abs_point_used = True
         r = cx
         l = cx + w
@@ -153,7 +153,7 @@ def translate_box_coords(coords,
 
     elif in_format == 'clwh':
         cx, cy, w, h = coords
-        cx, cy = abs_point((cx, cy), ref, dim)
+        cx, cy = absolute_point((cx, cy), ref, dim)
         abs_point_used = True
         r = cx - h
         l = cx
@@ -162,7 +162,7 @@ def translate_box_coords(coords,
 
     elif in_format == 'cirle':
         cx, cy, r, _ = coords
-        cx, cy = abs_point((cx, cy), ref, dim)
+        cx, cy = absolute_point((cx, cy), ref, dim)
         abs_point_used = True
         t = cy- r//2
         b = cy+ r//2
@@ -173,8 +173,8 @@ def translate_box_coords(coords,
         raise ValueError("invalid coord format")
 
     if abs_point_used is False:
-        r, t = abs_point((r, t), ref, dim)
-        l, b = abs_point((l, b), ref, dim)
+        r, t = absolute_point((r, t), ref, dim)
+        l, b = absolute_point((l, b), ref, dim)
 
     if  out_format == 'ltrb':
         return l, t, r, b
@@ -198,46 +198,6 @@ def translate_box_coords(coords,
     else:
         return r, t, l, b
 
-
-# def find_center_radius_from_box_coords(box_coords,
-#                                        radius_type='inner', #can be 'inner', 'outer', 'avg', 'diag'
-#                                        box_format='circle',
-#                                        ref=None,
-#                                        dim=None
-#                                        ):
-#     """
-#
-#     Args:
-#         box_coords:
-#         radius_type: can be 'inner', 'outer', 'avg', 'diag'
-#         box_format:
-#         ref:
-#         dim:
-#
-#     Returns:
-#         (cx, cy, radius, radius)
-#
-#     """
-#     if len(box_coords) == 3 or box_format == 'circle':
-#         return *box_coords, box_coords[2]
-#
-#     cx, cy, w, h = translate_box_coords(box_coords,
-#                                         in_format=box_format,
-#                                         out_format='cwh',
-#                                         ref=ref,
-#                                         dim=dim
-#                                         )
-#
-#     if radius_type == 'inner':
-#         radius = min(w, h)//4
-#     elif radius_type == 'outer':
-#         radius = max(w, h)//4
-#     elif radius_type == 'diag':
-#         radius = np.sqrt(w**2 + h**2)//2
-#     else:
-#         radius = (w+h)//4
-#
-#     return cx, cy, radius*2, radius
 
 def get_frame_portion(frame, coords, coord_format='cwh', ref=None, copy=True):
 

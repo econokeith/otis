@@ -9,12 +9,12 @@ import numpy as np
 import otis.helpers.coordtools
 import otis.helpers.maths
 from otis.helpers import timers, colortools, shapefunctions, texttools, \
-    otistools, cvtools, dstructures, coordtools, misc
-from otis.overlay import bases, shapes
-from otis.overlay.textwriters import TextWriter
+                         otistools, cvtools, dstructures, coordtools, misc
+
+from otis.overlay import bases, shapes, new_text_writer
 
 
-class TypeWriter(TextWriter):
+class TypeWriter(new_text_writer.TextWriter):
 
     def __init__(self,
                  coords=(0, 0),
@@ -29,17 +29,23 @@ class TypeWriter(TextWriter):
                  max_line_length=None,
                  line_length_format='pixels',
                  n_lines=None,
-                 border_spacing=(5, 5),
                  jtype='l',
-                 outliner=None,
-                 o_ltype=None,
-                 o_thickness=1,
+                 u_spacing=.05,
+                 u_ltype=None,
+                 u_thickness=1,
+                 underliner=False,
+                 border=False,
+                 border_spacing=(.1, .1),
+                 b_ltype=1,
+                 b_thickness=1,
                  invert_border=False,
                  one_border=False,
+                 transparent_background=0.,
                  # unique to typewriter starts here
                  key_wait_range=(.05, .1),
                  end_pause=1,
                  loop=False,
+                 perma_background=True
                  ):
 
         super().__init__(coords=coords,
@@ -56,11 +62,16 @@ class TypeWriter(TextWriter):
                          n_lines=n_lines,
                          border_spacing=border_spacing,
                          jtype=jtype,
-                         outliner=outliner,
-                         o_ltype=o_ltype,
-                         o_thickness=o_thickness,
                          invert_border=invert_border,
                          one_border=one_border,
+                         u_spacing=u_spacing,
+                         u_ltype=u_ltype,
+                         u_thickness=u_thickness,
+                         underliner=underliner,
+                         border=border,
+                         b_ltype=b_ltype,
+                         b_thickness=b_thickness,
+                         transparent_background=transparent_background
                          )
 
         self.is_waiting = True
@@ -78,6 +89,7 @@ class TypeWriter(TextWriter):
         self.completed_stubs = []
 
         self.text = text
+        self.perma_background = perma_background
 
     @property
     def text(self):
@@ -89,7 +101,6 @@ class TypeWriter(TextWriter):
         if isinstance(new_text, (tuple, list)):
             new_text, end_pause = new_text
             self.end_pause = end_pause
-            self.end_pause_timer = timers.TimeElapsedBool(wait=self.end_pause, start=False)
 
         # this is straight from:
         # https://stackoverflow.com/questions/10810369/python-super-and-setting-parent-class-property
@@ -97,6 +108,10 @@ class TypeWriter(TextWriter):
 
         self.stub_queue = Queue()
         if new_text is not None:
+            self.end_pause_timer = timers.TimeElapsedBool(wait=self.end_pause,
+                                                          start=False
+                                                          )
+
             self.text_complete = False
             for stub in self.text_stubs:
                 self.stub_queue.put(stub)
@@ -104,8 +119,6 @@ class TypeWriter(TextWriter):
             self.current_stub = self.stub_queue.get()
             self._output = ""
             self.completed_stubs = []
-
-        return
 
     @property
     def current_stub(self):
@@ -120,10 +133,6 @@ class TypeWriter(TextWriter):
         self.completed_stubs.append(old_stub)
 
     def write_line_of_text(self, frame, coords=None, show_outline = True, **kwargs):
-
-        # if self.typing_complete is True and (not self.stub_queue.empty() or self.end_pause_timer() is True):
-        #     self._stub_complete = True
-        #     return
 
         if self.text_complete is True:
             return
@@ -140,14 +149,12 @@ class TypeWriter(TextWriter):
 
         elif iter_empty is True and queue_empty is False:
             self.current_stub = self.stub_queue.get()
-            # don't miss a frame if we need to refill
-            # self.write_line_of_text(frame)
 
         elif iter_empty is True and queue_empty is True and self.end_pause_timer() is True:
             self.text_complete = True
 
         else:
-            pass  # this can't happenn
+            pass  # this can't happen, hopefully
 
         super().write_line_of_text(frame,
                                    text=self._output + self.cursor(),
@@ -157,10 +164,13 @@ class TypeWriter(TextWriter):
 
     def write(self, frame, **kwargs):
 
-        if self.text_complete is True and self.loop is False:
+        if self.text_complete is True and self.loop is False and self.perma_background is False:
             return
-        elif self.text_complete is True:
+        elif self.text_complete is True and self.loop is True:
             self.text = self._text
+        elif self.text_complete is True and self.perma_background is True:
+            self._write_one_border(frame, self.coords, self.color, self.ref)
+            return
 
         if self.one_border:
             self._write_one_border(frame, self.coords, self.color, self.ref)
@@ -190,10 +200,24 @@ if __name__ == '__main__':
     from otis import camera
 
     capture = camera.ThreadedCameraPlayer(max_fps=30).start()
-    writer = TypeWriter(coords=(100, 100), invert_border=True, max_line_length=300, one_border=True)
-    writer.text = "HELLO MY NAME IS OTIS I WOULD LIKE TO BE YOUR FRIENDS"
-    while True:
 
+    writer = TypeWriter(coords=(0, 120),
+                        ref='b',
+                        jtype='c',
+                        scale=1.5,
+                        max_line_length=1000,
+                        one_border=True,
+                        perma_background=True,
+                        border_spacing=(.3, .3),
+                        n_lines=3,
+                        transparent_background=.9,
+                        loop=True,
+                        color='g'
+                        )
+
+    writer.text = "HELLO MY NAME IS OTIS I WOULD LIKE TO BE YOUR FRIENDS"
+
+    while True:
         capture.read()
         writer.write(capture.frame)
         capture.show()
