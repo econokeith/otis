@@ -100,9 +100,9 @@ COLOR_HASH = {
 }
 
 def color_function(color):
-    if color in COLOR_HASH.keys():
+    try:
         return COLOR_HASH[color]
-    else:
+    except:
         return color
 
 

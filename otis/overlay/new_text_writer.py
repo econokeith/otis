@@ -338,7 +338,7 @@ def main():
     font_list = ('simplex', 'plain', 'duplex', 'complex', 'triplex', 'c_small', 's_simplex', 's_complex')
     from otis import camera
 
-    capture = camera.ThreadedCameraPlayer(max_fps=30).start()
+    capture = camera.ThreadedCameraPlayer(max_fps=30, dim=(1280, 720)).start()
 
     writer = TextWriter(ref='c',
                         jtype='c',
@@ -352,10 +352,11 @@ def main():
 
     while True:
 
-        capture.read()
+        _, frame = capture.read()
+
         for i, font in enumerate(font_list):
             writer.font = font
-            writer.write(capture.frame, text=font, coords=(0, 200-50*i))
+            writer.write(frame, text=font, coords=(0, 200-50*i))
         capture.show()
 
         if cvtools.cv2waitkey() is True:

@@ -25,6 +25,7 @@ class CameraPlayer:
                  flip = False,
                  output_scale = 1,
                  record_scale = .5, # I need to fix this
+                 crop_to = None,
 
                  ):
         """
@@ -49,6 +50,7 @@ class CameraPlayer:
         else:
             self.capture = cv2.VideoCapture(src)
 
+        self.crop_to = crop_to
         if dim is not None:
             self.dim = dim
             self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, dim[0])
@@ -60,8 +62,8 @@ class CameraPlayer:
 
         self.blank_frame = np.zeros(self.dim[0]*self.dim[1]*3, dtype="uint8").reshape((self.dim[1], self.dim[0], 3))
 
-        self.center = int(self.dim[0]/2), int(self.dim[1]/2)
-        self._frame = np.empty((*self.dim[::-1], 3))
+        self.center = self.dim[0]//2, self.dim[1]//2
+        self._frame = np.empty((*self.dim[::-1], 3), dtype='uint8')
         self._cached_frame = np.array(self._frame)
         self.grabbed = True
         self.name = name
