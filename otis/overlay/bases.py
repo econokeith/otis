@@ -65,7 +65,7 @@ class ShapeObject(metaclass=abc.ABCMeta):
 
 
 class CircleType(ShapeObject, metaclass=abc.ABCMeta):
-    _asset_shape = 'circle'
+    _asset_shape = 'circle0'
     pass
 
 

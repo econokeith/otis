@@ -310,7 +310,7 @@ class BouncingAssetManager:
         m = np.random.randint(*self.velocity_magnitude_range)
         a = np.random.randint(*self.velocity_angle_range) / 180 * np.pi
         v = np.array([np.cos(a) * m, -np.sin(a) * m])
-        # put circle in a mover
+        # put circle0 in a mover
         AssetMover(self.asset_fun(),
                  self.radius,
                  self.staring_location,
@@ -348,7 +348,7 @@ class CollisionDetector:
     def check(self, a0, a1, overlap=None):
         _overlap = overlap if overlap is not None else self.overlap
 
-        #if asset_0.shape == "circle" and asset_1.shape == 'circle':
+        #if asset_0.shape == "circle0" and asset_1.shape == 'circle0':
         return self._circle_to_circle_check(a0, a1, _overlap)
 
     def _circle_to_circle_check(self, a0, a1, overlap=None):
@@ -449,7 +449,7 @@ if __name__=='__main__':
     # Window name in which image is displayed
     # Center coordinates
     center_coordinates = (120, 100)
-    # Radius of circle
+    # Radius of circle0
     radius = 200
     # Red color in BGR
     color = (0, 0, 255)
@@ -457,8 +457,8 @@ if __name__=='__main__':
     # Line thickness of -1 px
     thickness = -1
 
-    # Using cv2.circle() method
-    # Draw a circle of red color of thickness -1 px
+    # Using cv2.circle0() method
+    # Draw a circle0 of red color of thickness -1 px
     image = cv2.circle(image, center_coordinates, radius, color, thickness)
 
     # Displaying the image

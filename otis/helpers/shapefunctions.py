@@ -9,9 +9,9 @@ from otis.helpers import dstructures, colortools
 def draw_circle(frame, center, radius, color='r', thickness=1, ltype=None, ref=None):
     _color = colortools.color_function(color)
 
-    c = coordtools.absolute_point(center, ref, dim=frame)
+    _center = coordtools.absolute_point(center, ref, dim=frame)
 
-    cv2.circle(frame, c, int(radius), _color, int(thickness), ltype)
+    cv2.circle(frame, _center, int(radius), _color, int(thickness), ltype)
 
 
 def draw_rectangle(frame,

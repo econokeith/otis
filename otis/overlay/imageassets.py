@@ -35,10 +35,10 @@ class ImageAsset(bases.AssetWriter):
             center: (x,y) coords of the center of the object
             ref: reference point for (x, y), if ref = None, (x, y) are absolute if None, else cartesian relative coords
                  to the absolute reference point
-            hitbox_type: either 'circle' or 'rectangle'.
+            hitbox_type: either 'circle0' or 'rectangle'.
             copy_updates:
             mask_bit:
-            use_circle_mask: loads, resizes, and uses a circle mask so only a circle centered at teh center of the image
+            use_circle_mask: loads, resizes, and uses a circle0 mask so only a circle0 centered at teh center of the image
                              is copied onto the frame. The image needs to be perfectly square, otherise, the results can
                              be unstable
         """

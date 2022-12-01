@@ -32,7 +32,7 @@ if __name__ == "__main__":
     def mover_function():
         pie = imageassets.ImageAsset(center=(0, 0),
                                      resize_to=(100, 100),
-                                     hitbox_type='circle',
+                                     hitbox_type='circle0',
                                      use_circle_mask=True,
                                      )
 

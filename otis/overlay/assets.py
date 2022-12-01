@@ -125,7 +125,7 @@ class BoundingBox(bases.AssetWriter):
 
 class BoundingCircle(BoundingBox):
 
-    shape = 'circle'
+    shape = 'circle0'
     def __init__(self,
                  color='r',  # must be either string in color hash or bgr value
                  thickness=2,

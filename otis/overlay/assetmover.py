@@ -22,7 +22,7 @@ class Hitbox:
     asset: shapes.ShapeAsset
 
     def __init__(self,
-                 shape_type,  # circle rectable
+                 shape_type,  # circle0 rectable
                  dimensions=(0, 0),  # width, height
                  ):
         self.shape_type = shape_type
@@ -349,7 +349,7 @@ class CollisionDetector:
     def check(self, asset_0, asset_1, buffer=0):
         _buffer = buffer if buffer is not None else self.buffer
 
-        # if asset_0.shape == "circle" and asset_1.shape == 'circle':
+        # if asset_0.shape == "circle0" and asset_1.shape == 'circle0':
         return self._circle_to_circle_check(asset_0, asset_1, _buffer)
 
     def _circle_to_circle_check(self, a0, a1, buffer):
@@ -432,7 +432,7 @@ if __name__ == '__main__':
 
     def mover_function():
 
-        pie = imageassets.ImageAsset(center=(0, 0), hitbox_type='circle')
+        pie = imageassets.ImageAsset(center=(0, 0), hitbox_type='circle0')
         pie.add_image_from_file('./photo_assets/pie_asset', file=__file__)
 
         mover = AssetMover(pie,

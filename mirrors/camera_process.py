@@ -250,7 +250,7 @@ class BallSprinkler:
             # resize_to = self.ball_diameter
             image_balls = imageassets.ImageAsset(center=(0, 0),
                                                  resize_to=(resize_to, resize_to),
-                                                 hitbox_type='circle',
+                                                 hitbox_type='circle0',
                                                  use_circle_mask=True,
                                                  )
             side_pi = [np.pi / 4, 3 / 4 * np.pi, 5 / 4 * np.pi, 7 / 4 * np.pi]
@@ -283,7 +283,7 @@ class BallSprinkler:
 
         self.big_ball = imageassets.ImageAsset(center=(0, 0),
                                                resize_to=(self.big_ball_diameter, self.big_ball_diameter),
-                                               hitbox_type='circle',
+                                               hitbox_type='circle0',
                                                use_circle_mask=True,
                                                )
 
@@ -293,7 +293,7 @@ class BallSprinkler:
         self._new_wait_list = np.array([0, .25, .25, .25, .125, .25, .25, .25])*4
 
     def loop(self, frame, target):
-        # if there is no target, the balls will focus on a circle in the middle of the screen
+        # if there is no target, the balls will focus on a circle0 in the middle of the screen
         if target is None:
             w = self.circle.width
             h = self.circle.height
@@ -331,7 +331,7 @@ class BallSprinkler:
 
             lrc = len(self.rectangle_counters)
 
-            # make the 8 big balls that circle
+            # make the 8 big balls that circle0
             if self.big_ball_on is True and lrc < 8 and self.new_big_ball_timer(self._new_wait_list[lrc]):
                 new_timer = timers.TimedRectangleCycle(self.x_range,
                                                         self.y_range,
