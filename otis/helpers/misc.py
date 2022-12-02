@@ -4,6 +4,7 @@ __COMMON_DIMENSIONS =  {
     "720p": (1280, 720),
     "1080p": (1920, 1080),
     "4k": (3840, 2160),
+    None: None
 }
 def dimensions_function(dim):
     """

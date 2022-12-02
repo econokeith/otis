@@ -1,4 +1,7 @@
+"""
+Containers for cv2.Capture:
 
+"""
 import time
 from threading import Thread
 import platform
@@ -12,6 +15,15 @@ from otis.helpers import misc
 
 
 class CameraPlayer:
+    """
+    Convenience object based on around cv2.CaptureVideo
+    important attributes:
+        self.frame = np.ndarray
+
+    important methods:
+        self.show()
+        self.read()
+    """
     recorder: cv2.VideoWriter
 
     def __init__(self,
@@ -25,6 +37,7 @@ class CameraPlayer:
                  record_dim=None,
                  flip = False, # flip horizontal axis
                  output_scale = 1,
+                 record_codec = 'MP4V'
                  ):
         """
         Convenience object based on around cv2.CaptureVideo
@@ -37,8 +50,8 @@ class CameraPlayer:
                 camera dimensions. tuple of the form (w, h) or string equal to one of '480p', '720p', '1080p, '4k'
             f_dim: str or tuple, optional
                 frame dimensions. tuple of the form (w, h) or string equal to one of '480p', '720p', '1080p, '4k'
-                if unset, will default to CAMERA dimensions (c_dim), otherwise will crop the frame around the center of the cam
-                feed
+                if unset, will default to CAMERA dimensions (c_dim), otherwise will crop the frame around the
+                center of the cam feed
             max_fps: int, optional
                 limits the max show_fps for recording purposes. default=60
             record: bool, optional
@@ -53,13 +66,19 @@ class CameraPlayer:
                 flip horizontally, default = True
             output_scale: float
                 increase the size of self.show()
+            record_codec: str, default = 'MP4V'
+
         """
+        # get dimensions
         c_dim = misc.dimensions_function(c_dim)
         f_dim = misc.dimensions_function(f_dim)
         record_dim = misc.dimensions_function(record_dim)
 
         # do necessary Linux stuff
         # I haven't tried this on window. it might need to be set to the xvid codec
+
+        self.record_codec = record_codec
+
         if platform.system() == 'Linux':
             self.capture = cv2.VideoCapture(src, cv2.CAP_V4L2)
             self.capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
@@ -124,7 +143,6 @@ class CameraPlayer:
         self.record_dim = f_dim if record_dim is None else record_dim
         self.record = record
 
-
     @property
     def frame(self):
         return self._frame
@@ -153,7 +171,7 @@ class CameraPlayer:
             self._record = new
             if self.recorder is None: ## TODO: check video recording outside of linux
                 self.recorder = cv2.VideoWriter(self.record_to,
-                                               cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'),
+                                               cv2.VideoWriter_fourcc(*self.record_codec),
                                                self.max_fps,
                                                self.record_dim
                                                )
