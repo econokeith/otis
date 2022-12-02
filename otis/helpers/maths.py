@@ -58,3 +58,51 @@ def linear_distance(p0, p1):
 def collision_two_moving_circles(circle0, circle1):
     pass
 
+
+def remove_overlap(ball1, ball2):
+    x1 = ball1.center
+    x2 = ball2.center
+    r1 = ball1.radius
+    r2 = ball2.radius
+    m1 = ball1.mass
+    m2 = ball2.mass
+    # find sides
+    a, b = dx = x2 - x1
+    # check distance
+    r_sum = r1 + r2
+    c = np.hypot(*dx)
+
+    if c < r_sum:
+        # separate along text connecting centers
+        dc = r_sum - c + 1
+        da = a * (c + dc) / c - a
+        db = b * (c + dc) / c - b
+        x1[0] -= da * m2 / (m1 + m2)
+        x2[0] += db * m1 / (m1 + m2)
+        x1[1] -= db * m2 / (m1 + m2)
+        x2[1] += da * m1 / (m1 + m2)
+
+
+def remove_overlap_w_no_mass(no_mass, has_mass, buffer=0):
+    x1 = no_mass.center
+    x2 = has_mass.center
+    r1 = no_mass.radius
+    r2 = has_mass.radius
+
+    # find sides
+    a, b = dx = x2 - x1
+    # check distance
+    r_sum = r1 + r2 + buffer
+    centers_distance = np.hypot(*dx)
+
+    if centers_distance < r1:
+        has_mass.is_finished = True
+
+    elif centers_distance < r_sum:
+        # separate along text connecting centers
+        dc = r_sum - centers_distance + 1
+        da = a * (centers_distance + dc) / centers_distance - a
+        db = b * (centers_distance + dc) / centers_distance - b
+
+        x2[0] += db
+        x2[1] += da

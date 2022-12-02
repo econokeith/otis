@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 import sys
 
+import otis.helpers.maths
 from otis import camera
 from otis.helpers import timers, coordtools
 from otis.overlay import imageassets, assetmover, shapes
@@ -64,7 +65,7 @@ if __name__ == "__main__":
         manager.update_velocities()
         for mover in manager.movers:
             manager.detector.collide(circle, mover, buffer=10)
-            assetmover.remove_overlap_w_no_mass(circle, mover)
+            otis.helpers.maths.remove_overlap_w_no_mass(circle, mover)
 
         manager.move()
 

@@ -11,10 +11,10 @@ import otis.helpers.maths
 from otis.helpers import timers, colortools, shapefunctions, texttools, \
                          otistools, cvtools, dstructures, coordtools, misc
 
-from otis.overlay import bases, shapes, new_text_writer
+from otis.overlay import bases, shapes, textwriters
 
 
-class TypeWriter(new_text_writer.TextWriter):
+class TypeWriter(textwriters.TextWriter):
 
     def __init__(self,
                  coords=(0, 0),

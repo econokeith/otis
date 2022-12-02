@@ -52,7 +52,7 @@ class ImageAsset(base.AssetWriter):
         else:
             return self.position
 
-    # TODO THIS IS FLIPPING COORDINATEES
+
     def _c_to_tl_on_frame(self, f_center):
         """
         find the coords of the frame that represents the top corner of hte image asset given

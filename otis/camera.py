@@ -1,5 +1,3 @@
-# todo: Extend CameraPlayer to work with PiCamera Backend
-# todo: add waitKey() break condition to CamperPlayer Method
 
 import time
 from threading import Thread
@@ -228,7 +226,7 @@ class CameraPlayer:
             self.recorder.release()
             print(f'video_recorded to {self.record_to}')
 
-#TODO maybe put in a wait until next frame option
+
 class ThreadedCameraPlayer(CameraPlayer):
 
     def __init__(self, *args, cache=True, start=True, **kwargs):

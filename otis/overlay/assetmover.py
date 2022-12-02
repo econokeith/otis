@@ -3,9 +3,6 @@ This is a very simple collisions detection class
 can be sped up
 """
 from collections import defaultdict, deque
-import os
-import types
-import time
 import copy
 
 
@@ -13,33 +10,7 @@ import numpy as np
 import cv2
 
 from otis.helpers import timers, maths
-from otis.helpers.cvtools import cv2waitkey
-from otis.overlay import imageassets as imga, shapes
-import otis.camera as camera
-
-
-class Hitbox:
-    asset: shapes.ShapeAsset
-
-    def __init__(self,
-                 shape_type,  # circle0 rectable
-                 dimensions=(0, 0),  # width, height
-                 ):
-        self.shape_type = shape_type
-
-        if isinstance(dimensions, (int, float)):
-            self.dimensions = np.array((dimensions,) * 2).astype(int)
-
-        else:
-            self.dimensions = np.array(dimensions).astype(int)
-
-    @property
-    def height(self):
-        return self.dimensions[1]
-
-    @property
-    def width(self):
-        return self.dimensions[0]
+from otis.overlay import shapes
 
 
 class AssetMover:
@@ -197,6 +168,7 @@ class AssetMover:
     def _update_velocity_from_b_collisions(self):
         if self._x_border_collision is True and self.border_collisions is False:
             self.is_finished = True
+            print('deleted by border')
         elif self._x_border_collision is True and self.border_collisions is True:
             self.velocity[0] *= -1 * self.dampening
         else:
@@ -204,6 +176,7 @@ class AssetMover:
 
         if self._y_border_collision is True and self.border_collisions is False:
             self.is_finished = True
+            print('deleted by border')
 
         elif self._y_border_collision is True and self.border_collisions is True:
             self.velocity[1] *= -1 * self.dampening
@@ -222,55 +195,6 @@ class AssetMover:
         elif self._coords[1] > self.y_range[1]:
             self._coords[1] = self.y_range[1] - 1
 
-
-def remove_overlap(ball1, ball2):
-    x1 = ball1.center
-    x2 = ball2.center
-    r1 = ball1.radius
-    r2 = ball2.radius
-    m1 = ball1.mass
-    m2 = ball2.mass
-    # find sides
-    a, b = dx = x2 - x1
-    # check distance
-    r_sum = r1 + r2
-    c = np.hypot(*dx)
-
-    if c < r_sum:
-        # separate along text connecting centers
-        dc = r_sum - c + 1
-        da = a * (c + dc) / c - a
-        db = b * (c + dc) / c - b
-        x1[0] -= da * m2 / (m1 + m2)
-        x2[0] += db * m1 / (m1 + m2)
-        x1[1] -= db * m2 / (m1 + m2)
-        x2[1] += da * m1 / (m1 + m2)
-
-
-def remove_overlap_w_no_mass(no_mass, has_mass, buffer=0):
-    x1 = no_mass.center
-    x2 = has_mass.center
-    r1 = no_mass.radius
-    r2 = has_mass.radius
-
-    # find sides
-    a, b = dx = x2 - x1
-    # check distance
-    r_sum = r1 + r2 + buffer
-    centers_distance = np.hypot(*dx)
-
-    if centers_distance < r1:
-        has_mass.is_finished = True
-
-    elif centers_distance < r_sum:
-        # separate along text connecting centers
-        dc = r_sum - centers_distance + 1
-        da = a * (centers_distance + dc) / centers_distance - a
-        db = b * (centers_distance + dc) / centers_distance - b
-
-        x2[0] += db
-        x2[1] += da
-
 class CollidingAssetManager:
 
     def __init__(self,
@@ -281,12 +205,23 @@ class CollidingAssetManager:
                  buffer=0,
                  ):
 
+        """
+        Manages Colliding assets on screen
+        Args:
+            dim: frame dimensions
+            collisions: bool. do assets collide
+            border_collision: bool. do assets collide with border of just run off the screen
+            max_movers: how many mover assets max
+            buffer: tbd
+        """
+
         self.collisions = collisions
         self.border_collision = border_collision
         self.movers = deque([], max_movers)
         self.dim = dim
         self.detector = CollisionDetector(buffer=buffer)
         self.max_movers = max_movers
+
 
     @property
     def n(self):
@@ -341,16 +276,17 @@ class CollidingAssetManager:
 
 class CollisionDetector:
 
-    def __init__(self, buffer=0):
+    def __init__(self, buffer=0, move_before_delete=10):
         """
         currently only supports circles, currently not optimized for searches faster than O(n^2)
         """
         self.buffer = buffer
+        self.moves_before_delete = move_before_delete
 
     def check(self, asset_0, asset_1, buffer=0):
         _buffer = buffer if buffer is not None else self.buffer
 
-        # if asset_0.shape == "circle0" and asset_1.shape == 'circle0':
+        # if asset_0.shape == "circle" and asset_1.shape == 'circle':
         return self._circle_to_circle_check(asset_0, asset_1, _buffer)
 
     def _circle_to_circle_check(self, a0, a1, buffer):
@@ -396,13 +332,14 @@ class CollisionDetector:
                 if distance > (r0 + r1) + buffer:
                     break
 
-                if i>5:
+                if i>self.moves_before_delete :
                     circle_1.is_finished=True
+                    print('deleted by bounder')
                     break
 
                 i+=1
 
-
+        # TODO : turn the while loops on circle collision into some kind of function to get rid of the boilerplate
         elif distance <= (r0 + r1) + buffer and circle_1.mass is None:
             d_velocity = v0 - v1
             dot_p0 = np.inner(d_velocity, d_center)
@@ -417,8 +354,9 @@ class CollisionDetector:
                 if distance > (r0 + r1) + buffer:
                     break
 
-                if i > 5:
+                if i > self.moves_before_delete:
                     circle_0.is_finished = True
+                    print('deleted by bounder')
                     break
 
                 i += 1
@@ -444,14 +382,16 @@ class CollisionDetector:
                 if distance > (r0 + r1) + buffer:
                     break
 
-                if i > 5:
+                if i > self.moves_before_delete:
+                    print('deleted by collision')
                     circle_1.is_finished = True
                     circle_0.is_finished = True
                     break
 
                 i += 1
-
-
+        ###############################################################
+        # NOT CURRENTLY USING COLLISION_HASH. MAY COME BACK TO IT
+        ###############################################################
             # circle_0.collision_hash[circle_1.id] = True
             # circle_1.collision_hash[circle_0.id] = True
             # remove_overlap(circle_0, circle_1)
@@ -462,6 +402,30 @@ class CollisionDetector:
         # elif distance > (r0 + r1) +buffer and circle_0.mass is not None and circle_1.mass is not None:
         #     circle_0.collision_hash[circle_1.id] = False
         #     circle_1.collision_hash[circle_0.id] = False
+
+# TODO: Consider adding Hitbox to all assets separately
+class Hitbox:
+    asset: shapes.ShapeAsset
+
+    def __init__(self,
+                 shape_type,  # circle0 rectable
+                 dimensions=(0, 0),  # width, height
+                 ):
+        self.shape_type = shape_type
+
+        if isinstance(dimensions, (int, float)):
+            self.dimensions = np.array((dimensions,) * 2).astype(int)
+
+        else:
+            self.dimensions = np.array(dimensions).astype(int)
+
+    @property
+    def height(self):
+        return self.dimensions[1]
+
+    @property
+    def width(self):
+        return self.dimensions[0]
 
 
 if __name__ == '__main__':

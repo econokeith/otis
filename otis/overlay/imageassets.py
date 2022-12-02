@@ -8,7 +8,7 @@ import numpy as np
 import otis.helpers.cvtools
 import otis.overlay.bases as base
 from otis.helpers import cvtools, misc, coordtools, timers
-from otis.overlay import bases
+from otis.overlay import bases, shapes
 
 
 class ImageAsset(bases.AssetWriter):
@@ -23,7 +23,10 @@ class ImageAsset(bases.AssetWriter):
                  hitbox_type='rectangle',
                  copy_updates=False,
                  mask_bit=0,
-                 use_circle_mask=False
+                 use_circle_mask=False,
+                 border = False,
+                 b_color = 'r',
+                 b_thickness = 1,
                  ):
         """
 
@@ -35,7 +38,7 @@ class ImageAsset(bases.AssetWriter):
             center: (x,y) coords of the center of the object
             ref: reference point for (x, y), if ref = None, (x, y) are absolute if None, else cartesian relative coords
                  to the absolute reference point
-            hitbox_type: either 'circle0' or 'rectangle'.
+            hitbox_type: either 'circle' or 'rectangle'.
             copy_updates:
             mask_bit:
             use_circle_mask: loads, resizes, and uses a circle0 mask so only a circle0 centered at teh center of the image
@@ -80,6 +83,23 @@ class ImageAsset(bases.AssetWriter):
 
         self.ref = ref
         self.hitbox_type = hitbox_type
+
+        if border is True and self.hitbox_type == 'circle':
+            self.border = shapes.Circle(color=b_color,
+                                        thickness=b_thickness,
+                                        coord_format = 'cwh',
+                                        update_format= 'cwh',
+                                        )
+
+        elif border is True and self.hitbox_type == 'rectangle':
+            self.border = shapes.Rectangle(color=b_color,
+                                            thickness=b_thickness,
+                                            coord_format = 'cwh',
+                                            update_format= 'cwh',
+                                            )
+
+        else:
+            self.border = None
 
     @property
     def coord_format(self):
@@ -247,6 +267,9 @@ class ImageAsset(bases.AssetWriter):
         if resize is True:
             _image = self.resize_image(_image)
 
+        # the coords stuff isn't totally right here\
+        # it won't update / resize with coords adn it will be thrown off if they are used to write
+        # TODO: double check the imageasset write function
         r, t, l, b = coordtools.translate_box_coords(_coords,
                                                      in_format=in_format,
                                                      out_format='rtlb',
@@ -254,9 +277,14 @@ class ImageAsset(bases.AssetWriter):
                                                      dim=frame
                                                      )
 
+
+
         dr = dt = dl = db = 0
         h_f, w_f, _ = frame.shape
         h_i, w_i = self.coords[2:]
+
+        bx, by = (l-r)//2, (b-t)//2
+        bw, bh = h_i, w_i
 
         # make sure that we aren't writing outside the bounds of the frame
         if l < 0:
@@ -275,6 +303,7 @@ class ImageAsset(bases.AssetWriter):
             db = b - h_f + 1
             b = h_f
 
+        # TODO: fix the issue with images resizing differently due to rounding / conversion from cwh format
         frame_portion = frame[t:b+1, l:r+1]
         # image_portion = _image[dt: h_i - db, dl: w_i - dr]
         image_portion = _image[dt: h_i - db + 1, dl: w_i - dr + 1]
@@ -297,6 +326,9 @@ class ImageAsset(bases.AssetWriter):
             frame_portion[_mask] = image_portion[_mask]
         else:
             frame_portion[:, :, :] = image_portion
-        r
+
+        if self.border is not None:
+            self.border.write(frame, coords=self.coords, ref=self.ref)
+
     def center_width_height(self):
         return self.coords

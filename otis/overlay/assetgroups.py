@@ -10,6 +10,13 @@ class AssetGroup:
                  color='r',
                  scale=1,
                  ):
+        """
+        Convenience object to hold multiple writer assets with the same reference point
+        Args:
+            coords:
+            color:
+            scale:
+        """
         super().__init__()
 
         self.assets = []

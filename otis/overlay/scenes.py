@@ -4,8 +4,6 @@ import numpy as np
 
 from otis import camera as camera
 from otis.helpers import cvtools, colortools
-from otis.overlay import assets
-
 
 class SceneManager:
     capture: camera.ThreadedCameraPlayer
@@ -41,46 +39,3 @@ class SceneManager:
         self.scene_number = 0
 
 
-class BoundingManager:
-
-    def __init__(self, manager, threshold=.1):
-
-        self.manager = manager
-        self.shared = manager.shared
-        self.args = manager.pargs
-        self.capture = self.manager.capture
-        self.threshold = threshold
-        self.color_cycle = colortools.ColorCycle()
-
-        self.bbox_coords = np.array(self.shared.bbox_coords)
-
-        self.box_fun = lambda: assets.BoundingBox(threshold=self.threshold,
-                                                  color= self.color_cycle()
-                                                  )
-
-        self.bbox_hash = defaultdict(self.box_fun)
-
-        self.is_updated = True
-        self.flash_event = False
-
-        self.frame = np.zeros((self.args.dim[1], self.args.dim[0], 3), dtype='uint8')
-        self.names = []
-
-    def loop(self, frame):
-
-        shared = self.shared
-        bbox_hash = self.bbox_hash
-        tracker = self.manager.name_tracker
-        # cache this stuff to avoid overwrites in the middle
-        # only updateq
-        if shared.new_overlay.value:
-
-            bbox_coords = shared.bbox_coords.copy()
-            n_faces = self.shared.n_faces.value
-            self.names = [tracker[name] for name in shared.observed_names[:n_faces]]
-
-            for i, name in enumerate(self.names):
-                box = bbox_hash[name]
-                box.name = name
-                box.coords = bbox_coords[i]
-                box.write(frame)

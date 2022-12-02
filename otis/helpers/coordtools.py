@@ -6,6 +6,10 @@ __FRAME_HASH['lt'] = lambda s: (0, 0)
 __FRAME_HASH['lb'] = lambda s: (0, s[0])
 __FRAME_HASH['rb'] = lambda s: (s[1], s[0])
 __FRAME_HASH['rt'] = lambda s: (s[1], 0)
+__FRAME_HASH['tl'] = lambda s: (0, 0)
+__FRAME_HASH['bl'] = lambda s: (0, s[0])
+__FRAME_HASH['br'] = lambda s: (s[1], s[0])
+__FRAME_HASH['tr'] = lambda s: (s[1], 0)
 __FRAME_HASH['l'] = lambda s: (0, int(s[0] / 2))
 __FRAME_HASH['r'] = lambda s: (s[1], int(s[0] / 2))
 __FRAME_HASH['t'] = lambda s: (int(s[1] / 2), 0)
@@ -24,10 +28,11 @@ def absolute_point(relative_point,
     """
     returns the absolute pixel location when given a cartesian relative point to there
     reference that is considered the origin
-    :param reference: origin (x, y)
-    :param relative_point: relative location actual location (x, y)
-    :param dim: the dimension of the frame. only necessary when using string valued reference
-    :return:  (x, y)
+    :param reference: origin (x, y) in frame coordinates
+    :param relative_point: relative location in cartesian coords (x, y)
+    :param dim: the dimension of the frame. only necessary when using string valued reference, can be entered as either
+                (x_dim, y_dim) or dim can just be the frame in question
+    :return:  (x, y) in frame coordinates
     """
     if reference is None:
         return int(relative_point[0]), int(relative_point[1])
@@ -200,6 +205,18 @@ def translate_box_coords(coords,
 
 
 def get_frame_portion(frame, coords, coord_format='cwh', ref=None, copy=True):
+    """
+    returns a frame portion
+    Args:
+        frame:
+        coords:
+        coord_format:
+        ref:
+        copy: if true, returns a new np.ndarray otherwise just a reference
+
+    Returns:
+
+    """
 
     r, t, l, b = translate_box_coords(coords,
                                       in_format=coord_format,
