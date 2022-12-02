@@ -11,13 +11,13 @@ from otis.overlay import scenes, assetgroups, shapes, assetbounders, textwriters
 from otis.helpers import shapefunctions, timers
 from otis.overlay.assetmover import AssetMover
 
-
 MAX_KEY_INPUTS_PER_SECOND = 10
-STOP_AFTER_OTIS = False
+STOP_AFTER_OTIS = True
 N_BOUNCERS = 50
 NEW_BALL_WAIT = .5
 FRAME_PORTION_SCALE = 2.
 RECORD = False
+MOVER_VELOCITY_MAGNITUDE = (200, 300)
 
 OTIS_SCRIPT = [
     ("Keith, I heard that mean lady stole your best friend, the cat.", 1),
@@ -38,10 +38,12 @@ def target(shared, pargs):
     capture = manager.capture  # for convenience
     # setup bounding manager
     color_cycle = colortools.ColorCycle()  # so boxes have different colors
+
     # base_function
     # it's easier define new_bounder as a function for keeping a defaultdict of bounders
     def new_bounder_function():
         base_bounding_shape = complexshapes.CircleWithLineToCenter(threshold=.75)
+        # could just be a regular circle
         # base_bounding_shape = shapes.Circle(color=None,
         #                                     radius_type='diag',
         #                                     thickness=2,
@@ -60,17 +62,15 @@ def target(shared, pargs):
 
     # bounding box manager that translates the box coords from the cv_model_process into the effects on screen
     box_manager = assetbounders.BoundingManager(manager,
-                                                  box_fun=new_bounder_function,
-                                                  )
-
+                                                box_fun=new_bounder_function,
+                                                )
     # both are adhoc effects managers defined below
     mirror = MirrorEffects(manager)
     ball_sprinkler = BallSprinkler(manager, frame_portion_scale=FRAME_PORTION_SCALE)
-
     # set up info writers to monitor import variables while this runs
     # they toggle on and off by hitting '1' on the keyboard
     # toggle on/off while running by hitting "1" on the keyboard
-    info_group0 = assetgroups.BasicInfoGroup((10, 40), manager)  # fps, model update, resolution
+    info_group0 = assetgroups.BasicInfoGroup((10, 40), manager)  # show_fps, model update, resolution
     # additional info writers for use during development
     extra_writers = [
         textwriters.InfoWriter(text_fun=lambda: f'n_faces= {shared.n_observed_faces.value}', coords=(50, -200)),
@@ -130,12 +130,10 @@ def target(shared, pargs):
             if pargs.record is True:
                 capture.record = True
 
-        # write the boxes
-
         if start_raining_balls is True:
             ball_sprinkler.loop(frame, box_manager.primary_box)  # send the balls everywhere
-
-        box_manager.write(frame)
+        # write the boxes
+        box_manager.write(frame)  # this can go above the sprinkler to have the box graphics appear in the balls
         # otis waits until there's someone here to talk
         if box_manager.primary_box is not None:
             if otis_speaks is False:
@@ -240,8 +238,8 @@ class BallSprinkler:
         self.capture = manager.capture
         self.pargs = manager.pargs
         self.n_bouncers = N_BOUNCERS
-        self.gravity = -10
-        self.dampen = .01
+        self.gravity = 0.
+        self.dampen = 0.
         self.frame_portion_scale = frame_portion_scale
         self.new_ball_wait = NEW_BALL_WAIT
         self.time_since_ball = timers.TimeSinceLast()
@@ -259,6 +257,7 @@ class BallSprinkler:
         self.x_border = x_border
 
         ################################### bouncies ##################################################################
+        self.mover_velocity_magnitude = MOVER_VELOCITY_MAGNITUDE
         self.frame_portion = None
         # default target for image assets if a bounding box isn't available
         self.circle = shapes.Circle((0, 0), 100, ref='c', dim=self.capture.f_dim, to_abs=True)
@@ -294,7 +293,7 @@ class BallSprinkler:
             mover = AssetMover(image_ball,
                                center=(self.x_value_counter(), 50),
                                # center = ball_origin,
-                               velocity=(np.random.randint(400, 700),
+                               velocity=(np.random.randint(*self.mover_velocity_magnitude),
                                          np.random.rand() * np.pi / 2 + np.pi / 4
                                          ),
                                # np.random.rand() * np.pi/2+ np.pi/4 - side*np.pi/2),
@@ -390,5 +389,3 @@ class BallSprinkler:
             for timer in self.rectangle_counters:
                 self.big_ball.center = timer()
                 self.big_ball.write(frame, larger_frame_portion)
-
-############################################### OTIS SCRIPT ############################################################

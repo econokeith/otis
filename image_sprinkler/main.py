@@ -23,7 +23,7 @@ pargs.cf = 2
 pargs.max_fps = 30
 pargs.record = True
 pargs.record_scale = 1
-pargs.record_to = 'bouncies.avi'
+pargs.record_to = 'bouncies.mp4'
 
 if pargs.servo is True:
     try:
@@ -49,8 +49,8 @@ def main():
     shared_data_object.add_array('key_input_receivedv', 'i', 0)
 
     # add shared arrays
-    shared_data_object.add_array('frame', ctypes.c_uint8, (pargs.crop_to[1], pargs.crop_to[0], 3)) # dims are backwards cause numpy
-    shared_data_object.add_array('bbox_coords', ctypes.c_int64, (pargs.faces, 4))         # is reversed
+    shared_data_object.add_array('frame', ctypes.c_uint8, (pargs.crop_to[1], pargs.crop_to[0], 3)) # dims are backwards
+    shared_data_object.add_array('bbox_coords', ctypes.c_int64, (pargs.faces, 4))
     shared_data_object.add_array('error', ctypes.c_double, 2)
     shared_data_object.add_array('observed_names', ctypes.c_uint8, pargs.faces)
     shared_data_object.add_array('servo_target', ctypes.c_uint64, 2)

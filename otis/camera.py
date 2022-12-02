@@ -8,6 +8,7 @@ import numpy as np
 
 import otis.helpers.timers as timers
 import otis.overlay.textwriters as writers
+from otis.helpers import misc
 
 
 class CameraPlayer:
@@ -16,31 +17,49 @@ class CameraPlayer:
     def __init__(self,
                  src=0,
                  name='otis',
-                 c_dim=(1280, 720), ## camera dimensions
+                 c_dim='720p', ## camera dimensions
                  f_dim=None, # frame dimensions only differs from c_dim if we're cropping the feed
                  max_fps=60,
                  record = False,
-                 record_to = 'cam.avi',
+                 record_to = 'otis.avi',
+                 record_dim=None,
                  flip = False, # flip horizontal axis
                  output_scale = 1,
-                 record_scale = .5,  # I need to fix this
                  ):
         """
-
+        Convenience object based on around cv2.CaptureVideo
         Args:
-            src:
-            name:
-            c_dim:
-            max_fps:
-            record:
-            record_to:
-            flip:
-            output_scale:
-            record_scale:
-            silent_sleep:
+            src: int, optional
+                usually 0, or string path to precorded file
+            name: str, optional
+                default 'otis'
+            c_dim: str or tuple
+                camera dimensions. tuple of the form (w, h) or string equal to one of '480p', '720p', '1080p, '4k'
+            f_dim: str or tuple, optional
+                frame dimensions. tuple of the form (w, h) or string equal to one of '480p', '720p', '1080p, '4k'
+                if unset, will default to CAMERA dimensions (c_dim), otherwise will crop the frame around the center of the cam
+                feed
+            max_fps: int, optional
+                limits the max show_fps for recording purposes. default=60
+            record: bool, optional
+                whether or not to record, default = False
+            record_to: str
+                file name to record to. default = otis.avi
+            record_dim:
+                record dimensions. tuple of the form (w, h) or string equal to one of '480p', '720p', '1080p, '4k'
+                if unset, will default to FRAME dimensions (f_dim), otherwise will crop the frame around the center of the cam
+                feed
+            flip: bool
+                flip horizontally, default = True
+            output_scale: float
+                increase the size of self.show()
         """
+        c_dim = misc.dimensions_function(c_dim)
+        f_dim = misc.dimensions_function(f_dim)
+        record_dim = misc.dimensions_function(record_dim)
 
         # do necessary Linux stuff
+        # I haven't tried this on window. it might need to be set to the xvid codec
         if platform.system() == 'Linux':
             self.capture = cv2.VideoCapture(src, cv2.CAP_V4L2)
             self.capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
@@ -75,8 +94,9 @@ class CameraPlayer:
             self.f_center = np.array((dx1//2, dy1//2), dtype=int)
             self.cropped=True
 
+        # incase we need a blank frame instead of a camera feed
         self.blank_frame = np.zeros((self.f_dim[1], self.f_dim[0], 3), dtype="uint8")
-
+        # frame stuff
         self._frame = self.blank_frame.copy()
         self._cached_frame = self._frame.copy()
         self.grabbed = True
@@ -84,26 +104,26 @@ class CameraPlayer:
         self.stopped = False
         self._max_fps = max_fps
         self.capture.set(cv2.CAP_PROP_FPS, max_fps)
-
-        # set up smart sleeper to ensure constant fps
+        self.flip = flip
+        self.output_scale = output_scale
+        # set up smart sleeper to ensure constant show_fps
         if self.max_fps is not None:
             self.fps_sleeper = timers.SmartSleeper(1 / self._max_fps)
         else:
             self.fps_sleeper = timers.SmartSleeper(0.)
-
+        # monitoring
         self.fps_writer = writers.FPSWriter((10, int(self.f_dim[1] - 40)))
         self.latency = 0.001
         self.limit_fps = True
         self.exit_warning = writers.TextWriter((10, 40), color='u')
         self.exit_warning.text = 'to exit hit ctrl-c or q'
+        # recording stuff
         self.recorder = None
         self._record = False
-
         self.record_to = record_to
-        self.record_scale = record_scale
+        self.record_dim = f_dim if record_dim is None else record_dim
         self.record = record
-        self.flip = flip
-        self.output_scale = output_scale
+
 
     @property
     def frame(self):
@@ -131,11 +151,11 @@ class CameraPlayer:
         assert isinstance(new, bool)
         if new is True:
             self._record = new
-            if self.recorder is None:
+            if self.recorder is None: ## TODO: check video recording outside of linux
                 self.recorder = cv2.VideoWriter(self.record_to,
                                                cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'),
                                                self.max_fps,
-                                               self.f_dim * self.record_scale
+                                               self.record_dim
                                                )
         else:
             self._record = new
@@ -147,8 +167,8 @@ class CameraPlayer:
         """
         equivalent of cv2 VideoCapture().read()
         reads new frame from buffer
-        :param silent:
         :return:
+            grabbed (bool), frame (np.ndarray)
         """
         tick = time.time()
         self.grabbed, self.frame = self.capture.read()
@@ -164,32 +184,46 @@ class CameraPlayer:
 
         return self.grabbed, self.frame
 
-    def show(self, frame=None, scale=None, fps=False, warn=False, record=None):
+    def show(self, frame=None, show_fps=False, exit_warning=False, record=None):
+        """
+        Equivalent to cv2.imshow('name', frame)
+        Args:
+            frame: np.ndarray, optional, default = None
+                will use self.frame if frame is None
+            show_fps: bool, default = False
+                show realized fps on the screen
+            exit_warning: bool, default = False
+                show 'hit q to exit'
+            record: bool, default = None
+                overrides the self.record if not None
+        Returns:
+
+        """
 
         _frame = self.frame if frame is None else frame
-        _scale = self.output_scale if scale is None else scale
         _record = self.record if record is None else record
 
-        # run fps_sleeper to limit fps
+        # run fps_sleeper to limit show_fps
         if self.max_fps is not None:
             self.fps_sleeper()
 
-        # show fps on screen
-        if fps is True:
+        # show show_fps on screen
+        if show_fps is True:
             self.write_fps()
 
         # show exit warning on screen
-        if warn is True:
+        if exit_warning is True:
             self.exit_warning.write(_frame)
 
         # change scale output
-        if _scale != 1:
-            out_frame = cv2.resize(_frame, (0, 0), fx=_scale, fy=_scale)
+        if self.output_scale != 1:
+            out_frame = cv2.resize(_frame, (0, 0), fx=self.output_scale, fy=self.output_scale)
         else:
             out_frame = _frame
 
         # record
         if _record is True:
+            # TODO - Fix Recorder Resizing in camera.show
             self.recorder.write(_frame.astype('uint8'))
 
         # display frame
@@ -198,7 +232,7 @@ class CameraPlayer:
 
     def test(self, warn=False):
         """
-        test to confirm that camera feed is working and check the fps
+        test to confirm that camera feed is working and check the show_fps
         :return:
         """
         dim_writer = writers.TextWriter((10, 120), color='g')
@@ -208,7 +242,7 @@ class CameraPlayer:
             self.read()
             self.write_fps()
             dim_writer.write(self.frame)
-            self.show(warn=warn)
+            self.show(exit_warning=warn)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
@@ -231,11 +265,46 @@ class ThreadedCameraPlayer(CameraPlayer):
 
     def __init__(self, *args, cache=True, start=True, **kwargs):
         """
-        separates the VideoCapture.read() and
-        cv2.imshow functions into separate threads. also caches the new frame in order to avoid flickering
-        :param args:
-        :param kwargs:
+        Convenience object based on around cv2.CaptureVideo. Same as camera.CameraPlayer, but with an extra Thread
+        to read from the camera feed.
+        Args:
+            src: int, optional
+                usually 0, or string path to precorded file
+            name: str, optional
+                default 'otis'
+            c_dim: str or tuple
+                camera dimensions. tuple of the form (w, h) or string equal to one of '480p', '720p', '1080p, '4k'
+            f_dim: str or tuple, optional
+                frame dimensions. tuple of the form (w, h) or string equal to one of '480p', '720p', '1080p, '4k'
+                if unset, will default to CAMERA dimensions, otherwise will crop the frame around the center of the cam
+                feed
+            max_fps: int, optional
+                limits the max show_fps for recording purposes. default=60
+            record: bool, optional
+                whether or not to record, default = False
+            record_to: str
+                file name to record to. default = otis.avi
+            record_dim:
+                record dimensions. tuple of the form (w, h) or string equal to one of '480p', '720p', '1080p, '4k'
+                if unset, will default to FRAME dimensions, otherwise will crop the frame around the center of the cam
+                feed
+            flip: bool
+                flip horizontally, default = True
+            output_scale: float, default = 1.
+                increase the size of self.show()
+            ------------------------------ThreadedCameraPlayer specific----------------------------------------------
+            cache: bool, default = True
+                cache the frame read, from the update Thread. If it's set to False, there may be flickering of written
+                assets on the screen
+            start: bool, default = True
+                start the update Thread process on instantiation. If false, the update process has to be manually
+                started: i.e.
+                threaded_camera = ThreadedCameraPlayer(start=False).start()
+                or
+                threaded_camera = ThreadedCameraPlayer(start=False)
+                threaded_camera.start()
         """
+
         super().__init__(*args, **kwargs)
         self.clock = timers.SmartSleeper()
         self.cache = cache
@@ -273,7 +342,12 @@ class ThreadedCameraPlayer(CameraPlayer):
 
 
     def read(self):
-
+            """
+            equivalent of cv2 VideoCapture().read()
+            reads new frame from buffer
+            :return:
+                grabbed (bool), frame (np.ndarray)
+            """
             tick = time.time()
             while True:
                 if self._frame is not None and self._frame.shape != ():

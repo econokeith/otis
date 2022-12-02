@@ -72,7 +72,6 @@ if __name__ == "__main__":
         for mover in manager.movers:
             mover.asset.write(frame, frame_portion)
 
-
         capture.show(frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):

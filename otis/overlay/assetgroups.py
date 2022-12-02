@@ -76,7 +76,7 @@ class BasicInfoGroup(AssetGroup):
         self.spacing = spacing * scale
         self.offsets = offsets
 
-        fps_writer = textwriters.TimerWriter(title="screen fps",
+        fps_writer = textwriters.TimerWriter(title="screen show_fps",
                                              timer_type='last',
                                              coords=(offsets[0], offsets[1]),
                                              roundw=0,

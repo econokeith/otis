@@ -1,3 +1,28 @@
+import numpy as np
+__COMMON_DIMENSIONS =  {
+    "480p": (640, 480),
+    "720p": (1280, 720),
+    "1080p": (1920, 1080),
+    "4k": (3840, 2160),
+}
+def dimensions_function(dim):
+    """
+    convenience function for setting dimensions
+    Args:
+        dim: tuple of the form (w, h) or string equal to one of '480p', '720p', '1080p, '4k'
+
+    Returns:
+
+    """
+    if isinstance(dim, (tuple, list, np.ndarray)):
+        return dim
+    else:
+        try:
+            return __COMMON_DIMENSIONS[dim]
+        except:
+            raise ValueError(f"Dimensions {dim} not recognized. For string inputs, the dimensions must be one of "
+                             f"'480p', '720p', '1080p, '4k'")
+
 def update_save_attributes_on_write(obj, local_dict, skip=2):
     """
     updates keyword arguments for writing and saved if saved=True
@@ -10,6 +35,9 @@ def update_save_attributes_on_write(obj, local_dict, skip=2):
             _kw1, _kw2, _kw3 = update...write(self, locals())
             ...
             ...
+
+            ## this replaces the need to constantly write:
+            _kw1 = self.kw1 if kw1 is none else kw1
     """
     variable_keys = list(local_dict.keys())
     output = []
@@ -40,6 +68,10 @@ def update_save_keywords(self, local_dict, attributes=()):
             _kw1, _kw2, _kw3 = update...write(self, locals())
             ...
             ...
+
+            ## this replaces the need to constantly write:
+            _kw1 = self.kw1 if kw1 is none else kw1
+
     """
 
     output = []
