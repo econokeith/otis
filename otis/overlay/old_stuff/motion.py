@@ -261,7 +261,7 @@ class BouncingAssetManager:
                  ball_frequency = (3,3),
                  velocity_magnitude_range = (300, 1000),
                  velocity_angle_range = (10, 80),
-                 starting_location = (200, -200),## TODO this relative thing will need to be fixed
+                 starting_location = (200, -200),
                  collisions = False,
                  max_fps = 30,
                  border_collision = True,

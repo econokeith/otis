@@ -10,6 +10,13 @@ class AssetGroup:
                  color='r',
                  scale=1,
                  ):
+        """
+        Convenience object to hold multiple writer assets with the same reference point
+        Args:
+            coords:
+            color:
+            scale:
+        """
         super().__init__()
 
         self.assets = []
@@ -69,7 +76,7 @@ class BasicInfoGroup(AssetGroup):
         self.spacing = spacing * scale
         self.offsets = offsets
 
-        fps_writer = textwriters.TimerWriter(title="screen fps",
+        fps_writer = textwriters.TimerWriter(title="screen show_fps",
                                              timer_type='last',
                                              coords=(offsets[0], offsets[1]),
                                              roundw=0,

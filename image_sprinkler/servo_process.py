@@ -12,7 +12,7 @@ from _piardservo.pid import PIDController
 MAX_SERVO_UPDATES_PER_SECOND = 10
 # X_PID_VALUES = (.0001, .000000001, .00000001)
 # Y_PID_VALUES = (.0001, .000000001, .00000001)
-X_PID_VALUES = (1e-4, 1e-10, 2e-7)
+X_PID_VALUES = (2e-4, 1e-10, 2e-7)
 Y_PID_VALUES = (5e-5 ,1e-10, 2e-7)
 MINIMUM_MOVE_SIZE_PIXELS = 20
 SERVO_START = np.array((-.06, -.72))
@@ -23,16 +23,14 @@ def target(shared_data_object, args):
 
     signal.signal(signal.SIGTERM, mtools.close_gracefully)
     signal.signal(signal.SIGINT, mtools.close_gracefully)
-
+    shared = shared_data_object
     if args.servo is False:
         sys.exit()
 
     rpi = RPiWifi(address='192.168.1.28', pins=(22, 17))
     Servos = ServoContainer(n=2, microcontroller=rpi).connect()
 
-
     Servos[0].value,  Servos[1].value = SERVO_START
-
 
     xPID = PIDController(*X_PID_VALUES)
     yPID = PIDController(*Y_PID_VALUES)
@@ -53,8 +51,8 @@ def target(shared_data_object, args):
 
     while True:
 
-        if shared_data_object.n_boxes_active.value == 0:
-            if reset_complete is False:
+        if shared_data_object.n_boxes_active.value == 0 and SERVO_TRACKING is True:
+            if reset_complete is False :
                 Servos[0].value, Servos[1].value = SERVO_START
                 reset_complete = True
 
@@ -77,6 +75,7 @@ def target(shared_data_object, args):
             #     reset_counter = 0
 
         elif update_limiter() is True and SERVO_TRACKING is True:
+
             reset_complete = False
             target = np.array(shared_data_object.servo_target)
             error = target - video_center
@@ -90,31 +89,37 @@ def target(shared_data_object, args):
         shared_data_object.servo_position[0] = round(Servos[0].value, 2)
         shared_data_object.servo_position[1] = round(Servos[1].value, 2)
 
-        key_board_input = shared_data_object.keyboard_input.value
-        if key_board_input == ord('q'):
-            break
+        if shared.new_keyboard_input.value is True:
+            key_board_input = shared_data_object.keyboard_input.value
 
-        elif key_board_input == ord('e'):
-            SERVO_TRACKING = not SERVO_TRACKING
+            if key_board_input == ord('q'):
+                break
 
-        elif key_board_input == ord('a'):
-            Servos[0].value += KEYBOARD_MOVE_INCREMENT
-            SERVO_TRACKING = False
+            elif key_board_input == ord('e'):
+                SERVO_TRACKING = not SERVO_TRACKING
 
-        elif key_board_input == ord('d'):
-            Servos[0].value -= KEYBOARD_MOVE_INCREMENT
-            SERVO_TRACKING = False
+            elif key_board_input == ord('a'):
+                Servos[0].value += KEYBOARD_MOVE_INCREMENT
+                SERVO_TRACKING = False
 
-        elif key_board_input == ord('w'):
-            Servos[1].value += KEYBOARD_MOVE_INCREMENT
-            SERVO_TRACKING = False
+            elif key_board_input == ord('d'):
+                Servos[0].value -= KEYBOARD_MOVE_INCREMENT
+                SERVO_TRACKING = False
 
-        elif key_board_input == ord('s'):
-            Servos[1].value -= KEYBOARD_MOVE_INCREMENT
-            SERVO_TRACKING = False
+            elif key_board_input == ord('w'):
+                Servos[1].value += KEYBOARD_MOVE_INCREMENT
+                SERVO_TRACKING = False
 
-        else:
-            pass
+            elif key_board_input == ord('s'):
+                Servos[1].value -= KEYBOARD_MOVE_INCREMENT
+                SERVO_TRACKING = False
+
+            else:
+                pass
+
+            shared_data_object.key_input_received[2] = True
+
+        shared_data_object.servo_tracking.value = SERVO_TRACKING
 
     Servos.close()
     sys.exit()

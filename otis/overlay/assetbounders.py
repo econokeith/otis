@@ -2,7 +2,7 @@ import copy
 import abc
 from collections import defaultdict
 import numpy as np
-from otis.overlay import bases, shapes, textwriters, assets
+from otis.overlay import bases, shapes, textwriters
 from otis.helpers import coordtools, timers, colortools, maths
 
 
@@ -21,7 +21,7 @@ class BoundingAsset(bases.AssetHolderMixin, bases.AssetWriter):
                  dimensions = None,
                  update_format = 'trbl',
                  stabilizer = None,
-                 name_tag_outliner = None,
+                 name_tag_border = True,
                  name_tag_inverted = False
                  ):
 
@@ -67,7 +67,7 @@ class BoundingAsset(bases.AssetHolderMixin, bases.AssetWriter):
         if name_tagger is None:
             self.name_tag = textwriters.NameTag(name=name,
                                                 attached_to=self,
-                                                outliner=name_tag_outliner,
+                                                border=name_tag_border,
                                                 invert_border=name_tag_inverted)
         else:
             assert isinstance(name_tagger, textwriters.NameTag)

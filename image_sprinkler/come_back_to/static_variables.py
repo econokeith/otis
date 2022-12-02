@@ -8,7 +8,7 @@ use_servos = True
 output_scale = 1.5
 record_scale = .5
 record = False
-record_to = 'mirrors.avi'
+record_to = 'image_sprinkler.avi'
 path_to_faces = './faces'
 
 

@@ -7,7 +7,7 @@ import abc
 import copy
 from otis.helpers import colortools
 from otis.helpers import cvtools
-# TODO: adding the functionality with abs_point to base
+# TODO: Consider adding the functionality with abs_point to base
 class AssetWriter:
 
     @classmethod
@@ -24,7 +24,7 @@ class AssetWriter:
         """
         AssetWriter is basically just a fancy mixin to add the class method
         cls().make_list which instantiates a list of identical AssetWriter/subclass
-        objects
+        objects. It also defines mass and velocity for the purposes of collision tracking
         """
         self.velocity = (0, 0)
         self.mass = None
@@ -65,7 +65,7 @@ class ShapeObject(metaclass=abc.ABCMeta):
 
 
 class CircleType(ShapeObject, metaclass=abc.ABCMeta):
-    _asset_shape = 'circle0'
+    _asset_shape = 'circle'
     pass
 
 

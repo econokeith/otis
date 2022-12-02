@@ -6,7 +6,7 @@ def make_parser():
     parser.add_argument('-d', '--c_dim',type=tuple, default=(1280, 720),
                         help='set video dimensions. default is (1920, 1080)')
     parser.add_argument('-m', '--max_fps', type=int, default=30,
-                        help='set max fps Default is 60')
+                        help='set max show_fps Default is 60')
     parser.add_argument('-p', '--port', type=int, default=0,
                         help='camera port default is 0')
     parser.add_argument('-cf', type=float, default=2,
@@ -40,7 +40,7 @@ class ArgParser:
         parser.add_argument('-d', '--c_dim', type=tuple, default=(1280, 720),
                             help='set video dimensions. default is (1280, 720)')
         parser.add_argument('-m', '--max_fps', type=int, default=30,
-                            help='set max fps Default is 30')
+                            help='set max show_fps Default is 30')
         parser.add_argument('-p', '--port', type=int, default=0,
                             help='camera port default is 0')
         parser.add_argument('-cf', type=float, default=2,

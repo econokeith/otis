@@ -100,6 +100,7 @@ class Circle(ShapeAsset, CircleType):
                  radius=None,
                  radius_type='inner',
                  coords=None,
+                 coord_format='cwh',
                  update_format='cwh',
                  to_abs=False,
                  **kwargs
@@ -116,7 +117,7 @@ class Circle(ShapeAsset, CircleType):
         ShapeAsset.__init__(self,
                             coords=None,
                             update_format=update_format,
-                            coord_format='cwh',
+                            coord_format=coord_format,
                             **kwargs)
 
         if coords is not None:
@@ -150,7 +151,8 @@ class Circle(ShapeAsset, CircleType):
             self._coords[:2] = cx, cy
             return
         # determines how the radius is found if coordinates are given in rectangular box form
-        # based on the radius type attribute
+        # based on the radius type attribute.
+        # TODO: Circle radius format stuff should probably be handled by the assetbounder
         if w == h:
             diameter = w
         elif self.radius_type == 'inner':
@@ -188,12 +190,18 @@ class Circle(ShapeAsset, CircleType):
     def width(self):
         return self.coords[2]
 
-    def write(self, frame, center=None, radius=None, color=None, ref=None, save=False):
+    def write(self, frame, center=None, coords=None, radius=None, color=None, ref=None, save=False):
+        #TODO. Fix the differences in write between circle and rectangle
         """
         :type frame: np.array
         """
-        _center = self.center if center is None else center
-        _radius = self.radius if radius is None else radius
+        if coords is None:
+            _center = self.center if center is None else center
+            _radius = self.radius if radius is None else radius
+        else:
+            _center = coords[:2]
+            _radius = coords[2]//2
+
         _color = self.color if color is None else color
         _ref = self.ref if ref is None else ref
 
