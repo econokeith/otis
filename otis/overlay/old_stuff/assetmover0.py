@@ -12,7 +12,7 @@ import copy
 import numpy as np
 import cv2
 
-from otis.helpers import timers, maths
+from otis.helpers import timers
 from otis.helpers.cvtools import cv2waitkey
 from otis.overlay import imageassets as imga, shapes
 import otis.camera as camera
@@ -110,7 +110,6 @@ class AssetMover:
         self._y_border_collision = False
         self.gravity = gravity
         self.dampening = 1. - dampen
-        self.has_moved = False
 
     @property
     def coords(self):
@@ -389,41 +388,16 @@ class CollisionDetector:
             dot_p1 = np.inner(-d_velocity, -d_center)
             d_v1 = -2  * (dot_p1 / dist_2) * (-d_center)
             circle_1.coords[2:] += d_v1
-            i = 0
-            while True:
-                circle_1.move()
-                distance = maths.linear_distance(circle_1.center, circle_0.center)
-                if distance > (r0 + r1) + buffer:
-                    break
-
-                if i>5:
-                    circle_1.is_finished=True
-                    break
-
-                i+=1
-
+            remove_overlap_w_no_mass(circle_0, circle_1)
 
         elif distance <= (r0 + r1) + buffer and circle_1.mass is None:
             d_velocity = v0 - v1
             dot_p0 = np.inner(d_velocity, d_center)
             d_v0 = -2 * (dot_p0 / dist_2) * d_center
             circle_0.coords[2:] += d_v0
-            # remove_overlap_w_no_mass(circle_1, circle_0)
-            i=0
-            while True:
-                circle_0.move()
-                distance = maths.linear_distance(circle_1.center, circle_0.center)
+            remove_overlap_w_no_mass(circle_1, circle_0)
 
-                if distance > (r0 + r1) + buffer:
-                    break
-
-                if i > 5:
-                    circle_0.is_finished = True
-                    break
-
-                i += 1
-
-        elif distance <= (r0 + r1) + buffer: #and circle_0.collision_hash[circle_1.id] is False:
+        elif distance <= (r0 + r1) + buffer and circle_0.collision_hash[circle_1.id] is False:
 
             d_velocity = v0 - v1
             dot_p0 = np.inner(d_velocity, d_center)
@@ -435,33 +409,16 @@ class CollisionDetector:
             circle_0.coords[2:] += d_v0
             circle_1.coords[2:] += d_v1
 
-            i=0
-            while True:
-                circle_0.move()
-                circle_1.move()
-                distance = maths.linear_distance(circle_1.center, circle_0.center)
+            circle_0.collision_hash[circle_1.id] = True
+            circle_1.collision_hash[circle_0.id] = True
+            remove_overlap(circle_0, circle_1)
 
-                if distance > (r0 + r1) + buffer:
-                    break
+        elif distance <= (r0 + r1) + buffer and circle_0.collision_hash[circle_1.id] is True:
+            pass  # no effect until they seperate
 
-                if i > 5:
-                    circle_1.is_finished = True
-                    circle_0.is_finished = True
-                    break
-
-                i += 1
-
-
-            # circle_0.collision_hash[circle_1.id] = True
-            # circle_1.collision_hash[circle_0.id] = True
-            # remove_overlap(circle_0, circle_1)
-
-        # elif distance <= (r0 + r1) + buffer and circle_0.collision_hash[circle_1.id] is True:
-        #     pass  # no effect until they seperate
-        #
-        # elif distance > (r0 + r1) +buffer and circle_0.mass is not None and circle_1.mass is not None:
-        #     circle_0.collision_hash[circle_1.id] = False
-        #     circle_1.collision_hash[circle_0.id] = False
+        elif distance > (r0 + r1) +buffer and circle_0.mass is not None and circle_1.mass is not None:
+            circle_0.collision_hash[circle_1.id] = False
+            circle_1.collision_hash[circle_0.id] = False
 
 
 if __name__ == '__main__':

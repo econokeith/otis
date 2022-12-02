@@ -13,7 +13,11 @@ from otis.helpers import shapefunctions, timers
 from otis.overlay.assetmover import AssetMover
 
 
-MAX_KEYS_PER_SECOND = 10
+MAX_KEY_INPUTS_PER_SECOND = 10
+STOP_AFTER_OTIS = False
+N_BOUNCERS = 50
+NEW_BALL_WAIT = 1
+FRAME_PORTION_SCALE = 2.
 
 OTIS_SCRIPT = [
     ("Keith, I heard that mean lady stole your best friend, the cat.", 1),
@@ -26,7 +30,7 @@ OTIS_SCRIPT = [
 def target(shared, pargs):
     signal.signal(signal.SIGTERM, multitools.close_gracefully)
     signal.signal(signal.SIGINT, multitools.close_gracefully)
-    pargs.record = False
+    pargs.record = True
 
     ####################################### SETUP #####################################################################
 
@@ -52,30 +56,32 @@ def target(shared, pargs):
                                                                  name_tag_inverted=False,
 
                                                                  )
-    #
+    # bounding box manager that translates the box coords from the cv_model_process into the effects on screen
     box_manager = boundingobjects.BoundingManager(manager,
                                                   box_fun=new_bounder_function,
                                                   )
 
     # both are adhoc effects managers defined below
     mirror = MirrorEffects(manager)
-    sprinkler = BallSprinkler(manager, frame_portion_scale=1.1)
+    ball_sprinkler = BallSprinkler(manager, frame_portion_scale=FRAME_PORTION_SCALE)
 
     # set up info writers to monitor import variables while this runs
     # they toggle on and off by hitting '1' on the keyboard
-
-    info_group = writergroups.BasicInfoGroup((10, 40), manager) # fps, model update, resolution
+    # toggle on/off while running by hitting "1" on the keyboard
+    info_group0 = writergroups.BasicInfoGroup((10, 40), manager) # fps, model update, resolution
+    # additional info writers for use during development
     extra_writers = [
         textwriters.InfoWriter(text_fun=lambda: f'n_faces= {shared.n_observed_faces.value}', coords=(50, -200)),
         textwriters.InfoWriter(text_fun=lambda: f'a_faces= {box_manager.active_names}', coords=(50, -250)),
         textwriters.InfoWriter(text_fun=lambda: f'primary= {box_manager.primary_target}', coords=(50, -300)),
         textwriters.InfoWriter(text_fun=lambda: f'target = {shared.servo_target}', coords=(50, -350)),
         textwriters.InfoWriter(text_fun=lambda: f'key_input= {shared.keyboard_input.value}', coords=(50, -400)),
-        textwriters.InfoWriter(text_fun=lambda: f'n_bouncers= {sprinkler.movement_manager.n}', coords=(50, -450)),
+        textwriters.InfoWriter(text_fun=lambda: f'n_bouncers= {ball_sprinkler.movement_manager.n}', coords=(50, -450)),
         textwriters.InfoWriter(text_fun=lambda: f'servo_active= {shared.servo_tracking.value}', coords=(50, -500))
     ]
-    info_group2 = writergroups.AssetGroup((0, 0)).add(extra_writers)
+    info_group1 = writergroups.AssetGroup((0, 0)).add(extra_writers)
 
+    # set up otis
     otis = typewriters.TypeWriter(coords=(50, 120),
                                   ref='lb',
                                   jtype='l',
@@ -96,12 +102,15 @@ def target(shared, pargs):
     for line in OTIS_SCRIPT:
         the_script.put(line)
 
+    ###################################################################################################################3
     #################################### THE LOOOP #####################################################################
+    ####################################################################################################################
+
     otis_speaks = False
     start_raining_balls = False
     show_info = False
     tick = time.time()
-    capture.record = False
+    capture.record = False # don't start recording otis recognizes a person
 
     while True:
 
@@ -114,16 +123,17 @@ def target(shared, pargs):
         box_manager.update_primary()  # choose primary target for servo process
 
         if box_manager.primary_box is not None: # nothing starts until otis finds someone
-            capture.record = True
+
             start_raining_balls = True
+            if pargs.record is True:
+                capture.record = True
+
+         # write the boxes
+
+        if start_raining_balls is True:
+            ball_sprinkler.loop(frame, box_manager.primary_box)  # send the balls everywhere
 
         box_manager.write(frame)
-        if start_raining_balls is True:
-            sprinkler.loop(frame, box_manager.primary_box)  # send the balls everywhere
-        # frame_portion = coordtools.get_frame_portion(frame, (0, 0, 200, 200), ref='c')
-        # mirror.write(frame, frame_portion)
-
-        otis.write(frame)
         # otis waits until there's someone here to talk
         if box_manager.primary_box is not None:
             if otis_speaks is False:
@@ -134,28 +144,35 @@ def target(shared, pargs):
             new_line = the_script.get()
             otis.text = new_line
 
-        otis.write(frame)
+        otis.write(frame) # otis always writes because cause he's set to perma_background = True so the grey box will be
+                          # there
+                          # regardless of him having something to say
+
+        # toggle info groups on / off
         if show_info is True:
-            info_group.write(frame)
-            info_group2.write(frame)
+            info_group0.write(frame)
+            info_group1.write(frame)
 
         capture.show(frame)
 
         if otis_speaks is True and otis.text_complete is True and the_script.empty() is True:
-            print(round(time.time() - tick, 2))
-
-            shared.keyboard_input.value = ord('q')
-            shared.new_keyboard_input.value = True
-            break
+            if STOP_AFTER_OTIS is True:
+                print(round(time.time() - tick, 2))
+                shared.keyboard_input.value = ord('q')
+                shared.new_keyboard_input.value = True
+                break
 
         ############################ keyboard inputs ###################################################################
 
         keyboard_input = cv2.waitKey(1) & 0xFF  # only camera process receives the keyboard input
 
+        # could probably have done without the new_keyboard_input and done it around the value of keyboard_input
         if shared.new_keyboard_input.value is False and keyboard_input != 255:  # 255 is the value given for no input
 
             shared.keyboard_input.value = keyboard_input
             shared.new_keyboard_input.value = True
+
+        #if shared.new_keyboard_input.value is True and shared.key_input_received[0] is False:
 
             if shared.keyboard_input.value == ord('q'):  # exit / destroy windows on 'q'
                 break
@@ -176,9 +193,10 @@ def target(shared, pargs):
 
 
 #######################################################################################################################
-########################   Extra Object Managers                          #############################################
+########################   Extra ad hoc Object Managers                   #############################################
 #######################################################################################################################
 
+# not currently in use
 class MirrorEffects:
 
     def __init__(self,
@@ -206,7 +224,7 @@ class MirrorEffects:
                                ref=corner,
                                in_format=corner + 'wh')
 
-
+# manages all the balls
 class BallSprinkler:
 
     def __init__(self,
@@ -217,48 +235,55 @@ class BallSprinkler:
         self.shared = manager.shared
         self.capture = manager.capture
         self.pargs = manager.pargs
-        self.n_bouncers = 20
+        self.n_bouncers = N_BOUNCERS
         self.gravity = -10
         self.dampen = .01
-        self.new_ball_wait = 1
+        self.frame_portion_scale = frame_portion_scale
+        self.new_ball_wait = NEW_BALL_WAIT
         self.time_since_ball = timers.TimeSinceLast()
         self.ball_buffer = 10
         self.circle_buffer = 10
         self.ball_collision = True
         self.ball_diameter = 80
         self.big_ball_diameter = 100
+        self.random_ball_sizes = True
         self.big_ball_on = False
         self.box_collisions = True
         self.x_range = (x_border, self.pargs.f_dim[0] - x_border)
         self.y_range = (x_border, 950 - x_border)
         self.cycle_time = 4
         self.x_border = x_border
+
+        ################################### bouncies ##################################################################
+
+        # default target for image assets if a bounding box isn't available
+        self.circle = shapes.Circle((0, 0), 100, ref='c', dim=self.capture.f_dim, to_abs=True)
+        # how often to introduce new bouncies
+        self.new_ball_timer = timers.CallFrequencyLimiter(self.new_ball_wait)
+        # controls the starting position of the bouncers
         self.x_value_counter = timers.TimedCycle(*self.x_range,
                                                  updown=True,
                                                  cycle_t=self.cycle_time
                                                  )
 
-        self.rectangle_counter = timers.TimedRectangleCycle(self.x_range,
-                                                            self.y_range,
-                                                            cycle_t=self.cycle_time
-                                                            )
-
-        self.circle = shapes.Circle((0, 0), 100, ref='c', dim=self.capture.f_dim, to_abs=True)
-
-        self.counter_check = timers.TimeSinceLast()
         # this function creates new bouncers
-        def mover_function():
-            resize_to = np.random.randint(2*self.ball_diameter,6*int(self.ball_diameter))//4
-            # resize_to = self.ball_diameter
-            image_balls = imageassets.ImageAsset(center=(0, 0),
+        def make_new_mover_function():
+            if self.random_ball_sizes is True:
+                resize_to = np.random.randint(2*self.ball_diameter,6*int(self.ball_diameter))//4 # random ball sizes
+            else:
+                resize_to = self.ball_diameter
+
+            image_ball = imageassets.ImageAsset(center=(0, 0),
                                                  resize_to=(resize_to, resize_to),
-                                                 hitbox_type='circle0',
+                                                 hitbox_type='circle',
                                                  use_circle_mask=True,
                                                  )
-            side_pi = [np.pi / 4, 3 / 4 * np.pi, 5 / 4 * np.pi, 7 / 4 * np.pi]
-            ball_origin = self.rectangle_counter()
-            side = self.rectangle_counter.side
-            mover = AssetMover(image_balls,
+
+            # can be used to have the ball origins move around the entire screen instead of just the top
+            # side_pi = [np.pi / 4, 3 / 4 * np.pi, 5 / 4 * np.pi, 7 / 4 * np.pi]
+            # ball_origin = self.rectangle_counter()
+            # side = self.rectangle_counter.side
+            mover = AssetMover(image_ball,
                                center=(self.x_value_counter(), 50),
                                # center = ball_origin,
                                velocity=(np.random.randint(400, 700),
@@ -274,18 +299,21 @@ class BallSprinkler:
 
                                )
             return mover
-
-        self.mover_function = mover_function
-        self.movement_manager = assetmover.CollidingAssetManager(collisions=self.ball_collision,
+        #
+        self.make_new_mover_function = make_new_mover_function
+        # controls the movement of the balls
+        self.movement_manager = assetmover2.CollidingAssetManager(collisions=self.ball_collision,
                                                                  max_movers=self.n_bouncers,
                                                                  buffer=self.ball_buffer)
 
-        self.new_ball_timer = timers.CallFrequencyLimiter(self.new_ball_wait)
-        self.frame_portion_scale = frame_portion_scale
+
+
+        #### BIG BALLS moving around the border of the screen ########################################################
+        ################# currently not in use ########################################################################
 
         self.big_ball = imageassets.ImageAsset(center=(0, 0),
                                                resize_to=(self.big_ball_diameter, self.big_ball_diameter),
-                                               hitbox_type='circle0',
+                                               hitbox_type='circle',
                                                use_circle_mask=True,
                                                )
 
@@ -294,8 +322,14 @@ class BallSprinkler:
         self.new_big_ball_timer = timers.CallFrequencyLimiter()
         self._new_wait_list = np.array([0, .25, .25, .25, .125, .25, .25, .25])*4
 
+        self.rectangle_counter = timers.TimedRectangleCycle(self.x_range,
+                                                            self.y_range,
+                                                            cycle_t=self.cycle_time
+                                                            )
+        self.counter_check = timers.TimeSinceLast()
+
     def loop(self, frame, target):
-        # if there is no target, the balls will focus on a circle0 in the middle of the screen
+        # if there is no target, the balls will focus on a circle in the middle of the screen
         if target is None:
             w = self.circle.width
             h = self.circle.height
@@ -309,20 +343,22 @@ class BallSprinkler:
         frame_portion = coordtools.get_frame_portion(frame, (*c, int(w * p_space), int(h * p_space)))
         movement_manager = self.movement_manager
 
+        # make new bouncers
         if  self.new_ball_timer() is True and len(self.rectangle_counters) >-1:  # and manager.n < n_bouncers:
-            ball = self.mover_function()
+            ball = self.make_new_mover_function()
             movement_manager.movers.append(ball)
 
+        # update velocities / check for collisions between bouncers
         movement_manager.update_velocities()
-
+        # check collisions with bounding boxes
         if target is not None:
             for mover in movement_manager.movers:
                 movement_manager.detector.collide(target, mover, buffer=self.circle_buffer)
-                # assetmover.remove_overlap_w_no_mass(target, mover)
 
+        # move the bouncies
         movement_manager.move()
-        #
-        # try:
+
+        # sometimes the frame portion bugs out when there isn't a clear pic, it won't have an x or y dimension
         if 0 not in frame_portion.shape:
             if len(self.rectangle_counters) > 0:
                 self.big_ball.image = frame_portion
@@ -333,7 +369,7 @@ class BallSprinkler:
 
             lrc = len(self.rectangle_counters)
 
-            # make the 8 big balls that circle0
+            # make the 8 big balls that circle
             if self.big_ball_on is True and lrc < 8 and self.new_big_ball_timer(self._new_wait_list[lrc]):
                 new_timer = timers.TimedRectangleCycle(self.x_range,
                                                         self.y_range,

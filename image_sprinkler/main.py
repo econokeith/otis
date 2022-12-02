@@ -20,9 +20,10 @@ pargs.PATH_TO_FACES = './faces'
 pargs.output_scale = 1
 pargs.servo = True
 pargs.cf = 2
-pargs.max_fps = 60
-pargs.record = False
+pargs.max_fps = 30
+pargs.record = True
 pargs.record_scale = 1
+pargs.record_to = 'bouncies.avi'
 
 if pargs.servo is True:
     try:
