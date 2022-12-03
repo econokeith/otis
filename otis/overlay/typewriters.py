@@ -13,7 +13,6 @@ from otis.helpers import timers, colortools, shapefunctions, texttools, \
 
 from otis.overlay import bases, shapes, textwriters
 
-
 class TypeWriter(textwriters.TextWriter):
 
     def __init__(self,
