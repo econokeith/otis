@@ -6,6 +6,7 @@ from otis.overlay import shapes, assetmover, imageassets
 
 
 def main():
+    ############################# SETUP ###################################################
     # start the camera
     square_size = 200
     capture = camera.ThreadedCameraPlayer(c_dim='720p')
