@@ -240,9 +240,10 @@ class CameraPlayer:
             out_frame = _frame
 
         # record
-        if _record is True:
-            # TODO - Fix Recorder Resizing in camera.show
-            self.recorder.write(_frame.astype('uint8'))
+        if _record is True and tuple(self.record_dim) != tuple(self.f_dim):
+            self.recorder.write(cv2.resize(_frame, self.record_dim))
+        elif _record is True:
+            self.recorder.write(_frame)
 
         # display frame
         cv2.imshow(self.name, out_frame)
