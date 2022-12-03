@@ -191,7 +191,7 @@ class CameraPlayer:
         tick = time.time()
         self.grabbed, self.frame = self.capture.read()
 
-        if self.cropped is not None:
+        if self.cropped is True:
             x0, x1, y0, y1 = self._crop_points
             self._frame = self.frame[y0:y1, x0:x1]
 
