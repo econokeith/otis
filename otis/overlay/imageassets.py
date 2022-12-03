@@ -29,7 +29,7 @@ class ImageAsset(bases.AssetWriter):
                  b_thickness = 1,
                  ):
         """
-
+        makes the images
         Args:
             image: cv2 frame or portion, default = None
             mask: mask to change the shape of the image, default is None

@@ -48,6 +48,39 @@ class TypeWriter(textwriters.TextWriter):
                  perma_background=True,
                  **kwargs
                  ):
+        """
+        writes text
+        Args:
+            coords:
+            font:
+            color:
+            scale:
+            ltype:
+            thickness:
+            ref:
+            text:
+            line_spacing:
+            max_line_length:
+            line_length_format:
+            n_lines:
+            jtype:
+            u_spacing:
+            u_ltype:
+            u_thickness:
+            underliner:
+            border:
+            border_spacing:
+            b_ltype:
+            b_thickness:
+            invert_border:
+            one_border:
+            transparent_background:
+            key_wait_range:
+            end_pause:
+            loop:
+            perma_background:
+            **kwargs:
+        """
 
         super().__init__(coords=coords,
                          font=font,

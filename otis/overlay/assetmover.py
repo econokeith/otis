@@ -30,6 +30,22 @@ class AssetMover:
                  gravity=0,
                  dampen=0.,
                  ):
+        """
+        moves the assets
+        Args:
+            asset:
+            center:
+            velocity:
+            dim:
+            x_range:
+            y_range:
+            border_collision:
+            ups:
+            mass:
+            velocity_format:
+            gravity:
+            dampen:
+        """
 
         self._coords = np.zeros(4)
         self._coords[:2] = center

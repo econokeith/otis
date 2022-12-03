@@ -9,6 +9,16 @@ class SceneManager:
     capture: camera.ThreadedCameraPlayer
 
     def __init__(self, shared, pargs, capture=None, names=True, file=None,**kwargs):
+        """
+        just a means of sharing information between scenes in the camera process
+        Args:
+            shared:
+            pargs:
+            capture:
+            names:
+            file:
+            **kwargs:
+        """
 
         self.shared = shared
         self.pargs = pargs

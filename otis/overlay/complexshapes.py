@@ -12,6 +12,14 @@ class CircleWithLineToCenter(shapes.Circle):
                  thickness=2,
                  ltc_thickness = 2,
                  **kwargs):
+        """
+        it's a circle with a line to the center
+        Args:
+            *args:
+            thickness:
+            ltc_thickness:
+            **kwargs:
+        """
 
         super().__init__(*args,
                          thickness=thickness,
