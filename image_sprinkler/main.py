@@ -10,6 +10,7 @@ import numpy as np
 from otis.helpers import multitools, otistools
 import camera_process, cv_model_process
 
+# using a parser was a bad idea and needs to be changed to something easier
 parser = otistools.make_parser()
 pargs = parser.parse_args()
 pargs.c_dim = (1920, 1080)
@@ -19,7 +20,7 @@ pargs.video_center = np.array(pargs.crop_to) // 2
 pargs.PATH_TO_FACES = './faces'
 pargs.output_scale = 1
 pargs.servo = True
-pargs.cf = 2
+pargs.cf = 2 # computer vision compression factor
 pargs.max_fps = 30
 pargs.record = True
 pargs.record_scale = 1

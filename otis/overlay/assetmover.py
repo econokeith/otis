@@ -1,6 +1,5 @@
 """
-This is a very simple collisions detection class
-can be sped up
+Controls the movements . say more
 """
 from collections import defaultdict, deque
 import copy
@@ -67,8 +66,8 @@ class AssetMover:
         _, _, width, height = asset.center_width_height()
 
         if self.border_collisions is True:
-            self.y_range += (height, -height)
-            self.x_range += (width, -width)
+            self.y_range += (height//2, -height//2)
+            self.x_range += (width//2, -width//2)
 
         self.ups = ups
         self._ups = ups
@@ -136,10 +135,8 @@ class AssetMover:
     def write(self, frame, safe_delete=False, **kwargs):
         if self.is_finished is True:
             return
-
         # self.ups = max(1. / self.real_time_elapsed(), self._ups)
         # print(self.ups)
-
         self.ups = 1. / self.real_time_elapsed()
         if safe_delete is True:
             try:
@@ -148,6 +145,11 @@ class AssetMover:
                 self.is_finished = True
         else:
             self.asset.write(frame, **kwargs)
+
+    def update_move_write(self, frame):
+        self.update_velocity()
+        self.move()
+        self.write(frame)
 
     def _check_for_border_collisions(self):
 
