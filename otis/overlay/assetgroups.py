@@ -1,3 +1,7 @@
+"""
+acts as an anchor / writer for groups of assets
+"""
+
 import numpy as np
 
 from otis.helpers import maths

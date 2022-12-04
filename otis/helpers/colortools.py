@@ -2,15 +2,16 @@ import cv2
 from itertools import cycle
 from otis.helpers import timers
 
+
 class UpDownCounter:
 
-    def __init__(self, 
-                 mini=0, 
-                 maxi=255, 
-                 step=1, 
-                 start=0, 
+    def __init__(self,
+                 mini=0,
+                 maxi=255,
+                 step=1,
+                 start=0,
                  forward=True,
-                 Hz = 1
+                 Hz=1
                  ):
 
         self.mini = mini
@@ -37,16 +38,17 @@ class UpDownCounter:
 
         return self.i
 
+
 class UpDownCounterT:
 
     def __init__(self,
                  mini=0,
                  maxi=255,
                  start=0,
-                 dir = 1,
-                 cycle_t = 1,
-                 max_ups = 60,
-                 repeat = True
+                 dir=1,
+                 cycle_t=1,
+                 max_ups=60,
+                 repeat=True
                  ):
 
         self.mini = mini
@@ -57,7 +59,7 @@ class UpDownCounterT:
         self.length = (maxi - mini + 1)
         self.cycle_t = cycle_t
         self.last_timer = timers.TimeSinceLast()
-        self.speed =  self.length/ self.cycle_t
+        self.speed = self.length / self.cycle_t
         self.ups_timer = timers.CallFrequencyLimiter(1 / max_ups)
         self.repeat = repeat
 
@@ -74,7 +76,7 @@ class UpDownCounterT:
 
             elif self.i > self.maxi and self.repeat is False:
                 self.i = self.maxi
-                self.dir *=-1
+                self.dir *= -1
 
             elif self.i < self.mini and self.repeat is True:
                 self.i = self.maxi
@@ -94,10 +96,10 @@ COLOR_HASH = {
     'b': (0, 0, 0),
     'y': (0, 255, 255),
     'c': (255, 255, 0),
-    'm' : (255, 0, 255),
-    'grey' : (127, 127, 127)
-
+    'm': (255, 0, 255),
+    'grey': (127, 127, 127)
 }
+
 
 def color_function(color):
     try:
@@ -136,7 +138,7 @@ def frame_portion_to_grey(frame, darken=.25):
 
 class ColorCycle:
 
-    def __init__(self, color_iter = None):
+    def __init__(self, color_iter=None):
         self.colors = COLOR_HASH.keys()
         if color_iter is None:
             self._cycler = cycle(COLOR_HASH.keys())
@@ -145,4 +147,3 @@ class ColorCycle:
 
     def __call__(self):
         return next(self._cycler)
-

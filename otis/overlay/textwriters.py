@@ -1,3 +1,7 @@
+"""
+Contains TextWriter and several other
+"""
+
 import time
 from queue import Queue
 import copy
@@ -18,16 +22,16 @@ class TextWriter(bases.AssetWriter):
     def __init__(self,
                  coords=(0, 0),
                  font='duplex',
-                 color='r',
+                 color='r', # can be 'r', 'g', 'u', 'w', 'b', 'y', 'c', 'm', 'grey' or (G, B, R) color tuple
                  scale=1.,
                  ltype=1,
                  thickness=1,
                  ref=None,
                  text=None,
-                 line_spacing=.5,
-                 max_line_length=None,
-                 line_length_format='pixels',
-                 n_lines=None,
+                 line_spacing=.5, # int = pixels, float = percentage of font height
+                 max_line_length=None, #
+                 line_length_format='pixels', # pixels or characters
+                 n_lines=None, #
                  jtype='l',
                  u_spacing=.1,
                  u_ltype=None,
@@ -38,7 +42,7 @@ class TextWriter(bases.AssetWriter):
                  b_ltype=None,
                  b_thickness=1,
                  invert_border=False,
-                 one_border=False,
+                 one_border=False, # for multiple lines, makes it so there is one big background/border
                  transparent_background=0.,
                  perma_border = False,
                  ):
@@ -59,7 +63,7 @@ class TextWriter(bases.AssetWriter):
         self.thickness = thickness
         self.jtype = jtype
 
-        ########################### underliner ###########################################
+        ##################################### underliner ###########################################
 
         self.u_spacing = self._int_or_float_times_font_size(u_spacing)
         self.u_ltype = u_ltype
@@ -77,7 +81,7 @@ class TextWriter(bases.AssetWriter):
                                           coord_format='points',
                                           )
 
-        #### border ####################################################
+        ####################################  border  ####################################################
 
         if transparent_background != 0:
             border = shapes.TransparentBackground(coord_format= 'lbwh', transparency=transparent_background)
@@ -169,7 +173,8 @@ class TextWriter(bases.AssetWriter):
                                                           )
 
         # for determining borders. all in pixels
-
+        # perma border means the border stays after being set even if there's no longer any text on it
+        # this is mostly for the TypeWriter subclass, but it made the most sense to put it here anyway
         if self.perma_border is False:
             if self.max_line_length != 'pixels':
                 longest_stub = max(self.text_stubs, key=lambda stub: self.get_text_size(stub)[0])
@@ -260,7 +265,7 @@ class TextWriter(bases.AssetWriter):
 
         h_space, v_space = self.border_spacing
         w, h = self.get_text_size(_text)
-
+        # write border
         if isinstance(self.border, bases.RectangleType) and show_outline is True:
 
             l = justified_position[0] - h_space
@@ -272,6 +277,7 @@ class TextWriter(bases.AssetWriter):
         if self.invert_border is True:
             _color = 'w'
 
+        # underline
         if isinstance(self.underliner, bases.LineType):
             self.underliner.write(frame,
                                   (0, -v_space, w, -v_space),
@@ -499,7 +505,7 @@ class TimerWriter(InfoWriter):
 
     def timer(self):
         t = self._timer()
-        if self.per_second is True and (t != 0 or t != 0.0):
+        if self.per_second is True and (t !=0):
             t = 1 / t
 
         if self.moving_average is not None:

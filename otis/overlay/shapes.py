@@ -20,6 +20,7 @@ class ShapeAsset(bases.AssetWriter, abc.ABC):
                  collisions=False,
                  lock_dimensions=False,
                  to_abs=False,
+                 **kwargs
                  ):
 
         super().__init__()
@@ -103,6 +104,13 @@ class Circle(ShapeAsset, CircleType):
                  coord_format='cwh',
                  update_format='cwh',
                  to_abs=False,
+                 color='r',
+                 thickness=1,
+                 ltype=None,
+                 ref=None,
+                 dim=None,
+                 collisions=False,
+                 lock_dimensions=False,
                  **kwargs
                  ):
         """
@@ -110,15 +118,33 @@ class Circle(ShapeAsset, CircleType):
         Args:
             center:
             radius:
-            *args:
             radius_type:
+            coords:
+            coord_format:
+            update_format:
+            to_abs:
+            color:
+            thickness:
+            ltype:
+            ref:
+            dim:
+            collisions:
+            lock_dimensions:
             **kwargs:
         """
         ShapeAsset.__init__(self,
                             coords=None,
                             update_format=update_format,
                             coord_format=coord_format,
-                            **kwargs)
+                            color=color,
+                            thickness=thickness,
+                            ltype=ltype,
+                            ref=ref,
+                            dim=dim,
+                            collisions=collisions,
+                            lock_dimensions=lock_dimensions,
+                            **kwargs
+                            )
 
         if coords is not None:
             self._coords[:] = coords
@@ -224,11 +250,50 @@ class Circle(ShapeAsset, CircleType):
 class Rectangle(ShapeAsset, RectangleType):
 
     def __init__(self,
-                 coords=(0, 0, 0, 0),
+                 coords=None,
+                 color='r',
+                 thickness=1,
+                 ltype=None,
+                 ref=None,
+                 dim=None,
+                 coord_format='rtlb',
+                 update_format=None,
+                 collisions=False,
+                 lock_dimensions=False,
+                 to_abs=False,
                  **kwargs,
                  ):
+        """
 
-        ShapeAsset.__init__(self, coords, **kwargs)
+        Args:
+            coords:
+            color:
+            thickness:
+            ltype:
+            ref:
+            dim:
+            coord_format:
+            update_format:
+            collisions:
+            lock_dimensions:
+            to_abs:
+            **kwargs:
+        """
+
+        ShapeAsset.__init__(self,
+                            coords=coords,
+                            color=color,
+                            thickness=thickness,
+                            ltype=ltype,
+                            ref=ref,
+                            dim=dim,
+                            coord_format=coord_format,
+                            update_format=update_format,
+                            collisions=collisions,
+                            lock_dimensions=lock_dimensions,
+                            to_abs=to_abs,
+                            **kwargs,
+                            )
 
     @property
     def coords(self):
@@ -286,14 +351,16 @@ class Rectangle(ShapeAsset, RectangleType):
     def height(self):
         _, _, _, h = coordtools.translate_box_coords(self.coords,
                                                      in_format=self.coord_format,
-                                                     out_format='cwh')
+                                                     out_format='cwh'
+                                                     )
         return h
 
     @property
     def width(self):
         _, _, w, _ = coordtools.translate_box_coords(self.coords,
                                                      in_format=self.coord_format,
-                                                     out_format='cwh')
+                                                     out_format='cwh'
+                                                     )
         return w
 
     def write(self, frame, coords=None, color=None, ref=None, save=False):
@@ -327,8 +394,7 @@ class Line(bases.AssetWriter, LineType):
                  color='r',
                  thickness=2,
                  ltype=None,
-                 coord_format='points',
-                 # points (x1, y1, x2, y2), 'pal': (x1, y1, angle, length), 'cal' center angle length
+                 coord_format='points',# points (x1, y1, x2, y2), 'pal': (x1, y1, angle, length), 'cal' center angle length
                  ref=None,
                  dim=None
                  ):

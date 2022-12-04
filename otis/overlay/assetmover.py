@@ -24,7 +24,7 @@ class AssetMover:
                  x_range=None,
                  y_range=None,
                  border_collision=True,
-                 ups=60,  # this needs to match frame_rate
+                 ups=60, # this needs to match frame_rate
                  mass=None,
                  velocity_format='mag_radians',
                  gravity=0,
@@ -40,9 +40,10 @@ class AssetMover:
             x_range:
             y_range:
             border_collision:
-            ups:
+            ups: updates per second. usually matches frame_rate, but it also automatically updates _ups to match how
+                 the mover is being called.
             mass:
-            velocity_format:
+            velocity_format: either 'mag_radians' or 'xy
             gravity:
             dampen:
         """

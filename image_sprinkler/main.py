@@ -1,5 +1,5 @@
 """
-Example of putting BBoxes around faces
+
 """
 import multiprocessing
 import ctypes
