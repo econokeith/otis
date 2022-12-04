@@ -23,7 +23,7 @@ def main():
                                  color='g',
                                  thickness=3
                                  )
-    ########## the loop ############################################
+    ################################ the loop ############################################
     while True:
 
         _, frame = capture.read() # get newest frame

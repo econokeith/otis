@@ -6,7 +6,7 @@ from otis.overlay import shapes, assetmover, imageassets
 
 
 def main():
-    ############################# SETUP ###################################################
+    ############################## SETUP ###################################################
     # start the camera
     square_size = 200
     capture = camera.ThreadedCameraPlayer(c_dim='720p')
@@ -35,7 +35,7 @@ def main():
                               coord_format='cwh'
                               )
 
-    ########## the loop ############################################
+    #################################### the loop ###########################################
     while True:
         # get newest frame
         _, frame = capture.read()
@@ -52,7 +52,7 @@ def main():
         mover.asset.image = frame_portion_saved
         # update / mover / write the mover
         mover.update_move_write(frame)
-        # get a reference to the center of the scren
+        # get a reference to the center of the screen
         frame_portion_reference = coordtools.get_frame_portion(frame,
                                                                (0, 0, square_size, square_size),
                                                                ref='c',

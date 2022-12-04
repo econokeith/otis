@@ -4,7 +4,6 @@ Controls the movements . say more
 from collections import defaultdict, deque
 import copy
 
-
 import numpy as np
 import cv2
 
@@ -163,7 +162,7 @@ class AssetMover:
             **kwargs:
 
         Returns:
-
+            N/A
         """
         if self.is_finished is True:
             return
