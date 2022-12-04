@@ -150,6 +150,21 @@ class AssetMover:
         self._check_for_boundary_snags()
 
     def write(self, frame, safe_delete=False, **kwargs):
+        """
+
+        Args:
+            frame:
+            safe_delete:
+                adds:
+                    try:
+                        self.asset.write(frame, **kwargs)
+                    except:
+                        self.is_finished = True
+            **kwargs:
+
+        Returns:
+
+        """
         if self.is_finished is True:
             return
         # self.ups = max(1. / self.real_time_elapsed(), self._ups)
@@ -284,6 +299,11 @@ class CollidingAssetManager:
             mover.write(frame)
 
     def move(self):
+        """
+        moves the movers and prunes the movers with mover.is_finished = True
+        Returns: N/A
+
+        """
         live_movers = deque([], self.max_movers)
         for mover in self.movers:
             if mover.is_finished is False:
@@ -294,11 +314,17 @@ class CollidingAssetManager:
         self.movers = live_movers
 
 class CollisionDetector:
-
+    """
+    currently only supports circles, currently not optimized for searches faster than O(n^2)
+    """
     def __init__(self, buffer=0, move_before_delete=10):
         """
-        currently only supports circles, currently not optimized for searches faster than O(n^2)
+
+        Args:
+            buffer: adds
+            move_before_delete:
         """
+
         self.buffer = buffer
         self.moves_before_delete = move_before_delete
 
@@ -358,7 +384,7 @@ class CollisionDetector:
 
                 i+=1
 
-        # TODO : turn the while loops on circle collision into some kind of function to get rid of the boilerplate
+        # todo : turn the while loops on circle collision into some kind of function to get rid of the boilerplate
         elif distance <= (r0 + r1) + buffer and circle_1.mass is None:
             d_velocity = v0 - v1
             dot_p0 = np.inner(d_velocity, d_center)
@@ -422,7 +448,7 @@ class CollisionDetector:
         #     circle_0.collision_hash[circle_1.id] = False
         #     circle_1.collision_hash[circle_0.id] = False
 
-# TODO: Consider adding Hitbox to all assets separately
+# todo: Consider adding Hitbox to all assets separately
 class Hitbox:
     asset: shapes.ShapeAsset
 
