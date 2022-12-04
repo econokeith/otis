@@ -184,7 +184,7 @@ def target(shared, pargs):
             shared.key_input_received[0] = True  # set as received
 
         if np.count_nonzero(shared.key_input_received) == 3:  # reset once all have processes have received the input
-            shared.new_keyboard_input.value = False
+            shared.new_keyboard_input.value = False           # probably shoulda just been a variable with a lock
             shared.key_input_received[:] = False
             shared.keyboard_input.value = 255
 
