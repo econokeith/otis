@@ -10,7 +10,6 @@ import cv2
 from otis.helpers import timers, maths
 from otis.overlay import shapes
 
-
 class AssetMover:
     movers = []
     _n_movers = 0
@@ -152,14 +151,13 @@ class AssetMover:
         """
 
         Args:
-            frame:
+            frame: cv2/np.ndarray frame
             safe_delete:
                 adds:
                     try:
                         self.asset.write(frame, **kwargs)
                     except:
                         self.is_finished = True
-            **kwargs:
 
         Returns:
             N/A
@@ -242,9 +240,12 @@ class CollidingAssetManager:
         Manages Colliding assets on screen
         Args:
             dim: frame dimensions
-            collisions: bool. do assets collide
-            border_collision: bool. do assets collide with border of just run off the screen
-            max_movers: how many mover assets max
+            collisions: bool, default = False
+                do assets collide
+            border_collision: bool, default=True
+                do assets collide with border of just run off the screen
+            max_movers: int
+                how many mover assets max
             buffer: tbd
         """
 
@@ -254,7 +255,6 @@ class CollidingAssetManager:
         self.dim = dim
         self.detector = CollisionDetector(buffer=buffer)
         self.max_movers = max_movers
-
 
     @property
     def n(self):
@@ -311,6 +311,11 @@ class CollidingAssetManager:
             else:
                 del mover
         self.movers = live_movers
+
+    def update_move_write(self, frame):
+        self.update_velocities()
+        self.move()
+        self.write(frame)
 
 class CollisionDetector:
     """

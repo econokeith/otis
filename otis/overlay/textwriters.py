@@ -1,7 +1,7 @@
 """
 Contains TextWriter and several other
-"""
 
+"""
 import time
 from queue import Queue
 import copy
@@ -22,16 +22,16 @@ class TextWriter(bases.AssetWriter):
     def __init__(self,
                  coords=(0, 0),
                  font='duplex',
-                 color='r', # can be 'r', 'g', 'u', 'w', 'b', 'y', 'c', 'm', 'grey' or (G, B, R) color tuple
+                 color='r',  # can be 'r', 'g', 'u', 'w', 'b', 'y', 'c', 'm', 'grey' or (G, B, R) color tuple
                  scale=1.,
                  ltype=1,
                  thickness=1,
                  ref=None,
                  text=None,
-                 line_spacing=.5, # int = pixels, float = percentage of font height
-                 max_line_length=None, #
-                 line_length_format='pixels', # pixels or characters
-                 n_lines=None, #
+                 line_spacing=.5,  # int = pixels, float = percentage of font height
+                 max_line_length=None,  #
+                 line_length_format='pixels',  # pixels or characters
+                 n_lines=None,  #
                  jtype='l',
                  u_spacing=.1,
                  u_ltype=None,
@@ -42,13 +42,65 @@ class TextWriter(bases.AssetWriter):
                  b_ltype=None,
                  b_thickness=1,
                  invert_border=False,
-                 one_border=False, # for multiple lines, makes it so there is one big background/border
+                 one_border=False,  # for multiple lines, makes it so there is one big background/border
                  transparent_background=0.,
-                 perma_border = False,
+                 perma_border=False,
                  ):
+        """
+
+        Args:
+            coords: tuple
+                (x, y)
+            font: str
+                'simplex', 'plain', 'duplex', 'complex', 'triplex', 'c_small', 's_simplex', 's_complex'
+            color: str or tuple
+                can be 'r', 'g', 'u', 'w', 'b', 'y', 'c', 'm', 'grey' or (G, B, R) color tuple
+            scale: float
+                increases the size of text
+            ltype: int
+                cv2 line type
+            thickness: int
+                cv2 line thickness
+            ref: None, tuple
+                absolute frame coords
+            text: str
+
+            line_spacing: int or float
+                int = pixels, float = percentage of font height
+            max_line_length: int
+                controls line breaks
+            line_length_format: int, default = None
+                pixels or characters
+            n_lines: int or None.
+                if max_line_length is also set
+            jtype: str
+                justification type, 'c', 'l', 'r'
+            u_spacing: int/float
+                underline vertical spacing int or float if int -> pixels. float -> % of font height
+            u_ltype:int
+                underline line ltype
+            u_thickness: int
+                underline thickniss
+            underliner: bool or shapes.Line
+                under line the text
+            border: bool or shapes.Rectangle
+                put a border around the text
+            border_spacing:
+            b_ltype: int
+                border line type
+            b_thickness: int
+                border thickness
+            invert_border: bool
+                background is colored and text is white
+            one_border: bool
+                for multiple lines, makes it so there is one big background/border
+            transparent_background:  float
+                between 0 and 1 or None, makes background grey transparent
+            perma_border: bool
+                border doesn't disappoint when there's no text
+        """
 
         super().__init__()
-
         self.font = font  # property
         self.color = color  # property
         self.ref = ref
@@ -81,10 +133,10 @@ class TextWriter(bases.AssetWriter):
                                           coord_format='points',
                                           )
 
-        ####################################  border  ####################################################
+        ####################################  border  #####################################################
 
         if transparent_background != 0:
-            border = shapes.TransparentBackground(coord_format= 'lbwh', transparency=transparent_background)
+            border = shapes.TransparentBackground(coord_format='lbwh', transparency=transparent_background)
 
         elif one_border is True and border is False and not isinstance(border, bases.RectangleType):
             border = True
@@ -119,12 +171,12 @@ class TextWriter(bases.AssetWriter):
         if self.invert_border is True:
             self.border.thickness = -1
 
-        ################ Text Set UP #################################################################
+        ################ Text Set Up #################################################################
+
         self.perma_border = perma_border
         self.text_stubs = []
         self.text = text  # property
-        self.text_fun = lambda : ""
-
+        self.text_fun = lambda: ""
 
         if self.n_lines is None:
             n_stubs = len(self.text_stubs)
@@ -141,8 +193,6 @@ class TextWriter(bases.AssetWriter):
         except:
             pass
 
-
-
     ############################# PROPERTIES ##########################################################
     @property
     def font(self):
@@ -158,7 +208,11 @@ class TextWriter(bases.AssetWriter):
 
     @text.setter
     def text(self, new_text):
+        """
 
+        Args:
+            new_text:
+        """
         self._text = new_text
         if self._text is None:
             return
@@ -171,9 +225,8 @@ class TextWriter(bases.AssetWriter):
                                                           scale=self.scale,
                                                           thickness=self.thickness,
                                                           )
-
         # for determining borders. all in pixels
-        # perma border means the border stays after being set even if there's no longer any text on it
+        # perma_border means the border stays after being set even if there's no longer any text on it
         # this is mostly for the TypeWriter subclass, but it made the most sense to put it here anyway
         if self.perma_border is False:
             if self.max_line_length != 'pixels':
@@ -267,7 +320,6 @@ class TextWriter(bases.AssetWriter):
         w, h = self.get_text_size(_text)
         # write border
         if isinstance(self.border, bases.RectangleType) and show_outline is True:
-
             l = justified_position[0] - h_space
             b = justified_position[1] + v_space
             w += 2 * h_space
@@ -344,11 +396,10 @@ class TextWriter(bases.AssetWriter):
         else:
             x -= h_space + self.total_length // 2
 
-        border = self.border
-        border.write(frame,
-                     coords= (x, y, w, h),
-                     color=color
-                     )
+        self.border.write(frame,
+                          coords=(x, y, w, h),
+                          color=color
+                          )
 
     def write_fun(self, frame, *args, **kwargs):
         self.write(frame, self.text_fun(*args, **kwargs))
@@ -360,16 +411,32 @@ class TextWriter(bases.AssetWriter):
         else:
             return value
 
+    def center_width_height(self):
+
+        x, y = coordtools.absolute_point(self.coords, self.ref)
+        v_space, h_space = self.border_spacing
+        h = self.total_height + 2 * v_space
+        w = self.total_length + 2 * h_space
+        y -= (self.font_height + v_space)
+
+        if self.jtype == 'l':
+            x -= h_space
+        elif self.jtype == 'r':
+            x -= h_space + self.total_length
+        else:
+            x -= h_space + self.total_length // 2
+
+
 class NameTag(TextWriter):
 
     def __init__(self,
-                 name = None,
+                 name=None,
                  v_offset=20,
                  h_offset=0,
                  attached_to=None,
-                 color = None,
-                 box_reference='c', #'c', 'l', 'r'
-                 line_to_box= False,
+                 color=None,
+                 box_reference='c',  # 'c', 'l', 'r'
+                 line_to_box=False,
                  ltb_offset=0,
                  **kwargs,
                  ):
@@ -381,7 +448,7 @@ class NameTag(TextWriter):
         self.h_offset = h_offset
         self.attached_to = attached_to
         self.color = color
-        self.box_reference=box_reference
+        self.box_reference = box_reference
         self.ltb_offset = ltb_offset
         self.line_to_box = line_to_box
         self.jtype = box_reference
@@ -395,7 +462,7 @@ class NameTag(TextWriter):
         self.text = new_name
 
     def write(self, frame, name=None, **kwargs):
-        #might wanna change this so that it just get's entered each time
+        # might wanna change this so that it just get's entered each time
         if self.name is not None:
             text = self.name
         elif self.attached_to.name is not None:
@@ -411,12 +478,12 @@ class NameTag(TextWriter):
         x, y, w, h = self.attached_to.center_width_height()
 
         if self.box_reference == 'l':
-            ref = (x-w//2, y-h//2)
+            ref = (x - w // 2, y - h // 2)
 
         elif self.box_reference == 'r':
-            ref = (x+w//2, y-h//2)
+            ref = (x + w // 2, y - h // 2)
         else:
-            ref = (x, y-h//2)
+            ref = (x, y - h // 2)
 
         super().write(frame,
                       text=text,
@@ -428,7 +495,7 @@ class NameTag(TextWriter):
 
         shapefunctions.draw_line(frame,
                                  ref,
-                                 (ref[0], ref[1]-self.v_offset + self.border_spacing[1]),
+                                 (ref[0], ref[1] - self.v_offset + self.border_spacing[1]),
                                  thickness=1,
                                  color=color
                                  )
@@ -441,7 +508,6 @@ class InfoWriter(TextWriter):
                  *args,
                  **kwargs
                  ):
-
         super().__init__(**kwargs)
         self.text_fun = text_fun
 
@@ -505,7 +571,7 @@ class TimerWriter(InfoWriter):
 
     def timer(self):
         t = self._timer()
-        if self.per_second is True and (t !=0):
+        if self.per_second is True and (t != 0):
             t = 1 / t
 
         if self.moving_average is not None:
@@ -531,7 +597,9 @@ class FPSWriter(TextWriter):
         self.clock()
         self.text_fun = lambda: f'FPS = {int(1 / self.clock())}'
 
-
+# def translate_text_coordinates(text_writer:TextWriter, to_format, from_format):
+#     lb = text_writer.coords
+#     c =
 def main():
     font_list = ('simplex', 'plain', 'duplex', 'complex', 'triplex', 'c_small', 's_simplex', 's_complex')
     from otis import camera
@@ -545,7 +613,7 @@ def main():
                         one_border=False,
                         border_spacing=(.5, .25),
                         transparent_background=1.,
-                        color ='g'
+                        color='g'
                         )
 
     while True:
@@ -554,7 +622,7 @@ def main():
 
         for i, font in enumerate(font_list):
             writer.font = font
-            writer.write(frame, text=font, coords=(0, 200-50*i))
+            writer.write(frame, text=font, coords=(0, 200 - 50 * i))
         capture.show()
 
         if cvtools.cv2waitkey() is True:
@@ -562,4 +630,21 @@ def main():
             break
 
 if __name__ == '__main__':
-    main()
+
+    font_list = ('simplex', 'plain', 'duplex', 'complex', 'triplex', 'c_small', 's_simplex', 's_complex')
+    from otis import camera
+
+    capture = camera.ThreadedCameraPlayer(max_fps=30,
+                                          dim=(1280, 720)
+                                          ).start()
+
+    writer = TextWriter(ref='c',
+                        jtype='c',
+                        text="HELLO MY NAME",
+                        border=True,
+                        one_border=False,
+                        border_spacing=(.5, .25),
+                        transparent_background=1.,
+                        color='g'
+                        )
+
