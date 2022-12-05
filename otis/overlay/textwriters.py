@@ -159,7 +159,7 @@ class TextWriter(bases.AssetWriter):
         if self._text is None:
             return
 
-        self.text_stubs = texttools.split_text_into_lines(new_text,
+        self.text_stubs = texttools.split_text_into_stubs(new_text,
                                                           max_line_length=self.max_line_length,
                                                           n_lines=self.n_lines,
                                                           line_length_format=self.line_length_format,
@@ -228,7 +228,7 @@ class TextWriter(bases.AssetWriter):
 
     def get_text_size(self, text=None):
         _text = self.text if text is None else text
-        return cv2.getTextSize(_text, self.font, self.scale, self.ltype)[0]
+        return cv2.getTextSize(_text, self.font, self.scale, self.thickness)[0]
 
     ################################## METHODS #############################################
     def write_line_of_text(self,

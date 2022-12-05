@@ -47,7 +47,7 @@ def find_justified_start(text, coords, font, scale=1, thickness=1, jtype='l', re
 
     return coordtools.absolute_point(justified_start, ref, dim)
 
-def split_text_into_lines(text,
+def split_text_into_stubs(text,
                           max_line_length=None,
                           n_lines=None,
                           line_length_format='pixels',

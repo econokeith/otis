@@ -93,7 +93,7 @@ class TextWriter(bases.AssetWriter):
         if self._text is None:
             return
 
-        self.text_stubs = texttools.split_text_into_lines(new_text,
+        self.text_stubs = texttools.split_text_into_stubs(new_text,
                                                           max_line_length=self.max_line_length,
                                                           n_lines=self.n_lines,
                                                           line_length_format=self.line_length_format,
