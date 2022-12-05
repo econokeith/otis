@@ -9,7 +9,11 @@ from otis.helpers import colortools
 from otis.helpers import cvtools
 # TODO: Consider adding the functionality with abs_point to base
 class AssetWriter:
-
+    """
+    AssetWriter is basically just a fancy mixin to add the class method
+    cls().make_list which instantiates a list of identical AssetWriter/subclass
+    objects. It also defines mass and velocity for the purposes of collision tracking
+    """
     @classmethod
     def make_list(cls, n_writers, *args, **kwargs):
         return [cls(*args, **kwargs) for _ in range(n_writers)]
@@ -63,7 +67,7 @@ class ShapeObject(metaclass=abc.ABCMeta):
     def asset_shape(cls):
         return cls._asset_shape
 
-
+###
 class CircleType(ShapeObject, metaclass=abc.ABCMeta):
     _asset_shape = 'circle'
     pass

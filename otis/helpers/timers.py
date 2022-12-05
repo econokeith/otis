@@ -1,10 +1,12 @@
 import time
 import abc
-
 import numpy as np
 
+# TODO - add moving average functionality the timers used to report frequency
 class Timer(abc.ABC):
-
+    """
+    Timer
+    """
     @abc.abstractmethod
     def __init__(self, *args, **kwargs):
         """

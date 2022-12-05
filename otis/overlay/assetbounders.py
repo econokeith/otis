@@ -1,5 +1,7 @@
+"""
+gives bounding box functionality to assets
+"""
 import copy
-import abc
 from collections import defaultdict
 import numpy as np
 from otis.overlay import bases, shapes, textwriters
@@ -24,19 +26,25 @@ class BoundingAsset(bases.AssetHolderMixin, bases.AssetWriter):
                  name_tag_border = True,
                  name_tag_inverted = False
                  ):
-
         """
-        Bounding asset functionality to shape assets for use in displaying bounding objects
+
         Args:
-            color:
+            asset:
             name:
             name_tagger:
             show_name:
             show_self:
-            coord_format:
-            thickness:
-            ltype:
+            time_to_inactive:
+            color:
+            moving_average:
+            scale:
+            dimensions:
+            update_format:
+            stabilizer:
+            name_tag_border:
+            name_tag_inverted:
         """
+        
         super().__init__()
 
         self._color = color
