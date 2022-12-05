@@ -90,10 +90,9 @@ def target(shared, pargs):
                                   scale=1.5,
                                   max_line_length=capture.f_dim[0] - 100,
                                   one_border=True,
-                                  perma_background=True,
+
                                   border_spacing=(.5, .5),
-                                  n_lines=3,
-                                  transparent_background=.9,
+                                  max_lines=3,
                                   loop=False,
                                   color='g',
                                   perma_border=True,

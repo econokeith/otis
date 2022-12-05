@@ -80,7 +80,7 @@ class TextWriter(bases.AssetWriter):
 
     @font.setter
     def font(self, new_font):
-        self._font = texttools.TEXT_HASH[new_font]
+        self._font = texttools.FONT_HASH[new_font]
 
     @property
     def text(self):

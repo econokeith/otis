@@ -14,10 +14,10 @@ __fonts = (cv2.FONT_HERSHEY_SIMPLEX,
 
 __keys = ('simplex', 'plain', 'duplex', 'complex', 'triplex', 'c_small', 's_simplex', 's_complex')
 
-TEXT_HASH = dict(zip(__keys + __fonts, __fonts + __fonts))
+FONT_HASH = dict(zip(__keys + __fonts, __fonts + __fonts))
 
 def get_text_size(text, font='simplex', scale=1, thickness=None):
-    _font = TEXT_HASH[font]
+    _font = FONT_HASH[font]
     return cv2.getTextSize(text, _font, scale, thickness)[0]
 
 def find_justified_start(text, coords, font, scale=1, thickness=1, jtype='l', ref=None, dim=None):
@@ -34,7 +34,7 @@ def find_justified_start(text, coords, font, scale=1, thickness=1, jtype='l', re
     Returns:
 
     """
-    _font = TEXT_HASH[font]
+    _font = FONT_HASH[font]
 
     w, h = cv2.getTextSize(text, _font, scale, thickness)[0]
     if jtype == 'r':
@@ -101,7 +101,7 @@ def split_text_into_lines_pixels(text, font=None, max_pixels_per_line=None, scal
     if max_pixels_per_line is None:
         return [text]
 
-    _font = TEXT_HASH[font]
+    _font = FONT_HASH[font]
 
     text_length = cv2.getTextSize(text, _font, scale, thickness)[0][0]
     lines_of_text = []

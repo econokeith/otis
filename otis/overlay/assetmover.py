@@ -27,6 +27,8 @@ class AssetMover:
                  velocity_format='mag_radians',
                  gravity=0,
                  dampen=0.,
+                 copy_asset=True,
+                 show_hitbox = False
                  ):
         """
         moves the assets
@@ -49,7 +51,9 @@ class AssetMover:
         self._coords = np.zeros(4)
         self._coords[:2] = center
         self.dim = dim
-        self.asset = copy.deepcopy(asset)
+        self.asset = asset
+        if copy_asset is True:
+            self.asset = copy.deepcopy(self.asset)
         self.asset.center = (0, 0)
         self.asset.ref = self._coords[:2]
 
@@ -80,6 +84,7 @@ class AssetMover:
 
         _, _, width, height = asset.center_width_height()
 
+
         if self.border_collisions is True:
             self.y_range += (height//2, -height//2)
             self.x_range += (width//2, -width//2)
@@ -96,6 +101,9 @@ class AssetMover:
         self.gravity = gravity
         self.dampening = 1. - dampen
         self.has_moved = False
+        self.show_hitbox = show_hitbox
+        if self.show_hitbox is True:
+            self.outline = shapes.Rectangle((0, 0, width, height), color='c', coord_format='cwh', thickness=3)
 
     @property
     def coords(self):
@@ -174,6 +182,9 @@ class AssetMover:
                 self.is_finished = True
         else:
             self.asset.write(frame, **kwargs)
+            if self.show_hitbox is True:
+                self.outline.coords[:2] = self.coords[:2]
+                self.outline.write(frame)
 
     def update_move_write(self, frame):
         self.update_velocity()
@@ -312,7 +323,7 @@ class CollidingAssetManager:
                 del mover
         self.movers = live_movers
 
-    def update_move_write(self, frame):
+    def loop(self, frame):
         self.update_velocities()
         self.move()
         self.write(frame)

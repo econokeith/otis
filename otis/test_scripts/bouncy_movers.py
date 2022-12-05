@@ -1,8 +1,9 @@
 import cv2
+import numpy as np
 
 from otis import camera
 from otis.helpers import coordtools
-from otis.overlay import shapes, assetmover, imageassets, typewriters
+from otis.overlay import shapes, assetmover, imageassets, typewriters, textwriters
 
 
 def main():
@@ -11,7 +12,7 @@ def main():
     square_size = 200
     capture = camera.ThreadedCameraPlayer(c_dim='720p')
     center = capture.f_center
-    print(center)
+
     # set up image asset without an image, we'll update once the frame is running
     image_asset = imageassets.ImageAsset(resize_to=(square_size, square_size),
                                          hitbox_type='rectangle',
@@ -20,6 +21,7 @@ def main():
                                          )
     # set up the mover holding the image asset
     mover = assetmover.AssetMover(image_asset,
+                                  center = center + (200, 200),
                                   velocity=(200, 1),
                                   dim=capture.f_dim,
                                   ups=capture.max_fps,
@@ -27,6 +29,7 @@ def main():
     # line connecting center of frame to center of mover
     line = shapes.Line(thickness=2, color='g')
     # define the border of the center square that'll be copied to the image asset each frame
+
     square = shapes.Rectangle(coords=(0, 0, square_size, square_size),
                               color='u',
                               ref='c',
@@ -35,21 +38,90 @@ def main():
                               coord_format='cwh'
                               )
     #
-    type_writer = typewriters.TypeWriter(text="I am a mover",
+    type_writer = typewriters.TypeWriter(coords=(0, 0),
+                                         text="I am a mover I am a mover",
                                          loop=True,
-                                         perma_background=True,
-                                         transparent_background=.5
+                                         border=True,
+                                         b_thickness=-1,
+                                         # one_border=True,
+                                         max_lines=2,
+                                         max_line_length=14,
+                                         # invert_background=True,
+                                         line_length_format='chars',
+                                         perma_background = True,
+                                         border_spacing=(.5, .5),
+                                         anchor_point='c',
+                                         jtype='l'
+                                         # transparent_background=.9,
                                          )
     # set up the mover holding the image asset
     mover1 = assetmover.AssetMover(type_writer,
+                                  center = center - (200, 200),
                                   velocity=(200, -1),
                                   dim=capture.f_dim,
                                   ups=capture.max_fps,
+                                  copy_asset=False,
+
+                                  show_hitbox=True,
                                   )
 
-    mover_manager = assetmover.CollidingAssetManager(collisions=True)
-    mover_manager.movers.append(mover)
+    rectangle_writer = shapes.Rectangle(coords=(0,0,120, 30),
+                                        coord_format='cwh',
+                                        color='c'
+                                        )
+    # set up the mover holding the image asset
+    mover2 = assetmover.AssetMover(rectangle_writer,
+                                  center = center,
+                                  velocity=(200, -2),
+                                  dim=capture.f_dim,
+                                  ups=capture.max_fps,
+                                  copy_asset=False,
+                                  )
+
+    text_writer = textwriters.TextWriter(coords=(0, 0),
+                                         text="I am a mover I am a mover",
+                                         # loop=True,
+                                         border=True,
+                                         one_border=True,
+                                         max_lines=2,
+                                         max_line_length=14,
+                                         invert_background=True,
+                                         line_length_format='chars',
+                                         # perma_background = True,
+                                         border_spacing=(.5, .5),
+                                         anchor_point='c',
+                                         jtype='l'
+                                         # transparent_background=.9,
+                                         )
+    #
+    # text_writer = textwriters.TextWriter(coords=(0, 0),
+    #                                      text="I am a mover I am a mover",
+    #                                      border=True,
+    #                                      max_lines=2,
+    #                                      max_line_length=14,
+    #                                      line_length_format='chars',
+    #                                      border_spacing=(.5, .5),
+    #                                      anchor_point='lb',
+    #                                      jtype='c',
+    #                                      one_border=True,
+    #                                      perma_border=True,
+    #                                      # transparent_background=.9,
+    #                                      )
+
+    mover3 = assetmover.AssetMover(text_writer,
+                                   center=center - (200, -200),
+                                   velocity=(200, -3),
+                                   dim=capture.f_dim,
+                                   ups=capture.max_fps,
+                                   copy_asset=False,
+                                   show_hitbox=True,
+                                   )
+
+    mover_manager = assetmover.CollidingAssetManager(collisions=False)
+    # mover_manager.movers.append(mover)
     mover_manager.movers.append(mover1)
+    # mover_manager.movers.append(mover2)
+    mover_manager.movers.append(mover3)
 
     #################################### the loop ###########################################
     while True:
@@ -63,11 +135,13 @@ def main():
                                                            copy=True
                                                            )
         # write the line connecting centers
-        line.write(frame, coords=(*center, *mover.center))
+
         # set copy of center to the image of the image asset of the mover
         mover.asset.image = frame_portion_saved
         # update / mover / write the mover
         mover_manager.loop(frame)
+        # print('mover_coords = ', np.array(mover_manager.movers[0].coords, dtype=int))
+        line.write(frame, coords=(*center, *mover.center))
         # get the reference frame
         frame_portion_reference = coordtools.get_frame_portion(frame,
                                                                (0, 0, square_size, square_size),

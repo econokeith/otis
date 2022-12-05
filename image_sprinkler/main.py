@@ -23,7 +23,7 @@ pargs.servo = True
 pargs.cf = 2 # computer vision compression factor
 pargs.max_fps = 30
 pargs.record = True
-pargs.record_scale = 1
+pargs.record_dim= (1080, 1080)
 pargs.record_to = 'bouncies.mp4'
 
 if pargs.servo is True:

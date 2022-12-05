@@ -40,7 +40,7 @@ class SceneManager:
                                                   record=pargs.record,
                                                   record_to=pargs.record_to,
                                                   output_scale=pargs.output_scale,
-                                                  record_scale=pargs.record_scale,
+                                                  record_dim=pargs.record_dim,
                                                   f_dim=pargs.crop_to,
                                                   **kwargs
                                                   ).start()

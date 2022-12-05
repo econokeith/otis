@@ -33,9 +33,9 @@ class CameraPlayer:
                  f_dim=None, # frame dimensions only differs from c_dim if we're cropping the feed
                  max_fps=60,
                  record = False,
-                 record_to = 'otis.avi',
+                 record_to = 'otis.mp4',
                  record_dim=None,
-                 flip = False, # flip horizontal axis
+                 flip = True, # flip horizontal axis
                  output_scale = 1,
                  record_codec = 'MP4V'
                  ):
@@ -131,7 +131,7 @@ class CameraPlayer:
         else:
             self.fps_sleeper = timers.SmartSleeper(0.)
         # monitoring
-        self.fps_writer = writers.FPSWriter((10, int(self.f_dim[1] - 40)))
+
         self.latency = 0.001
         self.limit_fps = True
         self.exit_warning = writers.TextWriter((10, 40), color='u')
@@ -178,8 +178,6 @@ class CameraPlayer:
         else:
             self._record = new
 
-    def write_fps(self):
-        self.fps_writer.write(self.frame)
 
     def read(self):
         """
@@ -226,8 +224,6 @@ class CameraPlayer:
             self.fps_sleeper()
 
         # show show_fps on screen
-        if show_fps is True:
-            self.write_fps()
 
         # show exit warning on screen
         if exit_warning is True:
@@ -259,7 +255,6 @@ class CameraPlayer:
 
         while True:
             self.read()
-            self.write_fps()
             dim_writer.write(self.frame)
             self.show(exit_warning=warn)
             if cv2.waitKey(1) & 0xFF == ord('q'):

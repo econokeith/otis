@@ -13,6 +13,7 @@ from otis.helpers import timers, colortools, shapefunctions, texttools, \
 
 from otis.overlay import bases, shapes, textwriters
 
+# something is happening when moving the transparent background
 class TypeWriter(textwriters.TextWriter):
 
     def __init__(self,
@@ -27,19 +28,20 @@ class TypeWriter(textwriters.TextWriter):
                  line_spacing=.5,
                  max_line_length=None,
                  line_length_format='pixels',
-                 n_lines=None,
+                 max_lines=None,
                  jtype='l',
                  u_spacing=.05,
                  u_ltype=None,
                  u_thickness=1,
-                 underliner=False,
+                 underline=False,
                  border=False,
                  border_spacing=(.1, .1),
                  b_ltype=1,
                  b_thickness=1,
-                 invert_border=False,
+                 invert_background=False,
                  one_border=False,
                  transparent_background=0.,
+                 anchor_point = None,
                  # unique to typewriter starts here
                  key_wait_range=(.05, .1),
                  end_pause=1,
@@ -61,17 +63,17 @@ class TypeWriter(textwriters.TextWriter):
             line_spacing:
             max_line_length:
             line_length_format:
-            n_lines:
+            max_lines:
             jtype:
             u_spacing:
             u_ltype:
             u_thickness:
-            underliner:
+            underline:
             border:
             border_spacing:
             b_ltype:
             b_thickness:
-            invert_border:
+            invert_background:
             one_border:
             transparent_background:
             key_wait_range:
@@ -89,22 +91,24 @@ class TypeWriter(textwriters.TextWriter):
                          thickness=thickness,
                          ref=ref,
                          text=None,
+                         anchor_point=anchor_point,
                          line_spacing=line_spacing,
                          max_line_length=max_line_length,
                          line_length_format=line_length_format,
-                         n_lines=n_lines,
+                         max_lines=max_lines,
                          border_spacing=border_spacing,
                          jtype=jtype,
-                         invert_border=invert_border,
+                         invert_background=invert_background,
                          one_border=one_border,
                          u_spacing=u_spacing,
                          u_ltype=u_ltype,
                          u_thickness=u_thickness,
-                         underliner=underliner,
+                         underline=underline,
                          border=border,
                          b_ltype=b_ltype,
                          b_thickness=b_thickness,
                          transparent_background=transparent_background,
+                         # perma_border=perma_background,
                          **kwargs
                          )
 
@@ -127,7 +131,7 @@ class TypeWriter(textwriters.TextWriter):
 
     @property
     def text(self):
-        return self._text
+        return super().text
 
     @text.setter
     def text(self, new_text):
@@ -201,7 +205,7 @@ class TypeWriter(textwriters.TextWriter):
         if self.text_complete is True and self.loop is False and self.perma_background is False:
             return
         elif self.text_complete is True and self.loop is True:
-            self.text = self._text
+            self.text = self.text_object.text
         elif self.text_complete is True and self.perma_background is True:
             self._write_one_border(frame, self.coords, self.color, self.ref)
             return
@@ -211,22 +215,24 @@ class TypeWriter(textwriters.TextWriter):
 
         down_space = self.line_spacing + self.font_height
 
-        if self.ref is not None:
-            down_space *= -1
+        # if self.ref is not None:
+        #     down_space *= -1
 
         i = 0
-        x, y = self.coords
+        coords = coordtools.absolute_point(self.coords, self.ref, frame)
+        coords += self.text_object.start_offset
+        x,y= coords
         for stub in self.completed_stubs:
             super().write_line_of_text(frame,
                                        stub,
                                        (x, y + i * down_space),
                                        self.color,
-                                       self.ref,
+                                       ref=None,
                                        show_outline=False,
                                        )
             i += 1
 
-        self.write_line_of_text(frame, coords=(x, y + i * down_space))
+        self.write_line_of_text(frame, coords=(x, y + i * down_space), ref=None)
 
 
 if __name__ == '__main__':
@@ -243,7 +249,7 @@ if __name__ == '__main__':
                         one_border=True,
                         perma_background=True,
                         border_spacing=(.3, .3),
-                        n_lines=3,
+                        max_lines=3,
                         transparent_background=.9,
                         loop=True,
                         color='g'

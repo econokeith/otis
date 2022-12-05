@@ -153,7 +153,7 @@ def translate_box_coords(coords,
         cx, cy = absolute_point((cx, cy), ref, dim)
         abs_point_used = True
         r = cx
-        l = cx + w
+        l = cx - w
         t = cy - h//2
         b = cy + h//2
 
@@ -161,7 +161,7 @@ def translate_box_coords(coords,
         cx, cy, w, h = coords
         cx, cy = absolute_point((cx, cy), ref, dim)
         abs_point_used = True
-        r = cx - h
+        r = cx + w
         l = cx
         t = cy - h//2
         b = cy + h//2
