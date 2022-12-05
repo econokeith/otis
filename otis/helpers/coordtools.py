@@ -1,5 +1,6 @@
 import numpy as np
 
+
 __FRAME_HASH = {}
 __FRAME_HASH['c'] = lambda s: (int(s[1] / 2), int(s[0] / 2))
 __FRAME_HASH['lt'] = lambda s: (0, 0)
@@ -229,7 +230,3 @@ def get_frame_portion(frame, coords, coord_format='cwh', ref=None, copy=True):
         return frame[t:b, l:r].copy()
     else:
         return frame[t:b, l:r]
-
-
-
-

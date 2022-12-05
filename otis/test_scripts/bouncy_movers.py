@@ -2,7 +2,7 @@ import cv2
 
 from otis import camera
 from otis.helpers import coordtools
-from otis.overlay import shapes, assetmover, imageassets
+from otis.overlay import shapes, assetmover, imageassets, typewriters
 
 
 def main():
@@ -34,6 +34,23 @@ def main():
                               thickness=2,
                               coord_format='cwh'
                               )
+    #
+    type_writer = typewriters.TypeWriter(text="I am a mover",
+                                         loop=True,
+                                         perma_background=True,
+                                         transparent_background=.5
+                                         )
+    # set up the mover holding the image asset
+    mover1 = assetmover.AssetMover(type_writer,
+                                  velocity=(200, -1),
+                                  dim=capture.f_dim,
+                                  ups=capture.max_fps,
+                                  )
+
+    mover_manager = assetmover.CollidingAssetManager(collisions=True)
+    mover_manager.movers.append(mover)
+    mover_manager.movers.append(mover1)
+
     #################################### the loop ###########################################
     while True:
         # get newest frame
@@ -50,8 +67,8 @@ def main():
         # set copy of center to the image of the image asset of the mover
         mover.asset.image = frame_portion_saved
         # update / mover / write the mover
-        mover.update_move_write(frame)
-        # get a reference to the center of the screen
+        mover_manager.loop(frame)
+        # get the reference frame
         frame_portion_reference = coordtools.get_frame_portion(frame,
                                                                (0, 0, square_size, square_size),
                                                                ref='c',
