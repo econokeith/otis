@@ -379,14 +379,10 @@ class TextWriter(bases.AssetWriter):
         _color = self.color if color is None else color
         _color = colortools.color_function(_color)
 
+        # the first write point of tte text
         _coords = coordtools.absolute_point(self.coords, self.ref, frame)
         _coords += self.text_object.start_offset
 
-        # if _ref is not None:
-        #     _anchor_offset[1] *= -1
-
-        # = _coords + _anchor_offset
-        # if fed a line of text it just writes it.
         if text is not None:
             self.write_line_of_text(frame,
                                     text=text,
@@ -404,8 +400,7 @@ class TextWriter(bases.AssetWriter):
 
             x, y, = _coords
             for i, stub in enumerate(self.stubs):
-                # this has to just keep running the ref stuff otherwise the justifications don't work
-                # I think
+
                 self.write_line_of_text(frame,
                                         stub,
                                         (x, y + i * down_space),
