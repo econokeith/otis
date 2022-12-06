@@ -42,17 +42,17 @@ def main():
                                          text="I am a mover I am a mover",
                                          loop=True,
                                          border=True,
-                                         b_thickness=-1,
-                                         # one_border=True,
+                                         b_thickness=1,
+                                         one_border=True,
                                          max_lines=2,
                                          max_line_length=14,
                                          # invert_background=True,
                                          line_length_format='chars',
-                                         perma_background = True,
+                                         perma_border= True,
                                          border_spacing=(.5, .5),
                                          anchor_point='c',
-                                         jtype='l'
-                                         # transparent_background=.9,
+                                         jtype='l',
+                                         transparent_background=.9,
                                          )
     # set up the mover holding the image asset
     mover1 = assetmover.AssetMover(type_writer,
@@ -61,7 +61,6 @@ def main():
                                   dim=capture.f_dim,
                                   ups=capture.max_fps,
                                   copy_asset=False,
-
                                   show_hitbox=True,
                                   )
 
@@ -77,7 +76,7 @@ def main():
                                   ups=capture.max_fps,
                                   copy_asset=False,
                                   )
-
+    #
     text_writer = textwriters.TextWriter(coords=(0, 0),
                                          text="I am a mover I am a mover",
                                          # loop=True,
@@ -85,13 +84,15 @@ def main():
                                          one_border=True,
                                          max_lines=2,
                                          max_line_length=14,
-                                         invert_background=True,
+                                         # invert_background=True,
                                          line_length_format='chars',
-                                         # perma_background = True,
+                                         # perma_border = True,
                                          border_spacing=(.5, .5),
                                          anchor_point='c',
-                                         jtype='l'
-                                         # transparent_background=.9,
+                                         jtype='l',
+                                         background=True,
+                                         back_color='g',
+                                         transparent_background=.9,
                                          )
     #
     # text_writer = textwriters.TextWriter(coords=(0, 0),

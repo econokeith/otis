@@ -16,6 +16,7 @@ from otis.helpers import timers, colortools, shapefunctions, texttools, cvtools,
 from otis.overlay import bases, shapes
 from otis.overlay import otistext
 
+
 # todo - texttxt writer perma border doesn't work without one border turned on
 class TextWriter(bases.AssetWriter):
     text_fun: types.FunctionType
@@ -156,20 +157,22 @@ class TextWriter(bases.AssetWriter):
             background = True
 
         if transparent_background != 0:
-            self.background = shapes.TransparentBackground(coord_format='lbwh', transparency=transparent_background)
+            self.background = shapes.TransparentBackground(coord_format='lbwh',
+                                                           transparency=transparent_background
+                                                           )
 
-        elif isinstance(background, bases.RectangleType) or border == False or border ==  None:
+        elif isinstance(background, bases.RectangleType) or border == False or border == None:
             self.background = background
 
         else:
             self.background = shapes.Rectangle((0, 0, 0, 0),
-                                           color=self.back_color,
-                                           thickness=-1,
-                                           ref=None,
-                                           dim=None,
-                                           coord_format='lbwh',
-                                           update_format=None,
-                                           )
+                                               color=self.back_color,
+                                               thickness=-1,
+                                               ref=None,
+                                               dim=None,
+                                               coord_format='lbwh',
+                                               update_format=None,
+                                               )
 
         ################################### border         ######################################################
 
@@ -200,7 +203,7 @@ class TextWriter(bases.AssetWriter):
 
     ############################# PROPERTIES ##########################################################
     @property
-    def text_stubs(self):
+    def stubs(self):
         return self.text_object.stubs
 
     @property
@@ -307,9 +310,11 @@ class TextWriter(bases.AssetWriter):
         """
         _text, _coords, _color, _ref, _jtype = misc.update_save_keywords(self,
                                                                          locals(),
-                                                                         ['text', 'coords', 'color', 'ref', 'jtype'],
+                                                                         ['text', 'coords',
+                                                                          'color', 'ref',
+                                                                          'jtype'],
                                                                          )
-
+        #
         justified_position = texttools.find_justified_start(text,
                                                             _coords,
                                                             font=self.font,
@@ -323,16 +328,19 @@ class TextWriter(bases.AssetWriter):
         h_space, v_space = self.border_spacing
         w, h = self.get_text_size(_text)
         # write border
+        l = justified_position[0] - h_space
+        b = justified_position[1] + v_space
+        w += 2 * h_space
+        h += 2 * v_space
+
+        if isinstance(self.background, bases.RectangleType) and show_outline is True:
+            self.background.write(frame, (l, b, w, h), color=_color)
+
         if isinstance(self.border, bases.RectangleType) and show_outline is True:
-            l = justified_position[0] - h_space
-            b = justified_position[1] + v_space
-            w += 2 * h_space
-            h += 2 * v_space
             self.border.write(frame, (l, b, w, h), color=_color)
 
         if self.invert_background is True:
             _color = 'w'
-
         # underline
         if isinstance(self.underline, bases.LineType):
             self.underline.write(frame,
@@ -353,7 +361,7 @@ class TextWriter(bases.AssetWriter):
                                   jtype='l'
                                   )
 
-    def write(self, frame, text:str=None, coords=None, color=None, ref=None, save=False):
+    def write(self, frame, text: str = None, coords=None, color=None, ref=None, save=False):
         """
 
         Args:
@@ -365,7 +373,6 @@ class TextWriter(bases.AssetWriter):
             save: nothing currently
 
         Returns:
-
         """
         _coords = self.coords if coords is None else coords
         _ref = self.ref if ref is None else ref
@@ -378,10 +385,9 @@ class TextWriter(bases.AssetWriter):
         # if _ref is not None:
         #     _anchor_offset[1] *= -1
 
-#= _coords + _anchor_offset
+        # = _coords + _anchor_offset
         # if fed a line of text it just writes it.
         if text is not None:
-
             self.write_line_of_text(frame,
                                     text=text,
                                     coords=_coords,
@@ -390,13 +396,14 @@ class TextWriter(bases.AssetWriter):
                                     )
 
         else:
-        # otherwise it reads from the stubs
+            # otherwise it reads from the stubs
             if self.one_border:
                 self._write_one_border(frame, _coords, _color, None)
 
             down_space = self.line_spacing + self.font_height
+
             x, y, = _coords
-            for i, stub in enumerate(self.text_stubs):
+            for i, stub in enumerate(self.stubs):
                 # this has to just keep running the ref stuff otherwise the justifications don't work
                 # I think
                 self.write_line_of_text(frame,
@@ -410,23 +417,30 @@ class TextWriter(bases.AssetWriter):
 
     def _write_one_border(self, frame, coords, color, ref):
 
-        x, y = coordtools.absolute_point(coords, ref, frame) + self.text_object.start_offset
+        x, y = coordtools.absolute_point(coords, ref, frame)
         v_space, h_space = self.border_spacing
         h = self.total_height + 2 * v_space
         w = self.total_length + 2 * h_space
-        y -= (self.font_height + v_space)
+        y += (self.n_lines - 1) * self.font_height + (self.n_lines) * self.line_spacing
 
         if self.jtype == 'l':
             x -= h_space
         elif self.jtype == 'r':
-            x -= h_space + self.total_length
+            x -= h_space - self.total_length
         else:
-            x -= h_space + self.total_length // 2
+            x -= h_space - self.total_length // 2
 
-        self.border.write(frame,
-                          coords=(x, y, w, h),
-                          color=color
-                          )
+        if isinstance(self.background, shapes.Rectangle):
+            self.background.write(frame,
+                              coords=(x, y, w, h),
+                              color=self.back_color,
+                              )
+
+        if isinstance(self.border, shapes.Rectangle):
+            self.border.write(frame,
+                              coords=(x, y, w, h),
+                              color=self.b_color,
+                              )
 
     def write_fun(self, frame, *args, **kwargs):
         self.write(frame, self.text_fun(*args, **kwargs))
@@ -450,14 +464,14 @@ class TextWriter(bases.AssetWriter):
         if self.jtype == 'l':
             x -= h_space
         elif self.jtype == 'r':
-            x -= h_space + self.total_length
+            x -= h_space - self.total_length
         else:
-            x -= h_space + self.total_length // 2
+            x -= h_space - self.total_length // 2
         return x, y, w, h
 
     @property
     def radius(self):
-        return (self.text_object.height + self.text_object.width)//4
+        return (self.text_object.height + self.text_object.width) // 4
 
 
 class NameTag(TextWriter):
@@ -643,7 +657,7 @@ def main():
     center = capture.f_center
     text = 'HELLO I AM OTIS'
 
-    writer = TextWriter(coords=(0,0),
+    writer = TextWriter(coords=(0, 0),
                         ref=capture.f_center,
                         jtype='c',
                         text=text,
@@ -656,7 +670,7 @@ def main():
                         anchor_point='lb'
                         )
 
-    writer1 = TextWriter(coords=(0,-100),
+    writer1 = TextWriter(coords=(0, -100),
                          ref=capture.f_center,
                          jtype='c',
                          text=text,
@@ -669,16 +683,13 @@ def main():
                          anchor_point='c'
                          )
 
-
     circle = shapes.Circle(radius_type=10, thickness=-1, color='g')
     circles = []
 
     for c in ('lb', 'cb', 'rb', 'cr', 'rt', 'ct', 'lt', 'cl', 'c'):
-            texter = otistext.OtisText(text=text, anchor_point=c)
+        texter = otistext.OtisText(text=text, anchor_point=c)
 
-            circles.append(shapes.Circle(center=center+texter.start_offset, radius=10, thickness=-1, color=colors()))
-
-
+        circles.append(shapes.Circle(center=center + texter.start_offset, radius=10, thickness=-1, color=colors()))
 
     while True:
 

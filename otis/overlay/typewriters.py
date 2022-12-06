@@ -46,7 +46,7 @@ class TypeWriter(textwriters.TextWriter):
                  key_wait_range=(.05, .1),
                  end_pause=1,
                  loop=False,
-                 perma_background=True,
+                 perma_border=True,
                  **kwargs
                  ):
         """
@@ -79,7 +79,7 @@ class TypeWriter(textwriters.TextWriter):
             key_wait_range:
             end_pause:
             loop:
-            perma_background:
+            perma_border:
             **kwargs:
         """
 
@@ -108,7 +108,7 @@ class TypeWriter(textwriters.TextWriter):
                          b_ltype=b_ltype,
                          b_thickness=b_thickness,
                          transparent_background=transparent_background,
-                         # perma_border=perma_background,
+                         perma_border=perma_border,
                          **kwargs
                          )
 
@@ -127,7 +127,7 @@ class TypeWriter(textwriters.TextWriter):
         self.completed_stubs = []
 
         self.text = text
-        self.perma_background = perma_background
+        self.perma_background = perma_border
 
     @property
     def text(self):
@@ -151,7 +151,7 @@ class TypeWriter(textwriters.TextWriter):
                                                           )
 
             self.text_complete = False
-            for stub in self.text_stubs:
+            for stub in self.stubs:
                 self.stub_queue.put(stub)
 
             self.current_stub = self.stub_queue.get()
@@ -201,17 +201,19 @@ class TypeWriter(textwriters.TextWriter):
                                    )
 
     def write(self, frame, **kwargs):
+        coords = coordtools.absolute_point(self.coords, self.ref, frame)
+        coords += self.text_object.start_offset
 
         if self.text_complete is True and self.loop is False and self.perma_background is False:
             return
         elif self.text_complete is True and self.loop is True:
             self.text = self.text_object.text
         elif self.text_complete is True and self.perma_background is True:
-            self._write_one_border(frame, self.coords, self.color, self.ref)
+            self._write_one_border(frame,coords, self.color, None)
             return
 
         if self.one_border:
-            self._write_one_border(frame, self.coords, self.color, self.ref)
+            self._write_one_border(frame, coords, self.color, None)
 
         down_space = self.line_spacing + self.font_height
 
@@ -219,8 +221,6 @@ class TypeWriter(textwriters.TextWriter):
         #     down_space *= -1
 
         i = 0
-        coords = coordtools.absolute_point(self.coords, self.ref, frame)
-        coords += self.text_object.start_offset
         x,y= coords
         for stub in self.completed_stubs:
             super().write_line_of_text(frame,
@@ -231,7 +231,6 @@ class TypeWriter(textwriters.TextWriter):
                                        show_outline=False,
                                        )
             i += 1
-
         self.write_line_of_text(frame, coords=(x, y + i * down_space), ref=None)
 
 
@@ -247,7 +246,7 @@ if __name__ == '__main__':
                         scale=1.5,
                         max_line_length=1000,
                         one_border=True,
-                        perma_background=True,
+                        perma_border=True,
                         border_spacing=(.3, .3),
                         max_lines=3,
                         transparent_background=.9,

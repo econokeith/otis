@@ -144,7 +144,7 @@ def target(shared, pargs):
             otis.text = new_line
 
         otis.write(
-            frame)  # otis always writes because cause he's set to perma_background = True so the grey box will be
+            frame)  # otis always writes because cause he's set to perma_border = True so the grey box will be
         # there
         # regardless of him having something to say
 
