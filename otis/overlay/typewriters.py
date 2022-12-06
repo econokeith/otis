@@ -41,12 +41,16 @@ class TypeWriter(textwriters.TextWriter):
                  invert_background=False,
                  one_border=False,
                  transparent_background=0.,
-                 anchor_point = None,
+                 anchor_point = 'lb',
                  # unique to typewriter starts here
                  key_wait_range=(.05, .1),
                  end_pause=1,
                  loop=False,
                  perma_border=True,
+                 u_color=None,
+                 b_color=None,
+                 background=False,
+                 back_color=False,
                  **kwargs
                  ):
         """
@@ -89,29 +93,38 @@ class TypeWriter(textwriters.TextWriter):
                          scale=scale,
                          ltype=ltype,
                          thickness=thickness,
+                         anchor_point=anchor_point,
                          ref=ref,
                          text=None,
-                         anchor_point=anchor_point,
                          line_spacing=line_spacing,
                          max_line_length=max_line_length,
                          line_length_format=line_length_format,
                          max_lines=max_lines,
-                         border_spacing=border_spacing,
                          jtype=jtype,
-                         invert_background=invert_background,
-                         one_border=one_border,
+                         ##################### underlining #############
                          u_spacing=u_spacing,
                          u_ltype=u_ltype,
                          u_thickness=u_thickness,
+                         u_color=u_color,
                          underline=underline,
+                         ###############################################
                          border=border,
+                         border_spacing=border_spacing,
                          b_ltype=b_ltype,
                          b_thickness=b_thickness,
-                         transparent_background=transparent_background,
+                         b_color=b_color,
+                         ##############################################
                          perma_border=perma_border,
+                         one_border=one_border,
+                         ##############################################
+                         background=background,
+                         transparent_background=transparent_background,
+                         invert_background=invert_background,
+                         back_color = back_color,
+                         ################################################
                          **kwargs
                          )
-
+        self._typing_mode = 'textwriter'
         self.is_waiting = True
         self.key_wait_range = key_wait_range
         self.end_pause = end_pause
@@ -127,7 +140,7 @@ class TypeWriter(textwriters.TextWriter):
         self.completed_stubs = []
 
         self.text = text
-        self.perma_background = perma_border
+        self.perma_border = perma_border
 
     @property
     def text(self):
@@ -170,12 +183,11 @@ class TypeWriter(textwriters.TextWriter):
         self.line_iterator = dstructures.BoundIterator(self.current_stub)
         self.completed_stubs.append(old_stub)
 
-    def write_line_of_text(self, frame, coords=None, show_outline = True, **kwargs):
+    def update_typing(self):
 
         if self.text_complete is True:
             return
 
-        _coords = self.coords if coords is None else coords
         iter_empty = self.line_iterator.is_empty
         queue_empty = self.stub_queue.empty()
 
@@ -192,47 +204,62 @@ class TypeWriter(textwriters.TextWriter):
             self.text_complete = True
 
         else:
-            pass  # this can't happen, hopefully
+            # don't update or make text complete, just pass
+            pass
 
-        super().write_line_of_text(frame,
-                                   text=self._output + self.cursor(),
-                                   coords=_coords,
-                                   show_outline=False
-                                   )
 
     def write(self, frame, **kwargs):
         coords = coordtools.absolute_point(self.coords, self.ref, frame)
-        coords += self.text_object.start_offset
+        center_coords = cx, cy, w, h = coordtools.translate_box_coords((*coords, self.width, self.height),
+                                                                        in_format=self.anchor_point + 'wh',
+                                                                        out_format='cwh'
+                                                                       )
 
-        if self.text_complete is True and self.loop is False and self.perma_background is False:
+        if self.text_complete is True and self.loop is False and self.perma_border is False:
             return
+
         elif self.text_complete is True and self.loop is True:
             self.text = self.text_object.text
-        elif self.text_complete is True and self.perma_background is True:
-            self._write_one_border(frame,coords, self.color, None)
+
+        if self.perma_border is True or self.one_border is True:
+            if isinstance(self.background, bases.RectangleType):
+                self.background.write(frame, coords=center_coords, ref=None)
+            if isinstance(self.border, bases.RectangleType):
+                self.border.write(frame, coords=center_coords, ref=None)
+
+        if self.text_complete is True:
             return
 
-        if self.one_border:
-            self._write_one_border(frame, coords, self.color, None)
-
         down_space = self.line_spacing + self.font_height
+        # start coordinates are the top left of the otis_text box then down by 1x font height
+        start_coords = (cx, cy + self.font_height, self.text_object.width, self.text_object.height)
+        start_coords = coordtools.translate_box_coords(start_coords,
+                                                       in_format='cwh',
+                                                       out_format='ltrb',
+                                                       )
 
-        # if self.ref is not None:
-        #     down_space *= -1
+        x, y = start_coords[:2]
+        # this just eneded up beign the simplest way to add typewriter functionality
+        self.update_typing() # update the typing
+        # write the already written stubs and portion of the current stub that's been typed out
+        for i, stub in enumerate(self.completed_stubs + [self._output + self.cursor()]):
+            # this has to just keep running the ref stuff otherwise the justifications don't work
+            # I think
+            if self.jtype == 'c':
+                j_offset = (self.text_object.width - self.get_text_size(stub)[0]) // 2
+            elif self.jtype == 'r':
+                j_offset = (self.text_object.width - self.get_text_size(stub)[0])
+            else:
+                j_offset = 0
 
-        i = 0
-        x,y= coords
-        for stub in self.completed_stubs:
-            super().write_line_of_text(frame,
-                                       stub,
-                                       (x, y + i * down_space),
-                                       self.color,
-                                       ref=None,
-                                       show_outline=False,
-                                       )
-            i += 1
-        self.write_line_of_text(frame, coords=(x, y + i * down_space), ref=None)
-
+            super()._write_line_of_text(frame,
+                                        stub,
+                                        (x + j_offset, y + i * down_space),
+                                        self.color,
+                                        ref=None,
+                                        show_outline=(not self.one_border),
+                                        jtype=None,
+                                        )
 
 if __name__ == '__main__':
 
@@ -240,25 +267,71 @@ if __name__ == '__main__':
 
     capture = camera.ThreadedCameraPlayer(max_fps=30).start()
 
-    writer = TypeWriter(coords=(0, 120),
-                        ref='b',
-                        jtype='c',
-                        scale=1.5,
-                        max_line_length=1000,
-                        one_border=True,
-                        perma_border=True,
-                        border_spacing=(.3, .3),
-                        max_lines=3,
-                        transparent_background=.9,
-                        loop=True,
-                        color='g'
-                        )
+    # writer = TypeWriter(coords=(0, 0),
+    #                     ref='c',
+    #                     jtype='c',
+    #                     anchor_point='c',
+    #                     scale=1.5,
+    #                     perma_border=True,
+    #                     underline=True,
+    #                     border=True,
+    #                     # max_line_length=1000,
+    #                     one_border=True,
+    #                     border_spacing=(.3, .3),
+    #                     max_lines=2,
+    #                     transparent_background=.9,
+    #                     loop=True,
+    #                     color='g'
+    #                     )
 
-    writer.text = "HELLO MY NAME IS OTIS I WOULD LIKE TO BE YOUR FRIENDS"
+    border = True
+    underline = False
+    line_spacing = 30
+    border_spacing = (10, 20)
+    transparent_background = .1
+    one_border = True
+    max_lines = 3
+    u_spacing = .1
+    scale = 1.
+    texts = ["I'm justified right with a left-bottom achor_point ('lb')",
+             "I'm justified center with a left-top anchor_point ('lt')",
+             "I'm justified left with a right-bottom anchor_point ('rb')",
+             "I'm justified center with a right-top anchor_point ('tr')"]
 
+    aps = ('lb', 'lt', 'rb', 'rt')
+    justs = ('r', 'c', 'l', 'c')
+    # justs = ('l')*4
+    writers = []
+    TEXT = "HELLO I AM OTIS, I WOULD LOVE TO BE YOUR FRIEND AND HELP YOU MAKE THINGS, YEAH"
+    for a, j in zip(aps, justs):
+        writer = TypeWriter(text=TEXT,
+                            coords=(0, 0),
+                            u_spacing=u_spacing,
+                            ref='c',
+                            jtype=j,
+                            anchor_point=a,
+                            scale=scale,
+                            perma_border=True,
+                            underline=underline,
+                            border=True,
+                            max_line_length=500,
+                            one_border=one_border,
+                            border_spacing=border_spacing,
+                            max_lines=3,
+                            transparent_background=.9,
+                            loop=True,
+                            color='g'
+                            )
+
+        writers.append(writer)
+    print(len(writers))
+    circle = shapes.Circle(center=capture.f_center, radius = 10, thickness=-1)
     while True:
-        capture.read()
-        writer.write(capture.frame)
+        _, frame = capture.read()
+
+        for writer in writers:
+            writer.write(frame)
+        circle.write(frame)
         capture.show()
 
         if cvtools.cv2waitkey() is True:

@@ -60,26 +60,36 @@ class AssetWriter:
 
 
 class ShapeObject(metaclass=abc.ABCMeta):
-    _asset_shape = None
+    asset_shape = None
+    hitbox_type = None
 
-    @classmethod
-    @property
-    def asset_shape(cls):
-        return cls._asset_shape
+    # @classmethod
+    # @property
+    # def asset_shape(cls):
+    #     return cls._asset_shape
+    #
+    # @classmethod
+    # @property
+    # def hitbox_type(cls):
+    #     return cls._hitbox_type
 
 ###
 class CircleType(ShapeObject, metaclass=abc.ABCMeta):
-    _asset_shape = 'circle'
+    hitbox_type = 'circle'
     pass
 
 
 class RectangleType(ShapeObject, metaclass=abc.ABCMeta):
-    _asset_shape = 'rectangle'
+    hitbox_type = 'rectangle'
     pass
 
 
 class LineType(ShapeObject, metaclass=abc.ABCMeta):
-    _asset_shape = 'text'
+    hitbox_type = 'line'
+    pass
+
+class TextType(ShapeObject, metaclass=abc.ABCMeta):
+    hitbox_type = 'rectangle'
     pass
 
 

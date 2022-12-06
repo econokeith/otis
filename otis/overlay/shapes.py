@@ -461,6 +461,7 @@ class Line(bases.AssetWriter, LineType):
                                      ref=_ref,
                                      )
 
+
 class TransparentBackground(RectangleType):
 
     def __init__(self,

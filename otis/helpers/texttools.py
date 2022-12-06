@@ -74,7 +74,9 @@ def split_text_into_stubs(text,
     else:
         lines_of_text = []
 
-    return lines_of_text
+
+
+    return [line.strip() for line in lines_of_text]
 
 
 def split_text_into_lines_pixels(text, font=None, max_pixels_per_line=None, scale=1, thickness=None, max_lines=None):

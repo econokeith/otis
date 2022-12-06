@@ -99,6 +99,13 @@ class OtisText:
                                                          )
             return np.array((l,t), dtype=int)
 
+    def get_cv2_start_from_center(self):
+        l, t, _, _ = coordtools.translate_box_coords((0, self.font_height, self.width, self.height),
+                                                     in_format='cwh',
+                                                     out_format='ltrb',
+                                                     )
+        return np.array((l, t), dtype=int)
+
 
     def export_stub_queue(self):
         stub_queue = Queue()

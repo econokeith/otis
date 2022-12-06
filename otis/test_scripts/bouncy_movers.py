@@ -43,6 +43,7 @@ def main():
                                          loop=True,
                                          border=True,
                                          b_thickness=1,
+                                         scale=1,
                                          one_border=True,
                                          max_lines=2,
                                          max_line_length=14,
@@ -93,6 +94,7 @@ def main():
                                          background=True,
                                          back_color='g',
                                          transparent_background=.9,
+                                         scale=1,
                                          )
     #
 
@@ -106,10 +108,14 @@ def main():
                                    show_hitbox=True,
                                    )
 
-    mover_manager = assetmover.CollidingAssetManager(collisions=False)
+    mover_manager = assetmover.CollidingAssetManager(collisions=True, move_before_delete=100)
+    mover.name = '0'
+    mover1.name = '1'
+    mover2.name = '2'
+    mover3.name = '3'
     mover_manager.movers.append(mover)
     mover_manager.movers.append(mover1)
-    mover_manager.movers.append(mover2)
+    # mover_manager.movers.append(mover2)
     mover_manager.movers.append(mover3)
 
     #################################### the loop ###########################################

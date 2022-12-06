@@ -18,7 +18,7 @@ from otis.overlay import otistext
 
 
 # todo - texttxt writer perma border doesn't work without one border turned on
-class TextWriter(bases.AssetWriter):
+class TextWriter(bases.AssetWriter, bases.RectangleType, bases.TextType):
     text_fun: types.FunctionType
 
     def __init__(self,
@@ -28,7 +28,7 @@ class TextWriter(bases.AssetWriter):
                  scale=1.,
                  ltype=1,
                  thickness=1,
-                 anchor_point=None,
+                 anchor_point='lb',
                  ref=None,
                  text=None,
                  line_spacing=.5,  # int = pixels, float = percentage of font height
@@ -158,9 +158,9 @@ class TextWriter(bases.AssetWriter):
         if invert_background is True and border == False and background == False:
             background = True
 
-        if transparent_background != 0:
-            self.background = shapes.TransparentBackground(coord_format='lbwh',
-                                                           transparency=transparent_background
+        if transparent_background != 0.:
+            self.background = shapes.TransparentBackground(coord_format='cwh',
+                                                           transparency=transparent_background,
                                                            )
 
         elif isinstance(background, bases.RectangleType) or background == False or background == None:
@@ -172,11 +172,11 @@ class TextWriter(bases.AssetWriter):
                                                thickness=-1,
                                                ref=None,
                                                dim=None,
-                                               coord_format='lbwh',
+                                               coord_format='cwh',
                                                update_format=None,
                                                )
 
-        ################################### border         ######################################################
+        ################################### border ######################################################
 
         self.border_spacing = border_spacing  # property
         self.b_ltype = b_ltype if b_ltype is not None else self.ltype
@@ -194,7 +194,7 @@ class TextWriter(bases.AssetWriter):
                                            ltype=self.b_ltype,
                                            ref=None,
                                            dim=None,
-                                           coord_format='lbwh',
+                                           coord_format='cwh',
                                            update_format=None,
                                            )
 
@@ -203,11 +203,19 @@ class TextWriter(bases.AssetWriter):
         self.perma_border = perma_border
         self.text = text  # property
         self.text_fun = lambda: ""
+        self._typing_mode = 'textwriter'
+        self._output = ""
+        self.completed_stubs = []
+        self.cursor = None
 
     ############################# PROPERTIES ##########################################################
     @property
     def stubs(self):
         return self.text_object.stubs
+
+    @property
+    def n_stubs(self):
+        return self.text_object.n_stubs
 
     @property
     def font(self):
@@ -244,12 +252,12 @@ class TextWriter(bases.AssetWriter):
                                              )
 
     @property
-    def total_height(self):
-        return self.text_object.height
+    def height(self):
+        return self.text_object.height + self.border_spacing[1]*2
 
     @property
-    def total_length(self):
-        return self.text_object.width
+    def width(self):
+        return self.text_object.width + self.border_spacing[0]*2
 
     @property
     def font_height(self):
@@ -273,6 +281,7 @@ class TextWriter(bases.AssetWriter):
             _new_spacing = (new_spacing, new_spacing)
         else:
             _new_spacing = new_spacing
+
         h_space, v_space = _new_spacing
         if isinstance(h_space, float):
             h_space = int(h_space * self.font_height)
@@ -298,22 +307,19 @@ class TextWriter(bases.AssetWriter):
         return cv2.getTextSize(_text, self.font, self.scale, self.thickness)[0]
 
     ################################## METHODS #############################################
-    def write_line_of_text(self,
-                           frame,
-                           text,
-                           coords=None,
-                           color=None,
-                           ref=None,
-                           jtype=None,
-                           show_outline=True,
-                           save=False
-                           ):
+    def _write_line_of_text(self,
+                            frame,
+                            text,
+                            coords=None,
+                            color=None,
+                            ref=None,
+                            jtype=None,
+                            show_outline=True,
+                            save=False
+                            ):
         """
         :type frame: np.array
         """
-
-
-
         h_space, v_space = self.border_spacing
         w, h = self.get_text_size(text)
         # write border
@@ -333,7 +339,7 @@ class TextWriter(bases.AssetWriter):
         # underline
         if isinstance(self.underline, bases.LineType):
             self.underline.write(frame,
-                                 (0, -v_space, w, -v_space),
+                                 (0, -v_space, w-2 * h_space, -v_space),
                                  color=color,
                                  ref=coords,
                                  )
@@ -369,69 +375,55 @@ class TextWriter(bases.AssetWriter):
         _color = colortools.color_function(_color)
 
         _coords = coordtools.absolute_point(_coords, _ref, frame)
-        _coords += self.text_object.start_offset
-        # need to account for outline
-
-
         # if fed a line of text it just writes it.
         if text is not None:
-            self.write_line_of_text(frame,
-                                    text=text,
-                                    coords=_coords,
-                                    color=_color,
-                                    ref=None
-                                    )
+            self._write_line_of_text(frame,
+                                     text=text,
+                                     coords=_coords,
+                                     color=_color,
+                                     ref=None
+                                     )
 
         else:
-            # otherwise it reads from the stubs
-            if self.one_border:
-                self._write_one_border(frame, _coords)
+            center_coords = cx, cy, w, h = coordtools.translate_box_coords((*_coords, self.width, self.height),
+                                                           in_format=self.anchor_point + 'wh',
+                                                           out_format='cwh',)
+
+            if self.one_border is True:
+                if isinstance(self.background, bases.RectangleType):
+                    self.background.write(frame, coords=center_coords, ref=None)
+
+                if isinstance(self.border, bases.RectangleType):
+                    self.border.write(frame, coords=center_coords, ref=None)
 
             down_space = self.line_spacing + self.font_height
-            h_space, v_space = self.border_spacing
-            _coords += ()
-            x, y, = _coords
+            start_coords = (cx, cy+self.font_height, self.text_object.width, self.text_object.height)
+
+            start_coords = coordtools.translate_box_coords(start_coords,
+                                                           in_format='cwh',
+                                                           out_format='ltrb',
+                                                           )
+
+            x, y = start_coords[:2]
+
             for i, stub in enumerate(self.stubs):
                 # this has to just keep running the ref stuff otherwise the justifications don't work
                 # I think
                 if self.jtype == 'c':
-                    j_offset = (self.total_length - self.get_text_size(stub)[0])//2
+                    j_offset = (self.text_object.width - self.get_text_size(stub)[0]) // 2
                 elif self.jtype == 'r':
-                    j_offset = (self.total_length - self.get_text_size(stub)[0])
+                    j_offset = (self.text_object.width - self.get_text_size(stub)[0])
                 else:
                     j_offset = 0
 
-                self.write_line_of_text(frame,
-                                        stub,
-                                        (x + j_offset, y + i * down_space),
-                                        _color,
-                                        ref=None,
-                                        show_outline=(not self.one_border),
-                                        jtype=None,
-                                        )
-
-    def _write_one_border(self, frame, coords):
-
-        x, y = coords
-        v_space, h_space = self.border_spacing
-        h = self.total_height + 2 * v_space
-        w = self.total_length + 2 * h_space
-        y += (self.text_object.n_stubs - 1) * self.font_height + (
-            self.text_object.n_stubs-1) * self.line_spacing + v_space
-        x -= h_space
-
-
-        if isinstance(self.background, shapes.Rectangle):
-            self.background.write(frame,
-                                  coords=(x, y, w, h),
-                                  color=self.back_color,
-                                  )
-
-        if isinstance(self.border, shapes.Rectangle):
-            self.border.write(frame,
-                              coords=(x, y, w, h),
-                              color=self.b_color,
-                              )
+                self._write_line_of_text(frame,
+                                         stub,
+                                         (x + j_offset, y + i * down_space),
+                                         _color,
+                                         ref=None,
+                                         show_outline=(not self.one_border),
+                                         jtype=None,
+                                         )
 
     def write_fun(self, frame, *args, **kwargs):
         self.write(frame, self.text_fun(*args, **kwargs))
@@ -443,26 +435,6 @@ class TextWriter(bases.AssetWriter):
         else:
             return value
 
-    def center_width_height(self):
-        coords = coordtools.absolute_point(self.coords, self.ref)
-        coords += self.text_object.start_offset
-        x, y = coords
-        v_space, h_space = self.border_spacing
-        h = self.total_height + 2 * v_space
-        w = self.total_length + 2 * h_space
-        y -= (self.font_height + v_space)
-
-        if self.jtype == 'l':
-            x -= h_space
-        elif self.jtype == 'r':
-            x -= h_space - self.total_length
-        else:
-            x -= h_space - self.total_length // 2
-        return x, y, w, h
-
-    @property
-    def radius(self):
-        return (self.text_object.height + self.text_object.width) // 4
 
 
 class NameTag(TextWriter):
@@ -643,30 +615,34 @@ def main():
     font_list = ('simplex', 'plain', 'duplex', 'complex', 'triplex', 'c_small', 's_simplex', 's_complex')
     from otis import camera
 
-    colors = colortools.ColorCycle('ugbw')
+    colors = colortools.ColorCycle('ugrw')
     capture = camera.ThreadedCameraPlayer(max_fps=30, c_dim=(1280, 720)).start()
 
-    text = "HELLO I AM OTIS, I WOULD LOVE TO BE YOUR FRIEND AND HELP YOU MAKE THINGS, YEAH"
+    TEXT = "HELLO I AM OTIS, I WOULD LOVE TO BE YOUR FRIEND AND HELP YOU MAKE THINGS, YEAH"
     border = True
-    underline = False
+    underline = True
     line_spacing = 30
     border_spacing = (10, 20)
     transparent_background = .1
     one_border = True
     max_lines=3
-    centers = ((10, 10), (10, -10), (-10, 10), (-10, -10))
+    texts = ["I'm justified right with a left-bottom achor_point ('lb')",
+             "I'm justified center with a left-top anchor_point ('lt')",
+             "I'm justified left with a right-bottom anchor_point ('rb')",
+             "I'm justified center with a right-top anchor_point ('tr')"]
+
     aps = ('lb', 'lt', 'rb', 'rt')
-    # justs = ('l', 'c', 'l', 'r')
-    justs = ('l')*4
+    justs = ('r', 'c', 'l', 'c')
+
     writers = []
 
-    for a, j, c in zip(aps, justs, centers):
+    for a, j, text in zip(aps, justs, texts):
         writer = TextWriter(jtype=j,
                             anchor_point=a,
-                            coords=c,
+                            coords=(0,0),
                             line_spacing=line_spacing,
                             ref=capture.f_center,
-                            text=text,
+                            text=TEXT,
                             border=border,
                             underline=underline,
                             border_spacing=border_spacing,
@@ -674,34 +650,50 @@ def main():
                             color=colors(),
                             one_border=one_border,
                             max_lines=max_lines,
+                            b_thickness=2,
 
                             )
-        print(writer.total_length, writer.total_height)
-        for stub in writer.stubs:
-            print(writer.get_text_size(stub))
+
+
         writers.append(writer)
 
     ltype = 1
     h_space, v_space = writer.border_spacing
+    w = writer.text_object.width
+    h = writer.text_object.height
+    thickness = 1
+
     circle = shapes.Circle(center=capture.f_center, radius = 10, thickness=-1)
     fx, fy = capture.f_dim
     line0 = shapes.Line((0, fy//2, fx, fy//2), color='r')
-    line2 = shapes.Line((0, fy//2+h_space, fx, fy//2+h_space), thickness=1, color='c',ltype=ltype)
-    line3 = shapes.Line((0, fy//2-h_space, fx, fy//2-h_space), thickness=1, color='c',ltype=ltype)
-    line1 = shapes.Line((fx//2, 0, fx//2, fy), color='r')
-    line4 = shapes.Line((fx//2+v_space, 0, fx//2+v_space, fy), thickness=1, color='y',ltype=ltype)
-    line5 = shapes.Line((fx//2-v_space, 0, fx//2-v_space, fy), thickness=1, color='y',ltype=ltype)
+    line6 = shapes.Line((fx//2, 0, fx//2, fy), color='r')
 
-    lines = [line0, line1, line2, line3, line4, line5]
+    line2 = shapes.Line((0, fy//2+v_space, fx, fy//2+v_space), thickness=thickness, color='c',ltype=ltype)
+    line3 = shapes.Line((0, fy//2-v_space, fx, fy//2-v_space), thickness=thickness, color='c',ltype=ltype)
+    line4 = shapes.Line((0, fy//2+v_space+h, fx, fy//2+v_space+h), thickness=thickness, color='c',ltype=ltype)
+    line5 = shapes.Line((0, fy//2-v_space-h, fx, fy//2-v_space-h), thickness=thickness, color='c',ltype=ltype)
+
+    line7 = shapes.Line((fx//2+h_space, 0, fx//2+h_space, fy), thickness=thickness, color='y',ltype=ltype)
+    line8 = shapes.Line((fx//2-h_space, 0, fx//2-h_space, fy), thickness=thickness, color='y',ltype=ltype)
+    line9 = shapes.Line((fx // 2 + h_space+w, 0, fx // 2 + h_space+w, fy), thickness=thickness, color='y', ltype=ltype)
+    line10 = shapes.Line((fx // 2 - h_space-w, 0, fx // 2 - h_space-w, fy), thickness=thickness, color='y', ltype=ltype)
+
+    lines = [line2, line2, line3, line4, line5,line7, line8, line9, line10]
 
     while True:
 
+
         _, frame = capture.read()
         circle.write(frame)
-        for line in lines:
-            line.write(frame)
+        # line0.write(frame)
+        # line6.write(frame)
+
         for writer in writers:
             writer.write(frame)
+
+        for line in lines:
+            line.write(frame)
+
 
 
         capture.show()

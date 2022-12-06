@@ -8,7 +8,8 @@ import numpy as np
 import cv2
 
 from otis.helpers import timers, maths
-from otis.overlay import shapes
+from otis.overlay import shapes, bases
+
 
 class AssetMover:
     movers = []
@@ -52,6 +53,7 @@ class AssetMover:
         self._coords[:2] = center
         self.dim = dim
         self.asset = asset
+
         if copy_asset is True:
             self.asset = copy.deepcopy(self.asset)
         self.asset.center = (0, 0)
@@ -82,7 +84,8 @@ class AssetMover:
         else:
             self.y_range = np.array(y_range, dtype=int)
 
-        _, _, width, height = asset.center_width_height()
+        width = asset.width
+        height = asset.height
 
 
         if self.border_collisions is True:
@@ -101,9 +104,15 @@ class AssetMover:
         self.gravity = gravity
         self.dampening = 1. - dampen
         self.has_moved = False
+
         self.show_hitbox = show_hitbox
-        if self.show_hitbox is True:
-            self.outline = shapes.Rectangle((0, 0, width, height), color='c', coord_format='cwh', thickness=3)
+        if self.show_hitbox is True and self.hitbox_type == 'rectangle':
+            self.outline = shapes.Rectangle((0, 0, width, height), color='c', coord_format='cwh', thickness=1)
+
+        elif self.show_hitbox is True and self.hitbox_type == 'circle':
+            self.outline = shapes.Circle(center=(0,0), radius=self.radius)
+
+
 
     @property
     def coords(self):
@@ -112,6 +121,10 @@ class AssetMover:
     @coords.setter
     def coords(self, new_coords):
         self._coords[:] = new_coords
+
+    @property
+    def hitbox_type(self):
+        return self.asset.hitbox_type
 
     @property
     def center(self):
@@ -140,6 +153,10 @@ class AssetMover:
     @property
     def radius(self):
         return self.asset.radius
+
+    @property
+    def center_width_height(self):
+        return self.asset.center_width_height
 
     def update_velocity(self):
         # don't update if it's not time
@@ -245,6 +262,7 @@ class CollidingAssetManager:
                  border_collision=True,
                  max_movers=None,
                  buffer=0,
+                 move_before_delete=100,
                  ):
 
         """
@@ -264,7 +282,7 @@ class CollidingAssetManager:
         self.border_collision = border_collision
         self.movers = deque([], max_movers)
         self.dim = dim
-        self.detector = CollisionDetector(buffer=buffer)
+        self.detector = CollisionDetector(buffer=buffer, move_before_delete=move_before_delete)
         self.max_movers = max_movers
 
     @property
@@ -332,7 +350,7 @@ class CollisionDetector:
     """
     currently only supports circles, currently not optimized for searches faster than O(n^2)
     """
-    def __init__(self, buffer=0, move_before_delete=10):
+    def __init__(self, buffer=1, move_before_delete=10):
         """
 
         Args:
@@ -359,9 +377,123 @@ class CollisionDetector:
         else:
             return False
 
-    def collide(self, asset_0, asset_1, buffer=0):
-        _buffer = buffer if buffer is not None else self.buffer
-        self._two_circle_velocity_update(asset_0, asset_1, _buffer)
+    def _rect_to_rect_check(self, rect0, rect1):
+        pass
+
+    def collide(self, asset_0, asset_1):
+        if asset_0.hitbox_type == 'circle' and asset_1.hitbox_type == 'circle':
+            self._two_circle_velocity_update(asset_0, asset_1, self.buffer)
+        elif asset_0.hitbox_type == 'rectangle' and asset_1.hitbox_type == 'rectangle':
+            self._two_rectangle_velocity_update2(asset_0, asset_1, self.buffer)
+
+    def _two_rectangle_velocity_update(self, rect_0, rect_1, buffer, times=0, ):
+        if times >= self.moves_before_delete:
+            rect_0.is_finished = True
+            rect_1.is_finished = True
+            return
+
+        cx0, cy0, = rect_0.center
+        w0 = rect_0.width
+        h0 = rect_0.height
+        cx1, cy1, = rect_1.center
+        w1 = rect_1.width
+        h1 = rect_1.height
+
+        dx = int(abs(cx0-cx1))
+        dy = int(abs(cy0-cy1))
+
+        x_overlap = dx - (w0 + w1)//2 - buffer
+        y_overlap = dy - (h0 + h1)//2 - buffer
+
+        if x_overlap <= 0 and y_overlap <=0:
+
+            d_center = rect_0.center - rect_1.center
+            dist_2 = (d_center*d_center).sum()
+            d_velocity = rect_0.velocity - rect_1.velocity
+
+            m0 = rect_0.mass
+            m1 = rect_1.mass
+
+            dot_p0 = np.inner(d_velocity, d_center)
+            dot_p1 = np.inner(-d_velocity, -d_center)
+
+            d_v0 = -2 * m1 / (m0 + m1) * (dot_p0 / dist_2) * d_center
+            d_v1 = -2 * m0 / (m0 + m1) * (dot_p1 / dist_2) * (-d_center)
+
+            rect_0.coords[2:] += d_v0
+            rect_1.coords[2:] += d_v1
+
+            i = 0
+            while True:
+                rect_0.move()
+                rect_1.move()
+
+                cx0, cy0, = rect_0.center
+                cx1, cy1, = rect_1.center
+                dx = int(abs(cx0 - cx1))
+                dy = int(abs(cy0 - cy1))
+
+                x_overlap = dx - (w0 + w1) // 2 - buffer
+                y_overlap = dy - (h0 + h1) // 2 - buffer
+
+                if x_overlap > 1 or y_overlap > 1:
+                    break
+
+                if i > self.moves_before_delete:
+                    break
+                i += 1
+            print(i)
+
+    def _two_rectangle_velocity_update2(self, rect_0, rect_1, buffer, times=0, ):
+
+        if times >= self.moves_before_delete:
+            rect_0.is_finished = True
+            rect_1.is_finished = True
+            return
+
+        cx0, cy0, = rect_0.center
+        w0 = rect_0.width
+        h0 = rect_0.height
+        cx1, cy1, = rect_1.center
+        w1 = rect_1.width
+        h1 = rect_1.height
+
+        dx = int(abs(cx0 - cx1))
+        dy = int(abs(cy0 - cy1))
+
+        x_overlap = dx - (w0 + w1) // 2 - buffer
+        y_overlap = dy - (h0 + h1) // 2 - buffer
+
+        if x_overlap <= 0 and y_overlap <= 0:
+
+            dv_x , dv_y = np.abs(rect_0.velocity-rect_1.velocity)
+
+            if x_overlap > y_overlap:
+                rect_1.velocity[0] *= -1
+                rect_0.velocity[0] *= -1
+            else:
+                rect_1.velocity[1] *= -1
+                rect_0.velocity[1] *= -1
+            i=0
+            while True:
+                rect_0.move()
+                rect_1.move()
+
+                cx0, cy0, = rect_0.center
+                cx1, cy1, = rect_1.center
+                dx = int(abs(cx0 - cx1))
+                dy = int(abs(cy0 - cy1))
+
+                x_overlap = dx - (w0 + w1) // 2 - buffer
+                y_overlap = dy - (h0 + h1) // 2 - buffer
+
+                if x_overlap > 1 or y_overlap > 1:
+                    break
+
+                if i > self.moves_before_delete:
+                    break
+                i += 1
+            print(i)
 
     def _two_circle_velocity_update(self, circle_0, circle_1, buffer):
 
@@ -464,6 +596,10 @@ class CollisionDetector:
         #     circle_1.collision_hash[circle_0.id] = False
 
 # todo: Consider adding Hitbox to all assets separately
+
+
+
+
 class Hitbox:
     asset: shapes.ShapeAsset
 
@@ -488,48 +624,51 @@ class Hitbox:
         return self.dimensions[0]
 
 
+
+
+
 if __name__ == '__main__':
     # Reading an image in default mode
     from otis.helpers.colortools import ColorCycle
     from otis.overlay import imageassets
-    dim = (800, 800)
+    dim = (400, 400)
     fps = 30
     frame = np.zeros(dim[0] * dim[1] * 3, dtype='uint8').reshape((dim[1], dim[0], 3))
     colors = ColorCycle()
 
-    def mover_function():
-
-        pie = imageassets.ImageAsset(center=(0, 0), hitbox_type='circle0')
-        pie.add_image_from_file('./photo_assets/pie_asset', file=__file__)
-
-        mover = AssetMover(pie,
-                           center=(100, 100),
-                           velocity=(np.random.randint(200, 300), np.random.rand() * -np.pi / 2),
-                           dim=dim,
-                           ups=fps,
-                           border_collision=True,
-                           gravity=-20,
-                           dampen=.02,
-                           )
-        return mover
-
     fps_limiter = timers.SmartSleeper(1 / fps)
+    manager = CollidingAssetManager(collisions=True,  move_before_delete=100)
 
-    manager = CollidingAssetManager(collisions=True)
 
-    new_ball_timer = timers.CallFrequencyLimiter(1)
+    square = shapes.Rectangle((0,0, 120, 30), color='r', coord_format='cwh')
+    mover = AssetMover(square,
+                       center=(100, 100),
+                       velocity=(100, 1),
+                       dim=dim,
+                       ups=fps,
+                       border_collision=True,
+                       gravity=0,
+                       dampen=0,
+                       )
 
+    square2 = shapes.Rectangle((0,0, 30, 120), color='r', coord_format='cwh')
+
+    mover2 = AssetMover(square2,
+                       center=(300, 300),
+                       velocity=(100, 1),
+                       dim=dim,
+                       ups=fps,
+                       border_collision=True,
+                       gravity=0,
+                       dampen=0,
+                       )
+
+    manager.movers += [mover, mover2]
+    print(mover.height, mover.width, mover2.height, mover2.width)
     while True:
         frame[:, :, :] = 0
 
-        if manager.n < 2 and new_ball_timer():
-            ball = mover_function()
-            manager.movers.append(ball)
-
-        manager.update_velocities()
-        manager.move()
-        manager.write(frame)
-
+        manager.loop(frame)
         fps_limiter()
         cv2.imshow('meh', frame)
 
