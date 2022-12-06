@@ -61,7 +61,7 @@ def main():
                                   dim=capture.f_dim,
                                   ups=capture.max_fps,
                                   copy_asset=False,
-                                  show_hitbox=True,
+                                  #show_hitbox=True,
                                   )
 
     rectangle_writer = shapes.Rectangle(coords=(0,0,120, 30),
@@ -95,19 +95,7 @@ def main():
                                          transparent_background=.9,
                                          )
     #
-    # text_writer = textwriters.TextWriter(coords=(0, 0),
-    #                                      text="I am a mover I am a mover",
-    #                                      border=True,
-    #                                      max_lines=2,
-    #                                      max_line_length=14,
-    #                                      line_length_format='chars',
-    #                                      border_spacing=(.5, .5),
-    #                                      anchor_point='lb',
-    #                                      jtype='c',
-    #                                      one_border=True,
-    #                                      perma_border=True,
-    #                                      # transparent_background=.9,
-    #                                      )
+
 
     mover3 = assetmover.AssetMover(text_writer,
                                    center=center - (200, -200),
@@ -119,9 +107,9 @@ def main():
                                    )
 
     mover_manager = assetmover.CollidingAssetManager(collisions=False)
-    # mover_manager.movers.append(mover)
+    mover_manager.movers.append(mover)
     mover_manager.movers.append(mover1)
-    # mover_manager.movers.append(mover2)
+    mover_manager.movers.append(mover2)
     mover_manager.movers.append(mover3)
 
     #################################### the loop ###########################################
