@@ -47,6 +47,8 @@ class AssetMover:
             velocity_format: either 'mag_radians' or 'xy
             gravity:
             dampen:
+            copy_asset=True,
+            show_hitbox = False
         """
 
         self._coords = np.zeros(4)
@@ -189,8 +191,7 @@ class AssetMover:
         """
         if self.is_finished is True:
             return
-        # self.ups = max(1. / self.real_time_elapsed(), self._ups)
-        # print(self.ups)
+
         self.ups = 1. / self.real_time_elapsed()
         if safe_delete is True:
             try:
@@ -357,7 +358,6 @@ class CollisionDetector:
             buffer: adds
             move_before_delete:
         """
-
         self.buffer = buffer
         self.moves_before_delete = move_before_delete
 
@@ -384,72 +384,11 @@ class CollisionDetector:
         if asset_0.hitbox_type == 'circle' and asset_1.hitbox_type == 'circle':
             self._two_circle_velocity_update(asset_0, asset_1, self.buffer)
         elif asset_0.hitbox_type == 'rectangle' and asset_1.hitbox_type == 'rectangle':
-            self._two_rectangle_velocity_update2(asset_0, asset_1, self.buffer)
+            self._two_rectangle_velocity_update(asset_0, asset_1, self.buffer)
 
-    def _two_rectangle_velocity_update(self, rect_0, rect_1, buffer, times=0, ):
-        if times >= self.moves_before_delete:
-            rect_0.is_finished = True
-            rect_1.is_finished = True
-            return
 
-        cx0, cy0, = rect_0.center
-        w0 = rect_0.width
-        h0 = rect_0.height
-        cx1, cy1, = rect_1.center
-        w1 = rect_1.width
-        h1 = rect_1.height
+    def _two_rectangle_velocity_update(self, rect_0, rect_1, buffer):
 
-        dx = int(abs(cx0-cx1))
-        dy = int(abs(cy0-cy1))
-
-        x_overlap = dx - (w0 + w1)//2 - buffer
-        y_overlap = dy - (h0 + h1)//2 - buffer
-
-        if x_overlap <= 0 and y_overlap <=0:
-
-            d_center = rect_0.center - rect_1.center
-            dist_2 = (d_center*d_center).sum()
-            d_velocity = rect_0.velocity - rect_1.velocity
-
-            m0 = rect_0.mass
-            m1 = rect_1.mass
-
-            dot_p0 = np.inner(d_velocity, d_center)
-            dot_p1 = np.inner(-d_velocity, -d_center)
-
-            d_v0 = -2 * m1 / (m0 + m1) * (dot_p0 / dist_2) * d_center
-            d_v1 = -2 * m0 / (m0 + m1) * (dot_p1 / dist_2) * (-d_center)
-
-            rect_0.coords[2:] += d_v0
-            rect_1.coords[2:] += d_v1
-
-            i = 0
-            while True:
-                rect_0.move()
-                rect_1.move()
-
-                cx0, cy0, = rect_0.center
-                cx1, cy1, = rect_1.center
-                dx = int(abs(cx0 - cx1))
-                dy = int(abs(cy0 - cy1))
-
-                x_overlap = dx - (w0 + w1) // 2 - buffer
-                y_overlap = dy - (h0 + h1) // 2 - buffer
-
-                if x_overlap > 1 or y_overlap > 1:
-                    break
-
-                if i > self.moves_before_delete:
-                    break
-                i += 1
-            print(i)
-
-    def _two_rectangle_velocity_update2(self, rect_0, rect_1, buffer, times=0, ):
-
-        if times >= self.moves_before_delete:
-            rect_0.is_finished = True
-            rect_1.is_finished = True
-            return
 
         cx0, cy0, = rect_0.center
         w0 = rect_0.width
@@ -466,21 +405,26 @@ class CollisionDetector:
 
         if x_overlap <= 0 and y_overlap <= 0:
 
-            dv_x , dv_y = np.abs(rect_0.velocity-rect_1.velocity)
-
             if x_overlap > y_overlap:
-                rect_1.velocity[0] *= -1
-                rect_0.velocity[0] *= -1
+                if rect_1.mass != None:
+                    rect_1.velocity[0] *= -1
+                if rect_0.mass != None:
+                    rect_0.velocity[0] *= -1
             else:
-                rect_1.velocity[1] *= -1
-                rect_0.velocity[1] *= -1
+                if rect_1.mass != None:
+                    rect_1.velocity[1] *= -1
+                if rect_0.mass != None:
+                    rect_0.velocity[1] *= -1
             i=0
             while True:
-                rect_0.move()
-                rect_1.move()
+                if rect_1.mass != None:
+                    rect_1.move()
+                if rect_0.mass != None:
+                    rect_0.move()
 
                 cx0, cy0, = rect_0.center
                 cx1, cy1, = rect_1.center
+
                 dx = int(abs(cx0 - cx1))
                 dy = int(abs(cy0 - cy1))
 

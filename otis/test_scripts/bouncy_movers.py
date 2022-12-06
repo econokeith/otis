@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 from otis import camera
-from otis.helpers import coordtools
+from otis.helpers import coordtools, timers
 from otis.overlay import shapes, assetmover, imageassets, typewriters, textwriters
 
 
@@ -10,7 +10,16 @@ def main():
     ############################## SETUP ###################################################
     # start the camera
     square_size = 200
-    capture = camera.ThreadedCameraPlayer(c_dim='720p')
+    v0 = (200, 1)
+    v1 = (200, -1)
+    v2 = (200, 2)
+
+    capture = camera.ThreadedCameraPlayer(c_dim='720p',
+                                          max_fps=30,
+                                          record=True,
+                                          record_to='bouncy_movers.mp4,',
+                                          record_dim=(540, 540)
+                                          )
     center = capture.f_center
 
     # set up image asset without an image, we'll update once the frame is running
@@ -21,8 +30,8 @@ def main():
                                          )
     # set up the mover holding the image asset
     mover = assetmover.AssetMover(image_asset,
-                                  center = center + (200, 200),
-                                  velocity=(200, 1),
+                                  center=center + (200, 200),
+                                  velocity=v0,
                                   dim=capture.f_dim,
                                   ups=capture.max_fps,
                                   )
@@ -49,7 +58,7 @@ def main():
                                          max_line_length=14,
                                          # invert_background=True,
                                          line_length_format='chars',
-                                         perma_border= True,
+                                         perma_border=True,
                                          border_spacing=(.5, .5),
                                          anchor_point='c',
                                          jtype='l',
@@ -57,26 +66,14 @@ def main():
                                          )
     # set up the mover holding the image asset
     mover1 = assetmover.AssetMover(type_writer,
-                                  center = center - (200, 200),
-                                  velocity=(200, -1),
-                                  dim=capture.f_dim,
-                                  ups=capture.max_fps,
-                                  copy_asset=False,
-                                  #show_hitbox=True,
-                                  )
+                                   center=center - (200, 200),
+                                   velocity=v1,
+                                   dim=capture.f_dim,
+                                   ups=capture.max_fps,
+                                   copy_asset=False,
+                                   # show_hitbox=True,
+                                   )
 
-    rectangle_writer = shapes.Rectangle(coords=(0,0,120, 30),
-                                        coord_format='cwh',
-                                        color='c'
-                                        )
-    # set up the mover holding the image asset
-    mover2 = assetmover.AssetMover(rectangle_writer,
-                                  center = center,
-                                  velocity=(200, -2),
-                                  dim=capture.f_dim,
-                                  ups=capture.max_fps,
-                                  copy_asset=False,
-                                  )
     #
     text_writer = textwriters.TextWriter(coords=(0, 0),
                                          text="I am a mover I am a mover",
@@ -98,10 +95,9 @@ def main():
                                          )
     #
 
-
-    mover3 = assetmover.AssetMover(text_writer,
+    mover2 = assetmover.AssetMover(text_writer,
                                    center=center - (200, -200),
-                                   velocity=(200, -3),
+                                   velocity=v2,
                                    dim=capture.f_dim,
                                    ups=capture.max_fps,
                                    copy_asset=False,
@@ -112,13 +108,20 @@ def main():
     mover.name = '0'
     mover1.name = '1'
     mover2.name = '2'
-    mover3.name = '3'
     mover_manager.movers.append(mover)
     mover_manager.movers.append(mover1)
-    # mover_manager.movers.append(mover2)
-    mover_manager.movers.append(mover3)
+    mover_manager.movers.append(mover2)
 
+    center_square = shapes.Rectangle((0, 0, square_size, square_size),
+                                     ref='c',
+                                     coord_format='cwh',
+                                     to_abs=True,
+                                     dim=capture.f_dim
+                                     )
+
+    # print(center_square.mass, center_square.velocity, center_square.hitbox_type)
     #################################### the loop ###########################################
+    time_to_stop = timers.TimeElapsedBool(5)
     while True:
         # get newest frame
         _, frame = capture.read()
@@ -134,8 +137,14 @@ def main():
         # set copy of center to the image of the image asset of the mover
         mover.asset.image = frame_portion_saved
         # update / mover / write the mover
-        mover_manager.loop(frame)
-        # print('mover_coords = ', np.array(mover_manager.movers[0].coords, dtype=int))
+        mover_manager.update_velocities()
+
+        for m in mover_manager.movers:
+            mover_manager.detector.collide(m, center_square)
+
+        mover_manager.move()
+        mover_manager.write(frame)
+        # fj
         line.write(frame, coords=(*center, *mover.center))
         # get the reference frame
         frame_portion_reference = coordtools.get_frame_portion(frame,
@@ -149,6 +158,8 @@ def main():
         # but the background on the center
         square.write(frame)
         # show the frameq
+        if time_to_stop() is True:
+            capture.record = True
         capture.show()
         # break if you hit 'q' on the keyboard
         if cv2.waitKey(1) & 0xFF == ord('q'):
