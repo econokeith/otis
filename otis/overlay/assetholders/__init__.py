@@ -1,3 +1,3 @@
-from otis.overlay.assetholders.assetmover import *
-from otis.overlay.assetholders.assetgroups import *
-from otis.overlay.assetholders.assetbounders import *
+from otis.overlay.assetholders.movers import *
+from otis.overlay.assetholders.groups import *
+from otis.overlay.assetholders.bounders import *

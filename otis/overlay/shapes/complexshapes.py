@@ -1,8 +1,9 @@
 import cv2
 import numpy as np
 import abc
-from otis.helpers import shapefunctions, coordtools, misc, maths
+from otis.helpers import coordtools, misc, maths
 from otis.overlay import bases, shapes
+from otis.overlay.shapes import shapefunctions
 from otis.overlay.bases import CircleType, RectangleType, LineType
 
 class CircleWithLineToCenter(shapes.Circle):

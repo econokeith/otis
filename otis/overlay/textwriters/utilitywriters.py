@@ -1,7 +1,7 @@
 import otis.helpers
-from otis.helpers import shapefunctions, timers
+from otis.helpers import timers
 from otis.overlay.textwriters.textwriters import TextWriter
-
+from otis.overlay import shapes
 
 class NameTag(TextWriter):
 
@@ -12,12 +12,13 @@ class NameTag(TextWriter):
                  attached_to=None,
                  color=None,
                  box_reference='c',  # 'c', 'l', 'r'
+                 anchor_point='cb',
                  line_to_box=False,
                  ltb_offset=0,
                  **kwargs,
                  ):
 
-        super().__init__(**kwargs)
+        super().__init__(anchor_point=anchor_point, **kwargs)
 
         self.name = name
         self.v_offset = v_offset
@@ -39,7 +40,10 @@ class NameTag(TextWriter):
 
     def write(self, frame, name=None, **kwargs):
         # might wanna change this so that it just get's entered each time
-        if self.name is not None:
+
+        if name is not None:
+            text = name
+        elif self.name is not None:
             text = self.name
         elif self.attached_to.name is not None:
             text = self.attached_to.name
@@ -67,14 +71,16 @@ class NameTag(TextWriter):
                               self.v_offset + self.border_spacing[1]),
                       color=color,
                       ref=ref,
-                      save=False)
+                      save=False
+                      )
 
-        shapefunctions.draw_line(frame,
-                                 ref,
-                                 (ref[0], ref[1] - self.v_offset + self.border_spacing[1]),
-                                 thickness=1,
-                                 color=color
-                                 )
+        if self.line_to_box is True:
+            shapes.draw_line(frame,
+                             ref,
+                             (ref[0], ref[1] - self.v_offset + self.border_spacing[1]),
+                             thickness=self.u_thickness,
+                             color=color
+                             )
 
 
 class InfoWriter(TextWriter):

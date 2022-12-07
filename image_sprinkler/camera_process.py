@@ -5,25 +5,24 @@ import time
 import cv2
 import numpy as np
 
-from otis.helpers import multitools, cvtools, coordtools, colortools
-from otis.overlay import scenes, assetgroups, shapes, assetbounders, textwriters, imageassets, assetmover, \
-    typewriters, complexshapes
-from otis.helpers import shapefunctions, timers
-from otis.overlay.assetmover import AssetMover
+from otis.helpers import multitools, cvtools, coordtools, colortools, timers
+from otis.overlay import scenes, imageassets, assetholders, textwriters, shapes
 
 MAX_KEY_INPUTS_PER_SECOND = 10
 STOP_AFTER_OTIS = True
 N_BOUNCERS = 50
 NEW_BALL_WAIT = .5
 FRAME_PORTION_SCALE = 2.
-RECORD = False
-MOVER_VELOCITY_MAGNITUDE = (200, 300)
+RECORD = True
+MOVER_VELOCITY_MAGNITUDE = (100, 101)
+GRAVITY = -10
+DAMPEN = .01
+INTRO_LENGTH = 3
 
 OTIS_SCRIPT = [
-    ("Keith, I heard that mean lady stole your best friend, the cat.", 1),
-    ("I know I'm not a cat, but I can do things a cat can't do like make all these bouncy you's!", 1),
-    ("Plus, I promise I won't poop in your bathroom sink or walk on your keyboard... ", 1),
-    ("... because both of things are physically impossible", 1)
+    ("Hello Keith, I am O.T.I.S.! I heard that mean lady stole your best friend, the cat.", 3),
+    ("Maybe I could be your new bestie! I can do all kinds of things a cat can't.", 3),
+    ("Plus, I won't poop in your bathroom sink or walk on your keyboard (though only cause I'm a computer and can't)", 3.5)
 ]
 
 
@@ -33,7 +32,7 @@ def target(shared, pargs):
     pargs.record = RECORD
 
     ####################################### SETUP #####################################################################
-
+    pargs.record = RECORD
     manager = scenes.SceneManager(shared, pargs, file=__file__)
     capture = manager.capture  # for convenience
     # setup bounding manager
@@ -42,35 +41,35 @@ def target(shared, pargs):
     # base_function
     # it's easier define new_bounder as a function for keeping a defaultdict of bounders
     def new_bounder_function():
-        base_bounding_shape = complexshapes.CircleWithLineToCenter(threshold=.75)
+        base_bounding_shape = shapes.CircleWithLineToCenter(threshold=.75)
         # could just be a regular circle
         # base_bounding_shape = shapes.Circle(color=None,
         #                                     radius_type='diag',
         #                                     thickness=2,
         #                                     ltype=2
         #                                     )
-        bounder = assetbounders.BoundingAsset(asset=base_bounding_shape,
-                                              moving_average=(None, None, 100, 100),
-                                              scale=1.25,
-                                              stabilizer=.01,
-                                              color='g',
-                                              name_tag_border='border',
-                                              name_tag_inverted=False,
-                                              )
+        bounder = assetholders.BoundingAsset(asset=base_bounding_shape,
+                                             moving_average=(None, None, 100, 100),
+                                             scale=1.25,
+                                             stabilizer=.01,
+                                             color='g',
+                                             name_tag_border='border',
+                                             name_tag_inverted=False,
+                                             )
         bounder.name_tag.scale = 1.5
         return bounder
 
     # bounding box manager that translates the box coords from the cv_model_process into the effects on screen
-    box_manager = assetbounders.BoundingManager(manager,
-                                                box_fun=new_bounder_function,
-                                                )
+    box_manager = assetholders.BoundingManager(manager,
+                                               box_fun=new_bounder_function,
+                                               )
     # both are adhoc effects managers defined below
     mirror = MirrorEffects(manager)
     ball_sprinkler = BallSprinkler(manager, frame_portion_scale=FRAME_PORTION_SCALE)
     # set up info writers to monitor import variables while this runs
     # they toggle on and off by hitting '1' on the keyboard
     # toggle on/off while running by hitting "1" on the keyboard
-    info_group0 = assetgroups.BasicInfoGroup((10, 40), manager)  # show_fps, model update, resolution
+    info_group0 = assetholders.BasicInfoGroup((10, 40), manager)  # show_fps, model update, resolution
     # additional info writers for use during development
     extra_writers = [
         textwriters.InfoWriter(text_fun=lambda: f'n_faces= {shared.n_observed_faces.value}', coords=(50, -200)),
@@ -81,38 +80,79 @@ def target(shared, pargs):
         textwriters.InfoWriter(text_fun=lambda: f'n_bouncers= {ball_sprinkler.movement_manager.n}', coords=(50, -450)),
         textwriters.InfoWriter(text_fun=lambda: f'servo_active= {shared.servo_tracking.value}', coords=(50, -500))
     ]
-    info_group1 = assetgroups.AssetGroup((0, 0)).add(extra_writers)
+    info_group1 = assetholders.AssetGroup((0, 0)).add(extra_writers)
 
     # set up otis
-    otis = typewriters.TypeWriter(coords=(50, 120),
-                                  ref='lb',
+    otis = textwriters.TypeWriter(coords=(0, 20),
+                                  ref='cb',
                                   jtype='l',
+                                  anchor_point='cb',
                                   scale=1.5,
                                   max_line_length=capture.f_dim[0] - 100,
                                   one_border=True,
-
+                                  thickness=2,
                                   border_spacing=(.5, .5),
                                   max_lines=3,
                                   loop=False,
                                   color='g',
+                                  transparent_background=.1,
                                   perma_border=True,
-                                  key_wait_range=(.06, .07),
+                                  key_wait_range=(.05, .06),
                                   )
 
     the_script = queue.Queue()
     for line in OTIS_SCRIPT:
         the_script.put(line)
 
+    bsw_text = "After nearly a week without the cat, Keith meets a potential new BFF"
+    black_screen = np.zeros((*pargs.f_dim[::-1], 3),dtype='uint8')
+    black_screen_writer = textwriters.TextWriter(coords=(0,100),
+                                                 anchor_point='c',
+                                                 jtype='c',
+                                                 ref='c',
+                                                 max_lines=3,
+                                                 text=bsw_text,
+                                                 color='w',
+                                                 thickness=2,
+                                                 scale=2
+                                                 )
+
+    music_writer = textwriters.TextWriter(coords=(0,-200),
+                                                 anchor_point='ct',
+                                                 jtype='c',
+                                                 ref='c',
+                                                 max_lines=2,
+                                                 text="(ft. Temporary Secretary by Paul McCartney)",
+                                                 color='w',
+                                                 scale=1.5,
+                                                 thickness=1
+                                                 )
     ###################################################################################################################3
     #################################### THE LOOOP #####################################################################
     ####################################################################################################################
 
-    otis_speaks = False
+    otis_speaks = True
     start_raining_balls = False
     show_info = False
-    tick = time.time()
-    capture.record = False  # don't start recording otis recognizes a person
 
+    capture.record = RECORD  # don't start recording otis recognizes a person
+    bs_timer = timers.TimeElapsedBool(INTRO_LENGTH)
+    capture.read()
+    tick=time.time()
+    TIME_PRINTED = False
+
+    # intro blackscreen
+    while True:
+        black_screen[:,:,:] = 0
+        black_screen_writer.write(black_screen)
+        music_writer.write(black_screen)
+        capture.show(black_screen)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+        if bs_timer() is True:
+            break
+    ################### main stuff
     while True:
 
         ############################### ##graphics ####################################################################
@@ -126,7 +166,7 @@ def target(shared, pargs):
         if box_manager.primary_box is not None:  # nothing starts until otis finds someone
 
             start_raining_balls = True
-            if pargs.record is True:
+            if RECORD is True and capture.record is False:
                 capture.record = True
 
         if start_raining_balls is True:
@@ -156,8 +196,10 @@ def target(shared, pargs):
         capture.show(frame)
 
         if otis_speaks is True and otis.text_complete is True and the_script.empty() is True:
-            if STOP_AFTER_OTIS is True:
+            if TIME_PRINTED is False:
                 print(round(time.time() - tick, 2))
+                TIME_PRINTED = True
+            if STOP_AFTER_OTIS is True:
                 shared.keyboard_input.value = ord('q')
                 shared.new_keyboard_input.value = True
                 break
@@ -237,8 +279,8 @@ class BallSprinkler:
         self.capture = manager.capture
         self.pargs = manager.pargs
         self.n_bouncers = N_BOUNCERS
-        self.gravity = 0.
-        self.dampen = 0.
+        self.gravity = GRAVITY
+        self.dampen = DAMPEN
         self.frame_portion_scale = frame_portion_scale
         self.new_ball_wait = NEW_BALL_WAIT
         self.time_since_ball = timers.TimeSinceLast()
@@ -289,7 +331,7 @@ class BallSprinkler:
             # side_pi = [np.pi / 4, 3 / 4 * np.pi, 5 / 4 * np.pi, 7 / 4 * np.pi]
             # ball_origin = self.rectangle_counter()
             # side = self.rectangle_counter.side
-            mover = AssetMover(image_ball,
+            mover = assetholders.AssetMover(image_ball,
                                center=(self.x_value_counter(), 50),
                                # center = ball_origin,
                                velocity=(np.random.randint(*self.mover_velocity_magnitude),
@@ -301,7 +343,7 @@ class BallSprinkler:
                                border_collision=True,
                                gravity=self.gravity,
                                dampen=self.dampen,
-                               y_range=(0, 950)
+                               y_range=(0, 900)
 
                                )
             return mover
@@ -309,9 +351,9 @@ class BallSprinkler:
         #
         self.make_new_mover_function = make_new_mover_function
         # controls the movement of the balls
-        self.movement_manager = assetmover.CollidingAssetManager(collisions=self.ball_collision,
-                                                                 max_movers=self.n_bouncers,
-                                                                 buffer=self.ball_buffer)
+        self.movement_manager = assetholders.CollidingAssetManager(collisions=self.ball_collision,
+                                                                   max_movers=self.n_bouncers,
+                                                                   buffer=self.ball_buffer)
 
         #### BIG BALLS moving around the border of the screen ########################################################
         ################# currently not in use ########################################################################

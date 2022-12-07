@@ -8,8 +8,7 @@ import numpy as np
 
 import otis.helpers.coordtools
 import otis.helpers.maths
-from otis.helpers import timers, colortools, shapefunctions, texttools, \
-                         otistools, cvtools, dstructures, coordtools, misc
+from otis.helpers import timers, colortools, dstructures, coordtools, misc, cvtools
 
 from otis.overlay import bases, shapes, textwriters
 

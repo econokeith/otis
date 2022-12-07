@@ -7,11 +7,12 @@ import sys
 
 import numpy as np
 
-from otis.helpers import multitools, otistools
+import otis.helpers.misc
+from otis.helpers import multitools
 import camera_process, cv_model_process
 
 # using a parser was a bad idea and needs to be changed to something easier
-parser = otistools.make_parser()
+parser = otis.helpers.misc.make_parser()
 pargs = parser.parse_args()
 pargs.c_dim = (1920, 1080)
 pargs.crop_to = (1080, 1080)
@@ -24,7 +25,7 @@ pargs.cf = 2 # computer vision compression factor
 pargs.max_fps = 30
 pargs.record = True
 pargs.record_dim= (1080, 1080)
-pargs.record_to = 'bouncies.mp4'
+pargs.record_to = 'keith_meets_otis.mov'
 
 if pargs.servo is True:
     try:

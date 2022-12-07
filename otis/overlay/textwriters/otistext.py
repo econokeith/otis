@@ -8,8 +8,8 @@ import numpy as np
 
 import otis.helpers.coordtools
 import otis.helpers.maths
-from otis.helpers import timers, colortools, shapefunctions, texttools, cvtools, dstructures, coordtools, misc
-from otis.overlay import bases, shapes
+from otis.helpers import timers, colortools, cvtools, dstructures, coordtools, misc
+from otis.overlay import bases, shapes, textwriters
 
 # Todo: there's a bit of a bug that causes right justified to justify off the left side. Probably need to add
 #       justification offsets to OtisText
@@ -33,7 +33,7 @@ class OtisText:
                  perma_border = False
                  ):
 
-        self.font = texttools.FONT_HASH[font]
+        self.font = textwriters.FONT_HASH[font]
         self.scale = scale
         self.anchor_point = anchor_point
         self.text = text
@@ -50,14 +50,14 @@ class OtisText:
         self.line_spacing = line_spacing
         self.thickness = thickness
 
-        self.stubs = texttools.split_text_into_stubs(text,
-                                                     max_line_length=self.max_line_length,
-                                                     n_lines=self.max_lines,
-                                                     line_length_format=self.line_length_format,
-                                                     font=self.font,
-                                                     scale=self.scale,
-                                                     thickness=self.thickness,
-                                                     )
+        self.stubs = textwriters.split_text_into_stubs(text,
+                                                       max_line_length=self.max_line_length,
+                                                       n_lines=self.max_lines,
+                                                       line_length_format=self.line_length_format,
+                                                       font=self.font,
+                                                       scale=self.scale,
+                                                       thickness=self.thickness,
+                                                       )
 
         self.n_stubs = len(self.stubs)
 

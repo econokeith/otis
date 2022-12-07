@@ -2,7 +2,7 @@ import cv2
 
 import otis.helpers.coordtools as coordtools
 import otis.helpers.maths
-import otis.helpers.texttools as texttools
+from otis.overlay.textwriters import texttools
 from otis.helpers import dstructures, colortools
 
 

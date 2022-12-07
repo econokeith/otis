@@ -7,6 +7,8 @@ import numpy as np
 from otis.helpers import maths
 from otis.overlay import textwriters
 
+
+# TODO - need to define hitbox for AssetGroup
 class AssetGroup:
 
     def __init__(self,
