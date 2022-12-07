@@ -381,6 +381,16 @@ class CollisionDetector:
         pass
 
     def collide(self, asset_0, asset_1):
+        """
+        checks for collisions and change velocities based on the collisiosn
+        
+        Args:
+            asset_0:
+            asset_1:
+
+        Returns:
+
+        """
         if asset_0.hitbox_type == 'circle' and asset_1.hitbox_type == 'circle':
             self._two_circle_velocity_update(asset_0, asset_1, self.buffer)
         elif asset_0.hitbox_type == 'rectangle' and asset_1.hitbox_type == 'rectangle':
