@@ -3,8 +3,7 @@ import numpy as np
 
 from otis import camera
 from otis.helpers import coordtools, timers
-from otis.overlay import shapes, assetmover, imageassets, typewriters, textwriters
-
+from otis.overlay import shapes, assetholders, imageassets, textwriters
 
 def main():
     ############################## SETUP ###################################################
@@ -17,8 +16,8 @@ def main():
     capture = camera.ThreadedCameraPlayer(c_dim='720p',
                                           max_fps=30,
                                           record=True,
-                                          record_to='bouncy_movers.mp4,',
-                                          record_dim=(540, 540)
+                                          record_to='bouncy_movers.mov',
+                                          record_dim='720p'
                                           )
     center = capture.f_center
 
@@ -29,12 +28,12 @@ def main():
                                          b_color='b'
                                          )
     # set up the mover holding the image asset
-    mover = assetmover.AssetMover(image_asset,
-                                  center=center + (200, 200),
-                                  velocity=v0,
-                                  dim=capture.f_dim,
-                                  ups=capture.max_fps,
-                                  )
+    mover = assetholders.AssetMover(image_asset,
+                                    center=center + (200, 200),
+                                    velocity=v0,
+                                    dim=capture.f_dim,
+                                    ups=capture.max_fps,
+                                    )
     # line connecting center of frame to center of mover
     line = shapes.Line(thickness=2, color='g')
     # define the border of the center square that'll be copied to the image asset each frame
@@ -47,7 +46,7 @@ def main():
                               coord_format='cwh'
                               )
     #
-    type_writer = typewriters.TypeWriter(coords=(0, 0),
+    type_writer = textwriters.TypeWriter(coords=(0, 0),
                                          text="I am a mover I am a mover",
                                          loop=True,
                                          border=True,
@@ -65,14 +64,14 @@ def main():
                                          transparent_background=.9,
                                          )
     # set up the mover holding the image asset
-    mover1 = assetmover.AssetMover(type_writer,
-                                   center=center - (200, 200),
-                                   velocity=v1,
-                                   dim=capture.f_dim,
-                                   ups=capture.max_fps,
-                                   copy_asset=False,
-                                   # show_hitbox=True,
-                                   )
+    mover1 = assetholders.AssetMover(type_writer,
+                                     center=center - (200, 200),
+                                     velocity=v1,
+                                     dim=capture.f_dim,
+                                     ups=capture.max_fps,
+                                     copy_asset=False,
+                                     # show_hitbox=True,
+                                     )
 
     #
     text_writer = textwriters.TextWriter(coords=(0, 0),
@@ -95,16 +94,16 @@ def main():
                                          )
     #
 
-    mover2 = assetmover.AssetMover(text_writer,
-                                   center=center - (200, -200),
-                                   velocity=v2,
-                                   dim=capture.f_dim,
-                                   ups=capture.max_fps,
-                                   copy_asset=False,
-                                   show_hitbox=True,
-                                   )
+    mover2 = assetholders.AssetMover(text_writer,
+                                     center=center - (200, -200),
+                                     velocity=v2,
+                                     dim=capture.f_dim,
+                                     ups=capture.max_fps,
+                                     copy_asset=False,
+                                     show_hitbox=True,
+                                     )
 
-    mover_manager = assetmover.CollidingAssetManager(collisions=True, move_before_delete=100)
+    mover_manager = assetholders.CollidingAssetManager(collisions=True, move_before_delete=100)
     mover.name = '0'
     mover1.name = '1'
     mover2.name = '2'
@@ -119,7 +118,6 @@ def main():
                                      dim=capture.f_dim
                                      )
 
-    # print(center_square.mass, center_square.velocity, center_square.hitbox_type)
     #################################### the loop ###########################################
     time_to_stop = timers.TimeElapsedBool(5)
     while True:

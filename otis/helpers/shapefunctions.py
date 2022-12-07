@@ -98,7 +98,7 @@ def draw_cal_line(frame, center, angle, length, color='r', thickness=1, ltype=No
     :return:
     """
     _color = colortools.color_function(color)
-    _pt0, _pt1 = otis.helpers.maths.line_from_center_angle_length(center, angle, length, ref=ref, dim=frame)
+    _pt0, _pt1 = otis.helpers.maths.line_center_angle_length_to_point_point(center, angle, length, ref=ref, dim=frame)
     cv2.line(frame, _pt0, _pt1, _color, thickness, ltype)
 
 
@@ -115,7 +115,7 @@ def draw_pal_line(frame, point, angle, length, color='r', thickness=1, ltype=Non
     :return:
     """
     _color = colortools.color_function(color)
-    _pt0, _pt1 = otis.helpers.maths.line_from_point_angle_length(point, angle, length, ref=ref, dim=frame)
+    _pt0, _pt1 = otis.helpers.maths.line_point_angle_length_to_point_point(point, angle, length, ref=ref, dim=frame)
     cv2.line(frame, _pt0, _pt1, _color, thickness, ltype)
 
 # todo combine with bordered

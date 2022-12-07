@@ -486,13 +486,13 @@ class TransparentBackground(RectangleType):
               color=None
               ):
 
-        _coords, _transparency, _ref = misc.update_save_keywords(self,
-                                                                 locals(),
-                                                                 ['coords',
+        _coords, _transparency, _ref = misc.update_save_keyword_attributes(self,
+                                                                           locals(),
+                                                                           ['coords',
                                                                   'transparency',
                                                                   'ref'
                                                                   ]
-                                                                 )
+                                                                           )
 
         shapefunctions.write_transparent_background(frame,
                                                     coords=_coords,

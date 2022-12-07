@@ -214,13 +214,14 @@ class TypeWriter(textwriters.TextWriter):
                                                                         in_format=self.anchor_point + 'wh',
                                                                         out_format='cwh'
                                                                        )
-
+        # do nothing if permaborder and loop are false
         if self.text_complete is True and self.loop is False and self.perma_border is False:
             return
-
+        # loop the text if self.loop is True
         elif self.text_complete is True and self.loop is True:
             self.text = self.text_object.text
 
+        # always show background with perma border or preprint if one_border is True
         if self.perma_border is True or self.one_border is True:
             if isinstance(self.background, bases.RectangleType):
                 self.background.write(frame, coords=center_coords, ref=None)
@@ -252,14 +253,8 @@ class TypeWriter(textwriters.TextWriter):
             else:
                 j_offset = 0
 
-            super()._write_line_of_text(frame,
-                                        stub,
-                                        (x + j_offset, y + i * down_space),
-                                        self.color,
-                                        ref=None,
-                                        show_outline=(not self.one_border),
-                                        jtype=None,
-                                        )
+            super()._write_line_of_text(frame, stub, (x + j_offset, y + i * down_space), self.color,
+                                        show_outline=(not self.one_border))
 
 if __name__ == '__main__':
 
@@ -324,7 +319,7 @@ if __name__ == '__main__':
                             )
 
         writers.append(writer)
-    print(len(writers))
+
     circle = shapes.Circle(center=capture.f_center, radius = 10, thickness=-1)
     while True:
         _, frame = capture.read()

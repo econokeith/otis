@@ -76,7 +76,7 @@ class BoundingAsset(bases.AssetHolderMixin, bases.AssetWriter):
             self.name_tag = textwriters.NameTag(name=name,
                                                 attached_to=self,
                                                 border=name_tag_border,
-                                                invert_border=name_tag_inverted)
+                                                invert_background=name_tag_inverted)
         else:
             assert isinstance(name_tagger, textwriters.NameTag)
             if self.name_tag.attached_to is not None:
@@ -89,6 +89,10 @@ class BoundingAsset(bases.AssetHolderMixin, bases.AssetWriter):
             self.moving_average = BoxMovingAverage(*moving_average, in_format='cwh', out_format='cwh')
         else:
             self.moving_average = None
+
+    @property
+    def hitbox_type(self):
+        return self.asset.hitbox_type
 
     @property
     def asset(self):

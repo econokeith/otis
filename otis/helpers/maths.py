@@ -5,7 +5,7 @@ import numpy as np
 from otis.helpers.coordtools import absolute_point
 
 
-def line_from_point_angle_length(point, angle, length, ref=None, dim=None):
+def line_point_angle_length_to_point_point(point, angle, length, ref=None, dim=None):
     """
     get ends point from point angle length
     :param point:
@@ -21,7 +21,7 @@ def line_from_point_angle_length(point, angle, length, ref=None, dim=None):
     return a_point, point_1
 
 
-def line_from_center_angle_length(center, angle, length, ref=None, dim=None):
+def line_center_angle_length_to_point_point(center, angle, length, ref=None, dim=None):
     a_center = absolute_point(center, ref, dim)
     add_x = np.cos(angle*2*np.pi/360) * length/2
     sub_y = -np.sin(angle*2*np.pi/360) * length/2
@@ -54,9 +54,6 @@ class MovingAverage:
 
 def linear_distance(p0, p1):
     return np.sqrt((p0[0]-p1[0])**2+(p0[1]-p1[1])**2)
-
-def collision_two_moving_circles(circle0, circle1):
-    pass
 
 
 def remove_overlap(ball1, ball2):
@@ -106,3 +103,5 @@ def remove_overlap_w_no_mass(no_mass, has_mass, buffer=0):
 
         x2[0] += db
         x2[1] += da
+
+

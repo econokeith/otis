@@ -380,7 +380,8 @@ class CollisionDetector:
     def _rect_to_rect_check(self, rect0, rect1):
         pass
 
-    def collide(self, asset_0, asset_1):
+    def collide(self, asset_0, asset_1, buffer=None):
+        buffer = self.buffer if buffer is None else buffer
         """
         checks for collisions and change velocities based on the collisiosn
         
@@ -392,13 +393,12 @@ class CollisionDetector:
 
         """
         if asset_0.hitbox_type == 'circle' and asset_1.hitbox_type == 'circle':
-            self._two_circle_velocity_update(asset_0, asset_1, self.buffer)
+            self._two_circle_velocity_update2(asset_0, asset_1, buffer)
         elif asset_0.hitbox_type == 'rectangle' and asset_1.hitbox_type == 'rectangle':
-            self._two_rectangle_velocity_update(asset_0, asset_1, self.buffer)
+            self._two_rectangle_velocity_update(asset_0, asset_1, buffer)
 
 
     def _two_rectangle_velocity_update(self, rect_0, rect_1, buffer):
-
 
         cx0, cy0, = rect_0.center
         w0 = rect_0.width
@@ -447,7 +447,6 @@ class CollisionDetector:
                 if i > self.moves_before_delete:
                     break
                 i += 1
-            print(i)
 
     def _two_circle_velocity_update(self, circle_0, circle_1, buffer):
 
@@ -549,11 +548,98 @@ class CollisionDetector:
         #     circle_0.collision_hash[circle_1.id] = False
         #     circle_1.collision_hash[circle_0.id] = False
 
+    def _two_circle_velocity_update2(self, circle_0, circle_1, buffer):
+
+        v0 = circle_0.velocity
+        v1 = circle_1.velocity
+        c0 = circle_0.center
+        c1 = circle_1.center
+        m0 = circle_0.mass
+        m1 = circle_0.mass
+        r0 = circle_0.radius
+        r1 = circle_1.radius
+
+        d_center = c0 - c1
+        dist_2 = np.sum(d_center ** 2)
+        distance = np.sqrt(dist_2)
+
+        # collisions hash makes it so that balls don't interact until they have fully separated
+        # need to add
+        if distance <= (r0 + r1) + buffer and circle_0.mass is None:
+            d_velocity = v0 - v1
+            dot_p1 = np.inner(-d_velocity, -d_center)
+            d_v1 = -2 * (dot_p1 / dist_2) * (-d_center)
+            circle_1.coords[2:] += d_v1
+            i = 0
+            while True:
+                circle_1.move()
+                distance = maths.linear_distance(circle_1.center, circle_0.center)
+                if distance > (r0 + r1) + buffer:
+                    break
+
+                if i > self.moves_before_delete:
+                    circle_1.is_finished = True
+                    print('deleted by bounder')
+                    break
+
+                i += 1
+
+        # todo : turn the while loops on circle collision into some kind of function to get rid of the boilerplate
+        elif distance <= (r0 + r1) + buffer and circle_1.mass is None:
+            d_velocity = v0 - v1
+            dot_p0 = np.inner(d_velocity, d_center)
+            d_v0 = -2 * (dot_p0 / dist_2) * d_center
+            circle_0.coords[2:] += d_v0
+            # remove_overlap_w_no_mass(circle_1, circle_0)
+            i = 0
+            while True:
+                circle_0.move()
+                distance = maths.linear_distance(circle_1.center, circle_0.center)
+
+                if distance > (r0 + r1) + buffer:
+                    break
+
+                if i > self.moves_before_delete:
+                    circle_0.is_finished = True
+                    print('deleted by bounder')
+                    break
+
+                i += 1
+
+        elif distance <= (r0 + r1) + buffer:  # and circle_0.collision_hash[circle_1.id] is False:
+
+            # d_velocity = v0 - v1
+            # dot_p0 = np.inner(d_velocity, d_center)
+            # dot_p1 = np.inner(-d_velocity, -d_center)
+
+            unweighted_d_v0 = np.dot(v0-v1, c0-c1) / dist_2 * (c0-c1)
+            unweighted_d_v1 = np.dot(v1-v0, c1-c0) / dist_2 * (c1-c0)
+
+            d_v0 = -2 * m1 / (m0 + m1) * unweighted_d_v0
+            d_v1 = -2 * m0 / (m0 + m1) * unweighted_d_v1
+
+            circle_0.coords[2:] += d_v0
+            circle_1.coords[2:] += d_v1
+
+            i = 0
+            while True:
+                circle_0.move()
+                circle_1.move()
+                distance = maths.linear_distance(circle_1.center, circle_0.center)
+
+                if distance > (r0 + r1) + buffer:
+                    break
+
+                if i > self.moves_before_delete:
+                    print('deleted by collision')
+                    circle_1.is_finished = True
+                    circle_0.is_finished = True
+                    break
+
+                i += 1
+
+
 # todo: Consider adding Hitbox to all assets separately
-
-
-
-
 class Hitbox:
     asset: shapes.ShapeAsset
 
