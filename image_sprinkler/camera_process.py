@@ -19,11 +19,17 @@ GRAVITY = -10
 DAMPEN = .01
 INTRO_LENGTH = 3
 
-OTIS_SCRIPT = [
-    ("Hello Keith, I am O.T.I.S.! I heard that mean lady stole your best friend, the cat.", 3),
-    ("Maybe I could be your new bestie! I can do all kinds of things a cat can't.", 3),
-    ("Plus, I won't poop in your bathroom sink or walk on your keyboard (though only cause I'm a computer and can't)", 3.5)
-]
+# OTIS_SCRIPT = [
+#     ("Hello Keith, I am O.T.I.S.! I heard that mean lady stole your best friend, the cat.", 3),
+#     ("Maybe I could be your new bestie! I can do all kinds of things a cat can't.", 3),
+#     ("Plus, I won't poop in your bathroom sink or walk on your keyboard (though only cause I'm a computer and can't)", 3.5)
+# ]
+
+OTIS_SCRIPT= [ ("Hello Keith, I am OTIS... I heard that mean lady stole your best friend the cat.", .5),
+               ("I know I am a computer and not a cat, but can a cat make all the little bouncy you's on the screen", .5),
+               ("Plus, I promise I will not poop in your bathroom sink or walk on your keyboard while you are using it",.5),
+               ("Although, that is mostly because computers do not poop nor do we have feet", 2)
+        ]
 
 
 def target(shared, pargs):
@@ -39,10 +45,11 @@ def target(shared, pargs):
     color_cycle = colortools.ColorCycle()  # so boxes have different colors
 
     # base_function
-    # it's easier define new_bounder as a function for keeping a defaultdict of bounders
+    # it's easier define new_bounder as a function for keeping a defaultdict of bounders whose keys are the names
+    # of the people in the scene so that whenever a new person is observed, a new box is created for them
     def new_bounder_function():
         base_bounding_shape = shapes.CircleWithLineToCenter(threshold=.75)
-        # could just be a regular circle
+        # could just be a regular circle or whatever
         # base_bounding_shape = shapes.Circle(color=None,
         #                                     radius_type='diag',
         #                                     thickness=2,
@@ -57,6 +64,7 @@ def target(shared, pargs):
                                              name_tag_inverted=False,
                                              )
         bounder.name_tag.scale = 1.5
+        bounder.name_tag.line_to_box = True
         return bounder
 
     # bounding box manager that translates the box coords from the cv_model_process into the effects on screen
@@ -97,21 +105,22 @@ def target(shared, pargs):
                                   color='g',
                                   transparent_background=.1,
                                   perma_border=True,
-                                  key_wait_range=(.05, .06),
+                                  key_wait_range=(.04, .06),
                                   )
 
     the_script = queue.Queue()
     for line in OTIS_SCRIPT:
         the_script.put(line)
 
-    bsw_text = "After nearly a week without the cat, Keith meets a potential new BFF"
-    black_screen = np.zeros((*pargs.f_dim[::-1], 3),dtype='uint8')
+    ########################################## setup for intro screen #################################################
+
+    black_screen = np.zeros((*pargs.f_dim[::-1], 3), dtype='uint8') # always has to be uint8
     black_screen_writer = textwriters.TextWriter(coords=(0,100),
                                                  anchor_point='c',
                                                  jtype='c',
                                                  ref='c',
                                                  max_lines=3,
-                                                 text=bsw_text,
+                                                 text="After nearly a week without the cat, Keith meets a potential new BFF",
                                                  color='w',
                                                  thickness=2,
                                                  scale=2
@@ -137,7 +146,7 @@ def target(shared, pargs):
 
     capture.record = RECORD  # don't start recording otis recognizes a person
     bs_timer = timers.TimeElapsedBool(INTRO_LENGTH)
-    capture.read()
+    capture.read() # start camera so it's running when intro is over
     tick=time.time()
     TIME_PRINTED = False
 
@@ -179,12 +188,12 @@ def target(shared, pargs):
                 tick = time.time()
             otis_speaks = True
 
+        # reload otis with a new line from the script
         if otis_speaks is True and otis.text_complete is True and the_script.empty() is False:
             new_line = the_script.get()
             otis.text = new_line
 
-        otis.write(
-            frame)  # otis always writes because cause he's set to perma_border = True so the grey box will be
+        otis.write(frame)  # otis always writes because because he's set to perma_border = True so the grey box will be
         # there
         # regardless of him having something to say
 
@@ -196,9 +205,11 @@ def target(shared, pargs):
         capture.show(frame)
 
         if otis_speaks is True and otis.text_complete is True and the_script.empty() is True:
+            # print time from start of intro to when otis is done speaking
             if TIME_PRINTED is False:
                 print(round(time.time() - tick, 2))
                 TIME_PRINTED = True
+            # quit once he's done
             if STOP_AFTER_OTIS is True:
                 shared.keyboard_input.value = ord('q')
                 shared.new_keyboard_input.value = True
@@ -418,7 +429,7 @@ class BallSprinkler:
 
             lrc = len(self.rectangle_counters)
 
-            # make the 8 big balls that circle
+            # make the 8 big balls that move along the outside of the frame
             if self.big_ball_on is True and lrc < 8 and self.new_big_ball_timer(self._new_wait_list[lrc]):
                 new_timer = timers.TimedRectangleCycle(self.x_range,
                                                        self.y_range,
