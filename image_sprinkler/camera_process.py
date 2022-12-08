@@ -19,16 +19,12 @@ GRAVITY = -10
 DAMPEN = .01
 INTRO_LENGTH = 3
 
-# OTIS_SCRIPT = [
-#     ("Hello Keith, I am O.T.I.S.! I heard that mean lady stole your best friend, the cat.", 3),
-#     ("Maybe I could be your new bestie! I can do all kinds of things a cat can't.", 3),
-#     ("Plus, I won't poop in your bathroom sink or walk on your keyboard (though only cause I'm a computer and can't)", 3.5)
-# ]
 
-OTIS_SCRIPT= [ ("Hello Keith, I am OTIS... I heard that mean lady stole your best friend the cat.", .5),
-               ("I know I am a computer and not a cat, but can a cat make all the little bouncy you's on the screen", .5),
-               ("Plus, I promise I will not poop in your bathroom sink or walk on your keyboard while you are using it",.5),
-               ("Although, that is mostly because computers do not poop nor do we have feet", 2)
+waits = [2, 2, 2, 2]
+OTIS_SCRIPT= [ ("Hello Keith, I am O.T.I.S, I heard that mean lady stole your best friend the cat.", waits[0]),
+               ("I know I am a computer and not a cat, but can a cat make all these little bouncy Keith's on the screen?!?", waits[1]),
+               ("Plus, I promise I will not poop in your bathroom sink or walk on your keyboard while you are using it.",waits[2]),
+               ("Although, that is mostly because computers do not poop nor do we have feet...", waits[3])
         ]
 
 

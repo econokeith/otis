@@ -8,7 +8,7 @@ import numpy as np
 from otis.helpers import multitools, cvtools, coordtools, colortools, timers
 from otis.overlay import scenes, imageassets, assetholders, textwriters, shapes
 
-waits = [2, 2, 2, 2]
+waits = [0, 0, 0, 0]
 OTIS_SCRIPT= [ ("Hello Keith, I am O.T.I.S, I heard that mean lady stole your best friend the cat.", waits[0]),
                ("I know I am a computer and not a cat, but can a cat make all these little bouncy Keith's on the screen?!?", waits[1]),
                ("Plus, I promise I will not poop in your bathroom sink or walk on your keyboard while you are using it.",waits[2]),
@@ -34,6 +34,7 @@ otis = textwriters.TypeWriter(coords=(0, 20),
 
 black_screen = np.zeros((1080, 1080, 3), dtype='uint8')
 the_script = queue.Queue()
+fps_sleeper = timers.SmartSleeper()
 
 
 
@@ -47,7 +48,7 @@ if __name__=='__main__':
     while True:
         black_screen[:, :, :] = 0
         otis.write(black_screen)
-
+        fps_sleeper()
         cv2.imshow('otis', black_screen)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
