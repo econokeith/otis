@@ -26,15 +26,15 @@ OTIS_SCRIPT= [ ("Hello Keith, I am O.T.I.S, I heard that mean lady stole your be
                ("Plus, I promise I will not poop in your bathroom sink or walk on your keyboard while you are using it.",waits[2]),
                ("Although, that is mostly because computers do not poop nor do we have feet...", waits[3])
         ]
-
+key_waits = [.035, .0345, .0351, .034]
 
 def target(shared, pargs):
     signal.signal(signal.SIGTERM, multitools.close_gracefully)
     signal.signal(signal.SIGINT, multitools.close_gracefully)
     pargs.record = RECORD
-
+    pargs.record_to = 'keith_meets_otis_15_pauses.mov'
     ####################################### SETUP #####################################################################
-    pargs.record = RECORD
+
     manager = scenes.SceneManager(shared, pargs, file=__file__)
     capture = manager.capture  # for convenience
     # setup bounding manager
@@ -158,6 +158,7 @@ def target(shared, pargs):
         if bs_timer() is True:
             break
     ################### main stuff
+    i = 0
     while True:
 
         ############################### ##graphics ####################################################################
@@ -188,8 +189,10 @@ def target(shared, pargs):
         if otis_speaks is True and otis.text_complete is True and the_script.empty() is False:
             new_line = the_script.get()
             otis.text = new_line
+            otis.key_wait_range = key_waits[i]
+            i+=1
 
-        otis.write(frame)  # otis always writes because because he's set to perma_border = True so the grey box will be
+        otis.write(frame)  # otis always writes because he's set to perma_border = True so the grey box will be
         # there
         # regardless of him having something to say
 

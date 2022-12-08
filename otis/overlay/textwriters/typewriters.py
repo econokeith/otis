@@ -134,7 +134,6 @@ class TypeWriter(textwriters.TextWriter):
         self._current_stub = None
         self._output = ""
         self.cursor = timers.Cursor()
-        self.key_press_timer = timers.RandomIntervalFrequencyLimiter(self.key_wait_range)
         self.total_timer = timers.TimeSinceFirst(start=True)
         self.completed_stubs = []
 
@@ -181,6 +180,19 @@ class TypeWriter(textwriters.TextWriter):
         self._output = ""
         self.line_iterator = dstructures.BoundIterator(self.current_stub)
         self.completed_stubs.append(old_stub)
+
+    @property
+    def key_wait_range(self):
+        return self._key_wait_range
+
+    @key_wait_range.setter
+    def key_wait_range(self, new_range):
+        if isinstance(new_range, (int, float)):
+            self._key_wait_range = new_range # cause of the random interval
+            self.key_press_timer = timers.CallFrequencyLimiter(new_range)
+        else:
+            self._key_wait_range = new_range
+            self.key_press_timer = timers.RandomIntervalFrequencyLimiter(new_range)
 
     def update_typing(self):
 
