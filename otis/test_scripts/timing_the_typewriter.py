@@ -35,8 +35,6 @@ otis = textwriters.TypeWriter(coords=(0, 20),
 black_screen = np.zeros((1080, 1080, 3), dtype='uint8')
 the_script = queue.Queue()
 
-
-
 for line in OTIS_SCRIPT:
     the_script.put(line)
 
