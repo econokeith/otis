@@ -50,7 +50,7 @@ if __name__=='__main__':
         black_screen[:, :, :] = 0
 
         otis.write(black_screen)
-
+        fps_sleeper()
         cv2.imshow('otis', black_screen)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):

@@ -19,11 +19,6 @@ GRAVITY = -10
 DAMPEN = .01
 INTRO_LENGTH = 3
 
-# OTIS_SCRIPT = [
-#     ("Hello Keith, I am O.T.I.S.! I heard that mean lady stole your best friend, the cat.", 3),
-#     ("Maybe I could be your new bestie! I can do all kinds of things a cat can't.", 3),
-#     ("Plus, I won't poop in your bathroom sink or walk on your keyboard (though only cause I'm a computer and can't)", 3.5)
-# ]
 
 waits = [2, 2, 2, 2]
 OTIS_SCRIPT= [ ("Hello Keith, I am O.T.I.S, I heard that mean lady stole your best friend the cat.", waits[0]),
