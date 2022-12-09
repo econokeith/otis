@@ -44,7 +44,8 @@ with mp_face_mesh.FaceMesh(
                     landmark_list=face_landmarks,
                     connections=mp_face_mesh.FACEMESH_TESSELATION,
                     landmark_drawing_spec=drawing_spec,
-                    connection_drawing_spec=style)
+                    connection_drawing_spec=style
+                )
         #                 mp_drawing.draw_landmarks(
         #                     image=image,
         #                     landmark_list=face_landmarks,
@@ -71,8 +72,9 @@ with mp_face_mesh.FaceMesh(
                     cv2.FONT_HERSHEY_SIMPLEX,
                     1, (0, 0, 255), 1)
         tick = tock
+        # cv2.resize(image, (0,0), fx=2, fy=2)
 
-        cv2.imshow('MediaPipe Face Mesh', image)
+        cv2.imshow('MediaPipe Face Mesh', cv2.resize(image, (0,0), fx=2, fy=2))
         if cv2.waitKey(5) & 0xFF == ord('q'):
             break
 
