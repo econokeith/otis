@@ -3,18 +3,15 @@ import mediapipe as mp
 import time
 from collections import deque
 import numpy as np
-from otis import camera
 
 last_10 = deque(maxlen=10)
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 mp_face_mesh = mp.solutions.face_mesh
-dim = (1280, 720)
+
 drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1, color=(0,255,0))
 style = mp_drawing.DrawingSpec(color=(0,255,0), thickness=1)
 cap = cv2.VideoCapture(0)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, dim[0])
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, dim[1])
 tick = time.time()
 black_screen = np.zeros((720, 1080, 3), dtype='uint8')
 BLACK_SCREEN = False
@@ -25,7 +22,7 @@ with mp_face_mesh.FaceMesh(
         min_detection_confidence=0.5,
         min_tracking_confidence=0.5) as face_mesh:
 
-    while True:
+    while cap.isOpened():
         success, image = cap.read()
         if not success:
             print("Ignoring empty camera frame.")
@@ -80,8 +77,7 @@ with mp_face_mesh.FaceMesh(
         tick = tock
         # cv2.resize(image, (0,0), fx=2, fy=2)
 
-        cv2.imshow('hh', image)
-
+        cv2.imshow('MediaPipe Face Mesh', cv2.resize(image, (0,0), fx=2.5, fy=2.5))
         key_input = cv2.waitKey(1) & 0xFF
         if key_input == ord('1'):
             BLACK_SCREEN = not BLACK_SCREEN

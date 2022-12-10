@@ -47,6 +47,11 @@ class ImageAsset(bases.AssetWriter):
         """
 
         super().__init__()
+        if isinstance(image, str):
+            path_to_dir = os.path.abspath(os.path.dirname(__file__))
+            path_to_image = os.path.join(path_to_dir, image)
+            image = cv2.imread(image)
+
 
         self._image = None
         self.locs = None
