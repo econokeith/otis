@@ -1,18 +1,18 @@
 import argparse
-
+from typing import Union, Tuple
 import numpy as np
 
-
-
-__COMMON_DIMENSIONS =  {
+__COMMON_DIMENSIONS = {
     "480p": (640, 480),
     "720p": (1280, 720),
     "1080p": (1920, 1080),
-    "1440p" : (2560, 1440),
+    "1440p": (2560, 1440),
     "4k": (3840, 2160),
     None: None
 }
-def dimensions_function(dim):
+
+
+def dimensions_function(dim: Union[str, Tuple[int, int]])->Tuple[int, int]:
     """
     convenience function for setting dimensions in CameraPlayer
     Args:
@@ -28,7 +28,8 @@ def dimensions_function(dim):
             return __COMMON_DIMENSIONS[dim]
         except:
             raise ValueError(f"Dimensions {dim} not recognized. For string inputs, the dimensions must be one of "
-                             f"'480p', '720p', '1080p, '4k'")
+                             f"'480p', '720p', '1440p' ,'1080p, '4k'")
+
 
 def update_save_attributes_on_write(obj, local_dict, skip=2):
     """
@@ -61,6 +62,7 @@ def update_save_attributes_on_write(obj, local_dict, skip=2):
             output.append(obj.__getattribute__(key))
 
     return output
+
 
 def update_save_keyword_attributes(self, local_dict, attributes=(), save=False):
     """
@@ -126,6 +128,7 @@ def update_save_keyword_attributes(self, local_dict, attributes=(), save=False):
 
     return output
 
+
 def int_or_float_or_tuple_to_tuple(value):
     """
     Args:
@@ -143,7 +146,7 @@ def int_or_float_or_tuple_to_tuple(value):
 
 def make_parser():
     parser = argparse.ArgumentParser(description='options for this otis project')
-    parser.add_argument('-d', '--c_dim',type=tuple, default=(1280, 720),
+    parser.add_argument('-d', '--c_dim', type=tuple, default=(1280, 720),
                         help='set video dimensions. default is (1920, 1080)')
     parser.add_argument('-m', '--max_fps', type=int, default=30,
                         help='set max show_fps Default is 60')
@@ -171,10 +174,9 @@ def make_parser():
 class ArgParser:
 
     def __init__(self,
-                 parser:argparse.ArgumentParser=None,
+                 parser: argparse.ArgumentParser = None,
                  description="this is an otis project",
                  **kwargs):
-
         if parser is None:
             parser = argparse.ArgumentParser(description=description, **kwargs)
 
@@ -230,4 +232,3 @@ def crop_image_to_square(img):
         y0 = (y - x) // 2
         y1 = x + y0
         return img[y0:y1, :]
-

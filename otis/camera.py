@@ -5,6 +5,7 @@ Containers for cv2.Capture:
 import time
 from threading import Thread
 import platform
+from typing import Union, Optional
 
 import cv2
 import numpy as np
@@ -33,10 +34,10 @@ class CameraPlayer:
                  f_dim=None, # frame dimensions only differs from c_dim if we're cropping the feed
                  max_fps=60,
                  record = False,
-                 record_to = 'otis.mp4',
+                 record_to:str = 'otis.mp4',
                  record_dim=None,
                  flip = True, # flip horizontal axis
-                 output_scale = 1,
+                 output_scale:float=1,
                  record_codec = 'MP4V'
                  ):
         """
