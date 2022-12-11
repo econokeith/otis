@@ -198,6 +198,7 @@ def write_transparent_background(frame,
                                  transparency=.25,
                                  ref=None
                                  ):
+
     r, t, l, b = coordtools.translate_box_coords(coords, coord_format, 'rtlb', ref, frame)
     portion = frame[t:b, l:r]
     # grey = cv2.cvtColor(portion, cv2.COLOR_BGR2GRAY) * transparency
