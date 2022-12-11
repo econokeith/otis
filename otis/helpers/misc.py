@@ -8,6 +8,7 @@ __COMMON_DIMENSIONS =  {
     "480p": (640, 480),
     "720p": (1280, 720),
     "1080p": (1920, 1080),
+    "1440p" : (2560, 1440),
     "4k": (3840, 2160),
     None: None
 }
@@ -207,3 +208,26 @@ class ArgParser:
 
     def parse_args(self):
         return self.parser.parse_args()
+
+
+def crop_image_to_square(img):
+    """
+    crops a rectangular image into a square with sides equal to the length of the shortest side and
+    the same center as the original image
+    """
+    y, x, _ = img.shape
+    if x == y:
+        return img
+
+    elif x > y:
+
+        x0 = (x - y) // 2
+        x1 = y + x0
+        return img[:, x0:x1]
+
+    else:
+
+        y0 = (y - x) // 2
+        y1 = x + y0
+        return img[y0:y1, :]
+
