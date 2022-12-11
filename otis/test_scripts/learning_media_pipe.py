@@ -6,18 +6,23 @@ import numpy as np
 from otis import camera
 
 last_10 = deque(maxlen=10)
+
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 mp_face_mesh = mp.solutions.face_mesh
+
 dim = (1280, 720)
 drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1, color=(0,255,0))
 style = mp_drawing.DrawingSpec(color=(0,255,0), thickness=1)
+
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, dim[0])
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, dim[1])
+
 tick = time.time()
 black_screen = np.zeros((720, 1080, 3), dtype='uint8')
 BLACK_SCREEN = False
+
 with mp_face_mesh.FaceMesh(
 
         max_num_faces=3,
@@ -31,7 +36,6 @@ with mp_face_mesh.FaceMesh(
             print("Ignoring empty camera frame.")
             # If loading a video, use 'break' instead of 'continue'.
             continue
-
         # To improve performance, optionally mark the image as not writeable to
         # pass by reference.
         image.flags.writeable = False

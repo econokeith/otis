@@ -331,7 +331,7 @@ class BallSprinkler:
             image_ball = imageassets.ImageAsset(center=(0, 0),
                                                 resize_to=(resize_to, resize_to),
                                                 hitbox_type='circle',
-                                                use_circle_mask=True,
+                                                use_mask=True,
                                                 border=True,
                                                 b_color='b',
                                                 b_thickness=1
@@ -371,7 +371,7 @@ class BallSprinkler:
         self.big_ball = imageassets.ImageAsset(center=(0, 0),
                                                resize_to=(self.big_ball_diameter, self.big_ball_diameter),
                                                hitbox_type='circle',
-                                               use_circle_mask=True,
+                                               use_mask=True,
                                                )
 
         self.rectangle_counters = []

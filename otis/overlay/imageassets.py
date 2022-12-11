@@ -23,7 +23,7 @@ class ImageAsset(bases.AssetWriter):
                  hitbox_type='rectangle',
                  copy_updates=False,
                  mask_bit=0,
-                 use_circle_mask=False,
+                 use_mask=False,
                  border = False,
                  b_color = 'r',
                  b_thickness = 1,
@@ -41,8 +41,8 @@ class ImageAsset(bases.AssetWriter):
             hitbox_type: either 'circle' or 'rectangle'.
             copy_updates:
             mask_bit:
-            use_circle_mask: loads, resizes, and uses a circle0 mask so only a circle0 centered at teh center of the image
-                             is copied onto the frame. The image needs to be perfectly square, otherise, the results can
+            use_mask: loads, resizes, and uses a circle mask so only a circle centered at the center of the image
+                             is copied onto the frame. The image needs to be perfectly square, otherwise, the results can
                              be unstable
         """
 
@@ -73,7 +73,7 @@ class ImageAsset(bases.AssetWriter):
         self.mask_bit = mask_bit
 
         # loads a saved circlular mask for writing
-        if use_circle_mask is True:
+        if use_mask is True:
             path_to_dir = os.path.abspath(os.path.dirname(__file__))
             path_to_mask = os.path.join(path_to_dir, 'photo_assets/masks/circle_mask.jpg')
             self.mask = cv2.imread(path_to_mask)
@@ -332,3 +332,11 @@ class ImageAsset(bases.AssetWriter):
 
     def center_width_height(self):
         return self.coords
+
+def open_image(path_to_file, file=None):
+    if file is not None:
+        path_to_dir = os.path.dirname(__file__)
+        path = os.path.abspath(os.path.join(path_to_dir, path_to_file))
+    else:
+        path = path_to_file
+    return cv2.imread(path)
