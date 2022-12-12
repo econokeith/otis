@@ -21,11 +21,11 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, dim[1])
 
 tick = time.time()
 black_screen = np.zeros((720, 1080, 3), dtype='uint8')
-BLACK_SCREEN = False
+BLACK_SCREEN = True
 
 with mp_face_mesh.FaceMesh(
 
-        max_num_faces=3,
+        max_num_faces=6,
         refine_landmarks=True,
         min_detection_confidence=0.5,
         min_tracking_confidence=0.5) as face_mesh:
