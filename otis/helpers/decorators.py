@@ -2,7 +2,6 @@
 A collection of decorators that  are mainly useful when testing functionality in
 Jupyter notebooks
 """
-
 import time
 import otis.helpers.timers as timers
 

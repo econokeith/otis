@@ -25,6 +25,7 @@ class ShapeAsset(bases.AssetWriter, abc.ABC):
                  ):
 
         super().__init__()
+
         if coords is None:
             self._coords = np.zeros(4, dtype=int)
         else:

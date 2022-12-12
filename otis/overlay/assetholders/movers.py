@@ -37,16 +37,16 @@ class AssetMover:
             asset:
             center:
             velocity:
-            dim:
-            x_range:
-            y_range:
+            dim (tuple): screen dimensions
+            x_range (tuple):
+            y_range (tuple): :
             border_collision:
             ups: updates per second. usually matches frame_rate, but it also automatically updates _ups to match how
                  the mover is being called.
-            mass:
-            velocity_format: either 'mag_radians' or 'xy
-            gravity:
-            dampen:
+            mass: (float) defaults to area of asset 
+            velocity_format: either 'mag_radians' or 'xy'
+            gravity: (int) acceleration in pixels per second
+            dampen: (float) proportion of velocity change that transfers during a collision
             copy_asset=True,
             show_hitbox = False
         """

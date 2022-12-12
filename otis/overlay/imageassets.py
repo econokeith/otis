@@ -23,10 +23,10 @@ class ImageAsset(bases.AssetWriter):
                  hitbox_type='rectangle',
                  copy_updates=False,
                  mask_bit=0,
-                 use_circle_mask=False,
-                 border = False,
-                 b_color = 'r',
-                 b_thickness = 1,
+                 use_mask=False,
+                 border=False,
+                 b_color='r',
+                 b_thickness=1,
                  ):
         """
         makes the images
@@ -41,8 +41,8 @@ class ImageAsset(bases.AssetWriter):
             hitbox_type: either 'circle' or 'rectangle'.
             copy_updates:
             mask_bit:
-            use_circle_mask: loads, resizes, and uses a circle0 mask so only a circle0 centered at teh center of the image
-                             is copied onto the frame. The image needs to be perfectly square, otherise, the results can
+            use_mask: loads, resizes, and uses a circle mask so only a circle centered at the center of the image
+                             is copied onto the frame. The image needs to be perfectly square, otherwise, the results can
                              be unstable
         """
 
@@ -78,7 +78,7 @@ class ImageAsset(bases.AssetWriter):
         self.mask_bit = mask_bit
 
         # loads a saved circlular mask for writing
-        if use_circle_mask is True:
+        if use_mask is True:
             path_to_dir = os.path.abspath(os.path.dirname(__file__))
             path_to_mask = os.path.join(path_to_dir, 'photo_assets/masks/circle_mask.jpg')
             self.mask = cv2.imread(path_to_mask)
@@ -92,17 +92,16 @@ class ImageAsset(bases.AssetWriter):
         if border is True and self.hitbox_type == 'circle':
             self.border = shapes.Circle(color=b_color,
                                         thickness=b_thickness,
-                                        coord_format = 'cwh',
-                                        update_format= 'cwh',
+                                        coord_format='cwh',
+                                        update_format='cwh',
                                         )
 
         elif border is True and self.hitbox_type == 'rectangle':
             self.border = shapes.Rectangle(color=b_color,
-                                            thickness=b_thickness,
-                                            coord_format = 'cwh',
-                                            update_format= 'cwh',
-                                            )
-
+                                           thickness=b_thickness,
+                                           coord_format='cwh',
+                                           update_format='cwh',
+                                           )
         else:
             self.border = None
 
@@ -112,7 +111,7 @@ class ImageAsset(bases.AssetWriter):
 
     @coord_format.setter
     def coord_format(self, new):
-        raise RuntimeError("ImageAsset can not have its coord_format value changed from 'cwh'")
+        raise ValueError("ImageAsset can not have its coord_format value changed from 'cwh'")
 
     @property
     def image(self):
@@ -125,8 +124,9 @@ class ImageAsset(bases.AssetWriter):
         1) if there isn't an image saved, it will save the image
             - if resize_to is set, then it will resize the image
             = otherwise it will set resize
-        2) if there's an image saved it will resize the image to that size
+        2) if there's an image saved it will resize the new image to that size
         3) if copy_updates is True, it will copy it. otherwise it will save the reference
+            (this only occurs if there isn't a resize
         4) if we don't want a resize on a new image, set self. resize = None before adding the image
 
         Args:
@@ -200,7 +200,7 @@ class ImageAsset(bases.AssetWriter):
             if self._image is None:
                 w, h = new_size
                 self._image = np.zeros(3 * w * h, dtype='uint8').reshape((h, w, 3))
-                
+
             else:
                 self._image = self.resize_image(self._image)
 
@@ -216,7 +216,6 @@ class ImageAsset(bases.AssetWriter):
 
         if self.resize_to is not None:
             image = cv2.resize(new_image, self.resize_to)
-
         elif isinstance(self.scale, (float, int)) and self.scale != 1:
             image = cv2.resize(new_image, (0, 0), fx=self.scale, fy=self.scale)
         elif isinstance(self.scale, (tuple, list, np.ndarray)):
@@ -225,7 +224,6 @@ class ImageAsset(bases.AssetWriter):
             image = new_image
 
         self.resize_to = image.shape[:2][::-1]
-
         return image
 
     def add_image_from_file(self, path_to_images, file=None):
@@ -238,10 +236,10 @@ class ImageAsset(bases.AssetWriter):
         Returns: self
 
         """
-
         abs_path = cvtools.abs_path_relative_to_calling_file(path_to_images, file=file)
         files = os.listdir(abs_path)
         image_file = min(files, key=len)
+
         self.image = cv2.imread(os.path.join(abs_path, image_file))
         self.resize_to = self.image.shape[:2][::-1]
 
@@ -282,13 +280,11 @@ class ImageAsset(bases.AssetWriter):
                                                      dim=frame
                                                      )
 
-
-
         dr = dt = dl = db = 0
         h_f, w_f, _ = frame.shape
         h_i, w_i = self.coords[2:]
 
-        bx, by = (l-r)//2, (b-t)//2
+        bx, by = (l - r) // 2, (b - t) // 2
         bw, bh = h_i, w_i
 
         # make sure that we aren't writing outside the bounds of the frame
@@ -309,12 +305,12 @@ class ImageAsset(bases.AssetWriter):
             b = h_f
 
         # TODO: fix the issue with images resizing differently due to rounding / conversion from cwh format
-        frame_portion = frame[t:b+1, l:r+1]
+        frame_portion = frame[t:b + 1, l:r + 1]
         # image_portion = _image[dt: h_i - db, dl: w_i - dr]
         image_portion = _image[dt: h_i - db + 1, dl: w_i - dr + 1]
 
         mismatch = False
-        if frame_portion.shape != image_portion.shape: #somethign happens here with the resizing that causes lots of errors
+        if frame_portion.shape != image_portion.shape:  # somethign happens here with the resizing that causes lots of errors
             # this just makes sure there any shape mismatches
             x_dim = min(frame_portion.shape[1], image_portion.shape[1])
             y_dim = min(frame_portion.shape[0], image_portion.shape[0])
@@ -337,3 +333,12 @@ class ImageAsset(bases.AssetWriter):
 
     def center_width_height(self):
         return self.coords
+
+
+def open_image(path_to_file, file=None):
+    if file is not None:
+        path_to_dir = os.path.dirname(__file__)
+        path = os.path.abspath(os.path.join(path_to_dir, path_to_file))
+    else:
+        path = path_to_file
+    return cv2.imread(path)
