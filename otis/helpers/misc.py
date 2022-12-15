@@ -16,7 +16,7 @@ def dimensions_function(dim: Union[str, Tuple[int, int]])->Tuple[int, int]:
     """
     convenience function for setting dimensions in CameraPlayer
     Args:
-        dim: tuple of the form (w, h) or string equal to one of '480p', '720p', '1080p, '4k'
+        dim: tuple(int, int) of the form (w, h) or string equal to one of '480p', '720p', '1080p, '4k'
             the resolution of the screen in pixels
     Returns:
         (w, h) of the screen
