@@ -2,7 +2,7 @@ import cv2
 
 from otis import camera
 from otis.helpers import coordtools
-from otis.overlay import shapes, assetmover, imageassets
+from otis.overlay import shapes, assetholders, imageassets
 
 
 def main():
@@ -19,7 +19,7 @@ def main():
                                          b_color='b'
                                          )
     # set up the mover holding the image asset
-    mover = assetmover.AssetMover(image_asset,
+    mover = assetholders.AssetMover(image_asset,
                                   velocity=(200, 1),
                                   dim=capture.f_dim,
                                   ups=capture.max_fps,
