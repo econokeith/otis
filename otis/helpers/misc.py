@@ -116,7 +116,7 @@ def update_save_keyword_attributes(self, local_dict, attributes=(), save=False):
         try:
             value = local_dict[key]
         except KeyError:
-            raise KeyError(f"keyword : '{key}' is not a named argument in this function") # should this be a value error
+            raise ValueError(f"keyword : '{key}' is not a named argument in this function") # should this be a value error
 
         if value is not None:
             output.append(value)
