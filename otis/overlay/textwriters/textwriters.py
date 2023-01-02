@@ -3,6 +3,7 @@ Contains TextWriter and several other
 
 """
 import types
+from typing import Union, Tuple, List
 
 import cv2
 import numpy as np
@@ -13,25 +14,24 @@ from otis.overlay.textwriters import otistext
 from otis.overlay.shapes import shapefunctions
 from otis.overlay.textwriters import texttools
 
-
 # todo - texttxt writer perma border doesn't work without one border turned on
 class TextWriter(bases.AssetWriter, bases.RectangleType, bases.TextType):
     text_fun: types.FunctionType
 
     def __init__(self,
                  coords=(0, 0),
-                 font='duplex',
-                 color='r',  # can be 'r', 'g', 'u', 'w', 'b', 'y', 'c', 'm', 'grey' or (G, B, R) color tuple
-                 scale=1.,
-                 ltype=1,
-                 thickness=1,
-                 anchor_point='lb',
-                 ref=None,
-                 text=None,
-                 line_spacing=.5,  # int = pixels, float = percentage of font height
-                 max_line_length=None,  #
-                 line_length_format='pixels',  # pixels or characters
-                 max_lines=None,  #
+                 font:str='duplex',
+                 color:Union[str, Tuple[int, int, int]]='r',  # can be 'r', 'g', 'u', 'w', 'b', 'y', 'c', 'm', 'grey' or (G, B, R) color tuple
+                 scale:float=1.,
+                 ltype:int=1,
+                 thickness:int=1,
+                 anchor_point:str='lb',
+                 ref:Union[str, Tuple[int, int], None]=None,
+                 text:Union[None, str]=None,
+                 line_spacing:Union[int, float]=.5,  # int = pixels, float = percentage of font height
+                 max_line_length:Union[None, int]=None,  #
+                 line_length_format:str='pixels',  # pixels or characters
+                 max_lines:Union[None,int] =None,  #
                  jtype='l',
                  ##################### underlining #############
                  u_spacing=.1,
