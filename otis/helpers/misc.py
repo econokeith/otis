@@ -12,21 +12,21 @@ __COMMON_DIMENSIONS = {
 }
 
 
-def dimensions_function(dim: Union[str, Tuple[int, int]])->Tuple[int, int]:
+def dimensions_function(dim: Union[str, Tuple[int, int]]) -> Tuple[int, int]:
     """
     convenience function for setting dimensions in CameraPlayer
     Args:
-        dim: tuple of the form (w, h) or string equal to one of '480p', '720p', '1080p, '4k'
+        dim: tuple[int, int] of the form (w, h) or string equal to one of '480p', '720p', '1080p, '1440p', '4k'
             the resolution of the screen in pixels
-    Returns:
-        (w, h) of the screen
+    Returns: tuple[int, int]
+            (w, h) of the screen
     """
     if isinstance(dim, (tuple, list, np.ndarray)):
         return dim
     else:
         try:
             return __COMMON_DIMENSIONS[dim]
-        except:
+        except ValueError:
             raise ValueError(f"Dimensions {dim} not recognized. For string inputs, the dimensions must be one of "
                              f"'480p', '720p', '1440p' ,'1080p, '4k'")
 
@@ -108,15 +108,15 @@ def update_save_keyword_attributes(self, local_dict, attributes=(), save=False):
     # sometimes we don't care about saving or don't have save in the kwargs
     try:
         save_it = local_dict['save']
-    except:
+    except KeyError:
         save_it = False
 
     for key in attributes:
         # unsure the attribute is available from named keyword arguments
         try:
             value = local_dict[key]
-        except:
-            raise ValueError(f"keyword : '{key}' is not a named argument in this function")
+        except KeyError:
+            raise KeyError(f"keyword : '{key}' is not a named argument in this function") # should this be a value error
 
         if value is not None:
             output.append(value)
@@ -139,7 +139,7 @@ def int_or_float_or_tuple_to_tuple(value):
         return value ... if value has more than 1 dimension
     """
     if isinstance(value, (int, float)):
-        return (value, value)
+        return value, value
     else:
         return value
 
