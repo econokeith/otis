@@ -1,5 +1,7 @@
 # O.T.I.S. - Observer Tracking Interactive Scripting
 
+  ![meet otis](./github_otis_one.gif)
+
 ### What it does
 Robocam provides a framework for making interactive computer vision models and writing scripted encounters with 
 participants using them. It solves one of the major hurdles to making realistic viewing experiences for humans by 
