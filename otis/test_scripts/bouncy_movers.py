@@ -10,13 +10,13 @@ def main():
     # start the camera
     square_size = 200
     v0 = (200, 1)
-    v1 = (200, -1)
-    v2 = (200, 2)
+    v1 = (200, 1)
+    v2 = (200, -2)
 
     capture = camera.ThreadedCameraPlayer(c_dim='720p',
                                           max_fps=30,
                                           record=True,
-                                          record_to='bouncy_movers.mov',
+                                          record_to='bouncy_movers.mp4',
                                           record_dim='720p'
                                           )
     center = capture.f_center
@@ -95,7 +95,7 @@ def main():
     #
 
     mover2 = assetholders.AssetMover(text_writer,
-                                     center=center - (200, -200),
+                                     center=center - (-200, 200),
                                      velocity=v2,
                                      dim=capture.f_dim,
                                      ups=capture.max_fps,

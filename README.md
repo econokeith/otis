@@ -3,24 +3,22 @@
   ![meet otis](./github_otis_one.gif)
 
 ### What it does
-Robocam provides a framework for making interactive computer vision models and writing scripted encounters with 
-participants using them. It solves one of the major hurdles to making realistic viewing experiences for humans by 
-allowing for a hi-definition real-time camera feed even when the models being used don't update quickly enough. It 
-accomplishes this by using the python multiprocessing module to run the camera process separately from the computer
-vision model. 
+What Otis does: 
+
+O.T.I.S. provides a framework for making interactive computer vision models and writing scripted encounters for participant 
+observers. It solves one of the major hurdles to making realistic viewing experiences for humans by allowing for a 
+hi-definition real-time camera feed even when the models being used don't update quickly enough. It accomplishes this by 
+using the python multiprocessing module to run the camera/display process separately from the computer vision model.
 
 The key is that when looking at themselves on a large scene, people are more focused on whether they themselves are 
-choppy, which they won't be at 30 fps. So, even if the bounding boxes in the overlay are only updating at 10 fps, most
-viewers won't notice. 
+choppy, which they won't be at 30 fps. So, even if the bounding boxes in the overlay are only updating at 10 fps, most 
+viewers won't notice.
 
-Robocam also provides tools to make it easy to manage the fact that the models and the camera are running 
-asynchronously. These include a SharedDataContainer object to quickly create and share buffers between the processes. 
-In addition to managing the shared memory, robocam  has extensive shape and text writer asset classes and timer classes 
-to ensure that the experience runs at the same speed regardless of camera frame rate or model update speed. 
+O.T.I.S. also provides tools to make it easy to manage the fact that the models and the camera are running asynchronously. 
+These include a SharedDataContainer object to quickly create and share buffers between the processes. 
 
-Finally, robocam also includes a Servo package for controlling a pan-tilt camera with a PID (proportional integrate 
-derivative) controller. 
-
+O.T.I.S. has extensive shape and text writer asset classes and timer classes to ensure that the experience runs at the 
+same speed regardless of camera frame rate or model update speed.
 
 ### Dependencies
 - python 3
@@ -36,8 +34,7 @@ pyserial is required if you want to use the servo package with an arduino as the
 communications. 
 
 ### ScreenAssets
-
-
+  ![bouncy_movers](./otis/test_scripts/bouncy_movers.gif)
 - otis provides 3 basic **ShapeAsset** classes: **Line**, **Circle**, **Rectangle**. Each is based on the underlying cv2 drawing functions. 
 On a basic level, these objects provide a container to storing the inputs of each respective cv2 function. However, they
 also add otis's much easier to use coordinate system (see below) as well as a more straightforward framework for updating 
