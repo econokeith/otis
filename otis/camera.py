@@ -141,7 +141,7 @@ class CameraPlayer:
         self.recorder = None
         self._record = False
         self.record_to = record_to
-        self.record_dim = f_dim if record_dim is None else record_dim
+        self.record_dim = self.f_dim if record_dim is None else record_dim
         self.record = record
 
     @property

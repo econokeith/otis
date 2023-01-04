@@ -19,7 +19,7 @@ def main():
                                           record_to='bouncy_movers.mp4',
                                           record_dim='720p'
                                           )
-    center = capture.f_center
+    center = capture.f_center # note that this is a np.ndarray
 
     # set up image asset without an image, we'll update once the frame is running
     image_asset = imageassets.ImageAsset(resize_to=(square_size, square_size),
@@ -55,7 +55,6 @@ def main():
                                          one_border=True,
                                          max_lines=2,
                                          max_line_length=14,
-                                         # invert_background=True,
                                          line_length_format='chars',
                                          perma_border=True,
                                          border_spacing=(.5, .5),

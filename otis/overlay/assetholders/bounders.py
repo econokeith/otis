@@ -4,9 +4,9 @@ gives bounding box functionality to assets
 import copy
 from collections import defaultdict
 import numpy as np
-from otis.overlay import bases, shapes, textwriters
+from otis.overlay import bases, shapes, textwriters, imageassets
 from otis.helpers import coordtools, timers, colortools, maths
-
+# TODO: there is something in BoundingAsset that is coords to get turned into floats
 
 class BoundingAsset(bases.AssetHolderMixin, bases.AssetWriter):
 
@@ -142,7 +142,7 @@ class BoundingAsset(bases.AssetHolderMixin, bases.AssetWriter):
 
     @property
     def coords(self):
-        return self.asset._coords
+        return [int(i) for i in self.asset.coords]
 
     @coords.setter
     def coords(self, new_coords):

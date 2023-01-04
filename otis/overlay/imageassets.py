@@ -55,8 +55,8 @@ class ImageAsset(bases.AssetWriter):
 
         self._image = None
         self.locs = None
-        self.coords = np.zeros(4, dtype=int)
-        self.coords[:2] = center
+        self._coords = np.zeros(4, dtype=int)
+        self._coords[:2] = center
         self.resize_to = resize_to
         self.scale = scale
         self.copy_updates = copy_updates
@@ -111,7 +111,8 @@ class ImageAsset(bases.AssetWriter):
 
     @coord_format.setter
     def coord_format(self, new):
-        raise ValueError("ImageAsset can not have its coord_format value changed from 'cwh'")
+        if new != 'cwh':
+            raise ValueError("ImageAsset can not have its coord_format value changed from 'cwh'")
 
     @property
     def image(self):
@@ -147,6 +148,15 @@ class ImageAsset(bases.AssetWriter):
             self._image[:, :, :] = _image
         else:
             self._image = _image
+
+    @property
+    def coords(self):
+        return self._coords
+
+    @coords.setter
+    def coords(self, new_coords):
+        self._coords[:] = new_coords
+        self._resize_to = self._coords[2:]
 
     @property
     def mask(self):

@@ -182,6 +182,10 @@ def translate_box_coords(coords,
         r, t = absolute_point((r, t), ref, dim)
         l, b = absolute_point((l, b), ref, dim)
 
+    r = int(r)
+    t = int(t)
+    l = int(l)
+    b = int(b)
     if  out_format == 'ltrb':
         return l, t, r, b
 
