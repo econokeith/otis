@@ -19,7 +19,7 @@ rich collection of Timer classes to ensure that the experience runs at the same 
 model update speed.
 
 OTIS is also designed to make the process of iteration in the creation of interactive scripts quick and easy. Written on 
-top of open-cv's image writing library, it adds hundreds of convenience classes functions to allow placement, movement, 
+top of open-cv's image writing library, it adds hundreds of convenience classes and functions to allow placement, movement, 
 event handling, collision handling, and interaction amongst onscreen assets.
 
 ### Dependencies
@@ -67,14 +67,18 @@ an image taken from either the current or past frame. (examples shown below)
 
 OTIS provides three asset holder classes that extend the functionality of the aforementioned display assets.
 
-- The **AssetBounder** class adds bounding box behavior to any the of screen assets. Below an ImageAsset is used a bounding
-box.
+- The **AssetBounder** class adds bounding box behavior to any the of screen assets. Below an ImageAsset that reads from
+the frame location of Taylor Swift's bounding box (when available) is used as a bounder.
+
 ![keith_and_taylor](./readme_gifs/keith_taylor.gif)
-  
+
 (find code [here](https://github.com/econokeith/otis/blob/master/examples/taylor_and_me.py))
 
 - The **AssetMover** class provides movement, collision tracking, and basic physics (i.e. gravity, elasticity, etc) to 
-ScreenAssets ![bouncy_movers](./readme_gifs/bouncy_movers.gif)
+ScreenAssets
+
+![bouncy_movers](./readme_gifs/bouncy_movers.gif)
+
 (find code [here](https://github.com/econokeith/otis/blob/master/examples/bouncy_movers.py))
 
 - The **AssetGroup** class is an extendable multi-asset container class to allow grouping and common movement of multiple Screen Assets.
