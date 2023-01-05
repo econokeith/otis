@@ -2,7 +2,10 @@
 
   ![meet otis](./readme_gifs/github_otis_one.gif)
 
-## What is O.T.I.S?
+
+(view full video on Vimeo, [here](https://vimeo.com/786671400))
+
+## What does OTIS do?
 
 OTIS provides a framework for making interactive computer vision models and writing scripted encounters for participant 
 observers. It solves one of the major hurdles to making realistic viewing experiences for humans by allowing for a 
