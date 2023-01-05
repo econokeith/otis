@@ -66,13 +66,15 @@ an image taken from either the current or past frame.
 otis provides three **AssetHolder** classes to extend the functionality of **ScreenAssets**
 
 - **AssetBounders** add bounding box behavior to any the of screen assets
+![keith_and_taylor](./readme_gifs/keith_taylor.gif)
 
-  ![keith_and_taylor](./readme_gifs/keith_taylor.gif)
+code can be found [here](https://duckduckgo.com)
 
 - The **AssetMover** class provides movement, collision tracking, and basic physics (i.e. gravity, elasticity, etc) to 
 ScreenAssets ![bouncy_movers](./readme_gifs/bouncy_movers.gif)
-AssetGroups
-- The **AssetGroup** is an extendable multi-asset container class to allow grouping and common movement of multiple Screen Assets.
+code can be found [here](https://duckduckgo.com)
+
+- The **AssetGroup** class is an extendable multi-asset container class to allow grouping and common movement of multiple Screen Assets.
 
 ## Helpers
 
