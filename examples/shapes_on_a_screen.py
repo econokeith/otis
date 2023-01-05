@@ -23,14 +23,21 @@ def main():
                                  color='g',
                                  thickness=3
                                  )
+
+    circle_with_line_to_center = shapes.CircleWithLineToCenter(center=(1000, 600), radius=100)
+
+    shape_list = [circle,
+                  line,
+                  rectangle,
+                  circle_with_line_to_center,
+                  ]
     ################################ the loop ############################################
     while True:
 
         _, frame = capture.read() # get newest frame
         # write shapes on to frame
-        circle.write(frame)
-        rectangle.write(frame)
-        line.write(frame)
+        for shape in shape_list:
+            shape.write(frame)
         #show the frameq
         capture.show()
         # break if you hit 'q' on the keyboard

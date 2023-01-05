@@ -2,8 +2,7 @@
 
   ![meet otis](./readme_gifs/github_otis_one.gif)
 
-### What it does
-What Otis does: 
+### What is this thing called O.T.I.S?
 
 O.T.I.S. provides a framework for making interactive computer vision models and writing scripted encounters for participant 
 observers. It solves one of the major hurdles to making realistic viewing experiences for humans by allowing for a 
@@ -15,10 +14,13 @@ choppy, which they won't be at 30 fps. So, even if the bounding boxes in the ove
 viewers won't notice.
 
 O.T.I.S. also provides tools to make it easy to manage the fact that the models and the camera are running asynchronously. 
-These include a SharedDataContainer object to quickly create and share buffers between the processes. 
+These include a SharedDataContainer object to quickly create and share buffers between the processes. It also includes a 
+rich collection of Timer classes to ensure that the experience runs at the same speed regardless of camera frame rate or 
+model update speed.
 
-O.T.I.S. has extensive shape and text writer asset classes and timer classes to ensure that the experience runs at the 
-same speed regardless of camera frame rate or model update speed.
+otis is also designed to make the process of iteration in the creation of interactive scripts quick and easy. Written on 
+top of open-cv's image writing library, it adds hundreds of convenience classes functions to allow placement, movement, 
+event handling, collision handling, and interaction amongst onscreen assets.
 
 ### Dependencies
 - python 3
@@ -72,7 +74,7 @@ code can be found [here](https://github.com/econokeith/otis/blob/master/examples
 
 - The **AssetMover** class provides movement, collision tracking, and basic physics (i.e. gravity, elasticity, etc) to 
 ScreenAssets ![bouncy_movers](./readme_gifs/bouncy_movers.gif)
-code can be found [here](https://duckduckgo.com)
+code can be found [here](https://github.com/econokeith/otis/blob/master/examples/bouncy_movers.py)
 
 - The **AssetGroup** class is an extendable multi-asset container class to allow grouping and common movement of multiple Screen Assets.
 
