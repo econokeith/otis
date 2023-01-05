@@ -1,6 +1,6 @@
 # O.T.I.S. - Observer Tracking Interactive Scripting
 
-  ![meet otis](./readme_gifs/helloKeith720.gif)
+  ![meet otis](./readme_gifs/helloKeith540.gif)
 
 
 (view full video on Vimeo, [here](https://vimeo.com/786671400))
@@ -73,7 +73,7 @@ OTIS provides three asset holder classes that extend the functionality of the af
 - The **AssetBounder** class adds bounding box behavior to any the of screen assets. Below an ImageAsset that reads from
 the frame location of Taylor Swift's bounding box (when available) is used as a bounder.
 
-![keith_and_taylor](./readme_gifs/keith_taylor.gif)
+![keith_and_taylor](./readme_gifs/keith_taylor540.gif)
 
 (find code [here](https://github.com/econokeith/otis/blob/master/examples/taylor_and_me.py))
 
