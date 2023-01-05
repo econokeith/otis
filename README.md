@@ -80,7 +80,7 @@ the frame location of Taylor Swift's bounding box (when available) is used as a 
 - The **AssetMover** class provides movement, collision tracking, and basic physics (i.e. gravity, elasticity, etc) to 
 ScreenAssets
 
-![bouncy_movers](./readme_gifs/bouncy_movers.gif)
+![bouncy_movers](./readme_gifs/bouncy3.gif)
 
 (find code [here](https://github.com/econokeith/otis/blob/master/examples/bouncy_movers.py))
 
