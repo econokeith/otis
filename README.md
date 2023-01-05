@@ -1,6 +1,6 @@
 # O.T.I.S. - Observer Tracking Interactive Scripting
 
-  ![meet otis](./readme_gifs/github_otis_one.gif)
+  ![meet otis](./readme_gifs/helloKeith720.gif)
 
 
 (view full video on Vimeo, [here](https://vimeo.com/786671400))
