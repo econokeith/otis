@@ -12,9 +12,9 @@ from otis.overlay import shapes, assetholders, imageassets
 DIM = (1280, 720)
 F_DIM = (720, 720)
 MAX_FACES = 2
-RECORD_TO = 'keith_and_taylor.mp4'
+RECORD_TO = 'taylor_and_me.mp4'
 MAX_FPS = 30
-RECORD = True
+RECORD = False
 CF = 2
 MODEL = 'cnn'
 PATH_TO_FACES = 'photo_assets/taylor_and_me/faces'
@@ -160,5 +160,3 @@ def computer_vision_process(shared_data_object):
 
 if __name__ == '__main__':
     main()
-
-

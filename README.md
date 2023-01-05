@@ -68,7 +68,7 @@ otis provides three **AssetHolder** classes to extend the functionality of **Scr
 - **AssetBounders** add bounding box behavior to any the of screen assets
 ![keith_and_taylor](./readme_gifs/keith_taylor.gif)
 
-code can be found [here](https://duckduckgo.com)
+code can be found [here](https://github.com/econokeith/otis/blob/master/examples/taylor_and_me.py)
 
 - The **AssetMover** class provides movement, collision tracking, and basic physics (i.e. gravity, elasticity, etc) to 
 ScreenAssets ![bouncy_movers](./readme_gifs/bouncy_movers.gif)
