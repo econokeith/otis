@@ -15,7 +15,7 @@ def main():
 
     capture = camera.ThreadedCameraPlayer(c_dim='720p',
                                           max_fps=30,
-                                          record=True,
+                                          record=False,
                                           record_to='bouncy_movers.mp4',
                                           record_dim='720p'
                                           )
