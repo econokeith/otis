@@ -17,20 +17,20 @@ MAX_FPS = 30
 RECORD = True
 CF = 2
 MODEL = 'cnn'
+PATH_TO_FACES = 'faces'
 
 def main():
     # create shared data objects
     dynamic_shared_data = multitools.SharedDataObject()
     # new overlay tag
-    dynamic_shared_data.add_value('new_overlay', ctypes.c_bool, False)
-    dynamic_shared_data.add_value('n_observed_faces', 'i', 0)
+    dynamic_shared_data.add_value('new_overlay', ctypes.c_bool, False) # tells camera process when there is new data
+    dynamic_shared_data.add_value('n_observed_faces', 'i', 0) # number of faces observed
     # shared data arrays
-    dynamic_shared_data.add_array('box_coords', 'i', (MAX_FACES, 4))
-    dynamic_shared_data.add_array('observed_names', 'i', MAX_FACES)
-    dynamic_shared_data.add_array('frame', ctypes.c_uint8, (*F_DIM[::-1], 3))
-
+    dynamic_shared_data.add_array('box_coords', 'i', (MAX_FACES, 4)) # box coords
+    dynamic_shared_data.add_array('observed_names', 'i', MAX_FACES) # index for names
+    dynamic_shared_data.add_array('frame', ctypes.c_uint8, (*F_DIM[::-1], 3)) # shared frame
     # define Processes with shared data
-    process_functions = [camera_display_process, computer_vision_process]
+    process_functions = [camera_display_process, computer_vision_process] # defined below
 
     processes = []
 
@@ -56,22 +56,22 @@ def camera_display_process(shared):
                                           flip=True,
                                           record=RECORD,
                                           record_to=RECORD_TO,
-
                                           f_dim=F_DIM,
                                           record_dim=F_DIM
                                           ).start()
 
     ### set up screen assets ##
+    # define the image asset that will fill one of the bounding boxes
     image_asset = imageassets.ImageAsset(border=True,
                                          b_color='r',
                                          b_thickness=1)
-
+    # define its bounder
     bounder_0 = assetholders.BoundingAsset(asset=image_asset,
                                            name='Keith',
                                            name_tag_border=True,
                                            moving_average=(3, 3, 10, 10)
                                            )
-
+    # define a regular bounding box with a rectangle shape as its asset
     bounder_1 = assetholders.BoundingAsset(asset=shapes.Rectangle(),
                                            name='Taylor Swift',
                                            color='g',
@@ -82,11 +82,13 @@ def camera_display_process(shared):
     boxes = [bounder_0, bounder_1]
     n_faces = 0
     observed_names = []
-
+    # start loop
     while True:
+        # read from the camera feed
         _, frame = capture.read()
+        # copy frame data to shared data
         shared.frame[:] = frame
-
+        # if cv process has completed a loop, update the box data
         if shared.new_overlay.value is True:
             n_faces = shared.n_observed_faces.value
             observed_names = np.copy(shared.observed_names)
@@ -95,11 +97,12 @@ def camera_display_process(shared):
                 boxes[observed_names[i]].coords = shared.box_coords[i]
             shared.new_overlay.value = False
 
+        # if I am the only face, then display the portion of the frame that is already in my bounding box
         if n_faces == 1 and observed_names[0] == 0:
             frame_portion = coordtools.get_frame_portion(frame,
                                                          bounder_0.coords)
             bounder_0.asset.image = frame_portion
-
+        # if there are two faces, copy/resize/paste taylors bounding box into mine
         elif n_faces == 2 and 0 in observed_names and 1 in observed_names:
            frame_portion = coordtools.get_frame_portion(frame, bounder_1.coords)
            bounder_0.asset.image = frame_portion
@@ -108,11 +111,14 @@ def camera_display_process(shared):
         else:
             pass
 
+        # write bounders onto frame
         for i in observed_names[:n_faces]:
             boxes[i].write(frame)
 
+        # display updated frame
         capture.show(frame)
 
+        # break if q0
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
@@ -124,7 +130,7 @@ def computer_vision_process(shared_data_object):
 
     shared = shared_data_object
 
-    known_names, known_encodings = cvtools.load_face_data(face_recognition, 'faces', __file__)
+    known_names, known_encodings = cvtools.load_face_data(face_recognition, PATH_TO_FACES, __file__)
 
     face_locator = timers.FunctionTimer(face_recognition.face_locations)
     frame_copy = np.zeros((*F_DIM[::-1], 3), dtype='uint8')

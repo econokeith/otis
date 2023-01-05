@@ -1,6 +1,6 @@
 # O.T.I.S. - Observer Tracking Interactive Scripting
 
-  ![meet otis](./github_otis_one.gif)
+  ![meet otis](./readme_gifs/github_otis_one.gif)
 
 ### What it does
 What Otis does: 
@@ -34,9 +34,9 @@ pyserial is required if you want to use the servo package with an arduino as the
 communications. 
 
 ### ScreenAssets
-  ![bouncy_movers](./otis/test_scripts/bouncy_movers.gif)
-- otis provides 3 basic **ShapeAsset** classes: **Line**, **Circle**, **Rectangle**. Each is based on the underlying cv2 drawing functions. 
-On a basic level, these objects provide a container to storing the inputs of each respective cv2 function. However, they
+ 
+- otis provides 3 basic **ShapeAsset** classes: **Line**, **Circle**, **Rectangle**. Each is based on the underlying cv2 
+drawing functions. On a basic level, these objects provide a container to storing the inputs of each respective cv2 function. However, they
 also add otis's much easier to use coordinate system (see below) as well as a more straightforward framework for updating 
 the position as well as other attributes of each shape (i.e. color, size, etc).
 
@@ -65,10 +65,12 @@ an image taken from either the current or past frame.
 
 otis provides three **AssetHolder** classes to extend the functionality of **ScreenAssets**
 
-- **AssetBounders** add bounding box behavior to any the screen assets
+- **AssetBounders** add bounding box behavior to any the of screen assets
+
+  ![keith_and_taylor](./readme_gifs/keith_taylor.gif)
 
 - The **AssetMover** class provides movement, collision tracking, and basic physics (i.e. gravity, elasticity, etc) to 
-ScreenAssets
+ScreenAssets ![bouncy_movers](./readme_gifs/bouncy_movers.gif)
 AssetGroups
 - The **AssetGroup** is an extendable multi-asset container class to allow grouping and common movement of multiple Screen Assets.
 
