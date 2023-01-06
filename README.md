@@ -70,19 +70,19 @@ an image taken from either the current or past frame. (examples shown below)
 
 OTIS provides three asset holder classes that extend the functionality of the aforementioned display assets.
 
-- The **AssetBounder** class adds bounding box behavior to any the of screen assets. Below an ImageAsset that reads from
+- The **AssetBounder** class adds bounding box behavior to any of the screen assets. Below an ImageAsset that reads from
 the frame location of Taylor Swift's bounding box (when available) is used as a bounder.
 
-![keith_and_taylor](./readme_gifs/keith_taylor540.gif)
+ ![keith_and_taylor](./readme_gifs/keith_taylor540.gif)
 
 (find code [here](https://github.com/econokeith/otis/blob/master/examples/taylor_and_me.py))
 
 - The **AssetMover** class provides movement, collision tracking, and basic physics (i.e. gravity, elasticity, etc) to 
 ScreenAssets
 
-![bouncy_movers](./readme_gifs/bouncy3.gif)
+ ![bouncy_movers](./readme_gifs/bouncy3.gif)
 
 (find code [here](https://github.com/econokeith/otis/blob/master/examples/bouncy_movers.py))
 
 - The **AssetGroup** class is an extendable multi-asset container class to allow grouping and common movement of multiple Screen Assets.
-
+- 
