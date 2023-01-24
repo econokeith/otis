@@ -58,7 +58,7 @@ class OtisText:
                                                        scale=self.scale,
                                                        thickness=self.thickness,
                                                        )
-
+        self.stubs
         self.n_stubs = len(self.stubs)
 
         if self.line_length_format != 'pixels' or self.max_line_length is None:
