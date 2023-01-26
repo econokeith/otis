@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 import os
 
+#requires mediapipe
 import mediapipe as mp
 
 from otis.helpers import timers
@@ -74,8 +75,8 @@ def main():
         the_script.put(line)
 
     ############################################ Face Mesh ###################################################
+
     mp_drawing = mp.solutions.drawing_utils
-    mp_drawing_styles = mp.solutions.drawing_styles
     mp_face_mesh = mp.solutions.face_mesh
     drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=0, color=(0, 255, 0))
     style = mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=1)
