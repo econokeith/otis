@@ -18,12 +18,11 @@ script_name = "intro_script"
 
 FPS = 30
 DIM = (1080, 1080)
-RECORD = True
+RECORD = False
 MAX_I = 80
 MIN_I = 15
 CYCLE_T = 1.6
 s_wait = 1.5
-
 
 def main():
     with open(os.path.join(folder_location, script_name), "r") as file:

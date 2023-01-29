@@ -42,7 +42,7 @@ class ImageAsset(bases.AssetWriter):
             copy_updates:
             mask_bit:
             use_mask: loads, resizes, and uses a circle mask so only a circle centered at the center of the image
-                             is copied onto the frame. The image needs to be perfectly square, otherwise, the results can
+                             is copied onto the frame. The image needs to be perfectly square, otherwise, the pose_results can
                              be unstable
         """
 
