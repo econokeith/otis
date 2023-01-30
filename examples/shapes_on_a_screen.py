@@ -21,7 +21,7 @@ def main():
     rectangle = shapes.Rectangle(coords=(400, 400, 100, 100), # (cx, cy, w, h)
                                  coord_format='cwh',
                                  color='g',
-                                 thickness=3
+                                 thickness=-1
                                  )
 
     circle_with_line_to_center = shapes.CircleWithLineToCenter(center=(1000, 600), radius=100)

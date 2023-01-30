@@ -160,12 +160,9 @@ pose_colors = ColorCycle()
 
 def draw_pose_landmarks(
         image: np.ndarray,
-        landmark_list: landmark_pb2.NormalizedLandmarkList,
+        landmark_list: list,
         connections: Optional[List[Tuple[int, int]]] = None,
-        landmark_drawing_spec: Union[DrawingSpec,
-        Mapping[int, DrawingSpec]] = DrawingSpec(
-            color=_RED),
-        connection_drawing_spec: Union[DrawingSpec, Mapping[Tuple[int, int], DrawingSpec]] = DrawingSpec()):
+):
     """Draws the landmarks_list and the connections on the image.
     Args:
       image: A three channel BGR image represented as numpy ndarray.

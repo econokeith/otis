@@ -372,7 +372,7 @@ class ThreadedCameraPlayer(CameraPlayer):
                     raise RuntimeError('External camera unable to provide video feed')
 
             try:
-
+                self._cached_frame.flags.writeable = True
                 if self.cropped is True:
                     x0, x1, y0, y1 = self._crop_points
                     self._cached_frame[:,:,:] = self._frame[y0:y1, x0:x1]
@@ -382,7 +382,7 @@ class ThreadedCameraPlayer(CameraPlayer):
                 if self.flip is not None:
                     self._cached_frame[:,:,:] = self._cached_frame[:,::-1, :]
 
-            except:
+            except RuntimeError:
                 frame_dim = self._frame.shape[:2][::-1]
                 raise RuntimeError(f'Video feed {frame_dim} does not match specified dimensions {self.f_dim}. This '
                                    'usually occurs because your camera is unable to record at the speficied frame size. '
