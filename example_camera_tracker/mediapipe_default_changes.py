@@ -236,7 +236,7 @@ def draw_pose_landmarks(
                          drawing_spec.thickness)
     # Draws landmark points after finishing the connection lines, which is
     # aesthetically better.
-        print(i)
+
     if landmark_drawing_spec:
         for idx, landmark_px in idx_to_coordinates.items():
             drawing_spec = landmark_drawing_spec[idx] if isinstance(
