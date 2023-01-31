@@ -4,6 +4,7 @@ import math
 import numpy as np
 
 from mediapipe.python.solutions.face_mesh_connections import FACEMESH_TESSELATION
+
 mp_pose = mp.solutions.pose
 
 from otis import camera
@@ -41,10 +42,12 @@ color_cycle = ColorCycle()
 face_drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=0, color=(0, 255, 0))
 face_style = mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=1)
 _N_FACE_LANDSMARKS = 468
+
 DIM = (1920, 1080)
 LINE_THICKNESS = 2
 TARGET_WIDTH = 200
 radius = 3
+
 
 def main():
     capture = cv2.VideoCapture(0)
@@ -80,8 +83,8 @@ def main():
 
     circle = Circle(center=square_center,
                     radius=3,
-                       color='w',
-                       thickness=-1
+                    color='w',
+                    thickness=-1
                     )
 
     while True:
@@ -94,40 +97,45 @@ def main():
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image = cv2.flip(image, 1)
         face_results = face_mesh.process(image)
+        pose_results = pose.process(image)
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
         image.flags.writeable = True
-
 
         if face_results.multi_face_landmarks:
             for face_landmarks in face_results.multi_face_landmarks:
                 landmarks_list = face_landmarks.landmark
                 num_landmarks = len(landmarks_list)
-                xy_pixels[:,:] = convert_landmarks_to_pixels(landmarks_list, image)
+                xy_pixels[:, :] = convert_landmarks_to_pixels(landmarks_list, image)
                 # x_bounds = (127, 356)
                 # (234, 454)
                 # y_bounds = (10, 152)
                 square.write(image)
                 circle.write(image)
+                #
+                center_y_line = ((xy_pixels[yc0] + xy_pixels[yc1]) // 2).astype(int)
+                center_x_line = ((xy_pixels[xc0] + xy_pixels[xc1]) // 2).astype(int)
+                center_x1_line = ((xy_pixels[xc11] + xy_pixels[xc10]) // 2).astype(int)
+                center_center_x = ((center_x1_line + center_x_line) // 2).astype(int)
 
-                center_y_line = ((xy_pixels[yc0]+ xy_pixels[yc1])//2).astype(int)
-                center_x_line = ((xy_pixels[xc0] + xy_pixels[xc1])//2).astype(int)
-                center_x1_line = ((xy_pixels[xc11] + xy_pixels[xc10])//2).astype(int)
-                center_center_x = ((center_x1_line+center_x_line)//2).astype(int)
-
-                average_height.update(find_landmark_distance(landmarks_list[yc0], landmarks_list[yc1], image))
-                average_width.update(find_landmark_distance(landmarks_list[xc10], landmarks_list[xc11], image))
+                average_height.update(find_landmark_distance(landmarks_list[yc0],
+                                                             landmarks_list[yc1],
+                                                             image)
+                                      )
+                average_width.update(find_landmark_distance(landmarks_list[xc10],
+                                                            landmarks_list[xc11],
+                                                            image)
+                                     )
 
                 avg_w = int(average_height())
                 avg_h = int(average_width())
-                ratio = avg_h / avg_w
 
-                resize_ratio = TARGET_WIDTH/avg_w
-                xy_pixels = (xy_pixels-center_center_x) * TARGET_WIDTH/avg_w + square_center
+                resize_ratio = TARGET_WIDTH / avg_w
+
+                xy_pixels = (xy_pixels - center_center_x) * TARGET_WIDTH / avg_w + square_center
                 xy_pixels = xy_pixels.astype(int)
 
                 # Draws the connections if the start and end landmarks_list are both visible.
                 for i, connection in enumerate(FACEMESH_TESSELATION):
-
                     start_idx = connection[0]
                     end_idx = connection[1]
 
@@ -135,16 +143,16 @@ def main():
                         raise ValueError(f'Landmark index is out of range. Invalid connection '
                                          f'from landmark #{start_idx} to landmark #{end_idx}.')
 
-
-                    cv2.line(image, xy_pixels[start_idx], xy_pixels[end_idx], (0,255,0), 1)
+                    cv2.line(image, xy_pixels[start_idx], xy_pixels[end_idx], (0, 255, 0), 1)
 
                 ######################### estimate and move pose #######################################
 
-        cv2.imshow('face', cv2.resize(image, (0,0),fx=1, fy=1))
+        cv2.imshow('face', cv2.resize(image, (0, 0), fx=1, fy=1))
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
     capture.stop()
+
 
 ########################################################################################################################
 
@@ -160,17 +168,18 @@ def convert_landmarks_to_pixels(landmarks_list, image):
         x_values[i] = landmark.x
         y_values[i] = landmark.y
 
-    xy_pixels[:,0] = np.minimum(x_values * image_width, image_width - 1).astype(int)
-    xy_pixels[:,1] = np.minimum(y_values * image_height, image_height - 1).astype(int)
+    xy_pixels[:, 0] = np.minimum(x_values * image_width, image_width - 1).astype(int)
+    xy_pixels[:, 1] = np.minimum(y_values * image_height, image_height - 1).astype(int)
 
     return xy_pixels
 
 
-
 def find_landmark_distance(lm0, lm1, image):
     image_height, image_width, _ = image.shape
+
     p0 = np.empty(3, dtype=int)
     p1 = np.empty(3, dtype=int)
+
     p0[0] = min(int(lm0.x * image_width), image_width - 1)
     p0[1] = min(int(lm0.y * image_height), image_height - 1)
     p0[2] = min(int(lm0.z * image_width), image_width - 1)
@@ -178,10 +187,8 @@ def find_landmark_distance(lm0, lm1, image):
     p1[1] = min(int(lm1.y * image_height), image_height - 1)
     p1[2] = min(int(lm1.z * image_width), image_width - 1)
 
-    return int(np.linalg.norm(p0-p1))
+    return int(np.linalg.norm(p0 - p1))
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()
-
-
