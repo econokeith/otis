@@ -112,8 +112,6 @@ POSE_CONNECTIONS = frozenset([(0, 1), (1, 2), (2, 3), (3, 7), (0, 4), (4, 5),
 #     PoseLandmark.RIGHT_FOOT_INDEX
 # ])
 
-
-
 _POSE_LANDMARKS_LEFT = frozenset([
 
     PoseLandmark.LEFT_SHOULDER, PoseLandmark.LEFT_ELBOW,
@@ -162,6 +160,7 @@ def draw_pose_landmarks(
         image: np.ndarray,
         landmark_list: list,
         connections: Optional[List[Tuple[int, int]]] = None,
+        radius: int = 1,
 ):
     """Draws the landmarks_list and the connections on the image.
     Args:
@@ -181,7 +180,7 @@ def draw_pose_landmarks(
     Raises:
       ValueError: If one of the followings:
         a) If the input image is not three channel BGR.
-        b) If any connetions contain invalid landmark index.
+        b) If any connetcions contain invalid landmark index.
     """
     if not landmark_list:
         return
@@ -202,8 +201,7 @@ def draw_pose_landmarks(
 
         if idx > 10:
 
-            landmark_px = _normalized_to_pixel_coordinates(landmark.x, landmark.y,
-                                                           image_cols, image_rows)
+            landmark_px = _normalized_to_pixel_coordinates(landmark.x, landmark.y, image_cols, image_rows)
             if landmark_px:
                 idx_to_coordinates[idx] = landmark_px
 
@@ -256,8 +254,7 @@ def _normalized_to_pixel_coordinates(
 
     # Checks if the float value is between 0 and 1.
     def is_valid_normalized_value(value: float) -> bool:
-        return (value > 0 or math.isclose(0, value)) and (value < 1 or
-                                                          math.isclose(1, value))
+        return (value > 0 or math.isclose(0, value)) and (value < 1 or math.isclose(1, value))
 
     if not (is_valid_normalized_value(normalized_x) and
             is_valid_normalized_value(normalized_y)):

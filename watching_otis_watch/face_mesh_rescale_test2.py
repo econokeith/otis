@@ -44,6 +44,7 @@ DIM = (1920, 1080)
 LINE_THICKNESS = 2
 TARGET_WIDTH = 200
 radius = 3
+
 def main():
     capture = cv2.VideoCapture(0)
     capture.set(cv2.CAP_PROP_FRAME_WIDTH, DIM[0])

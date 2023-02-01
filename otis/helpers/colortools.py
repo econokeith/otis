@@ -1,6 +1,7 @@
 import cv2
 from itertools import cycle
 from otis.helpers import timers
+import numpy as np
 
 
 class UpDownCounter:
@@ -124,6 +125,10 @@ def frame_portion_to_grey(frame, darken=.25):
     grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     new_array = grey[:, :] * darken
     frame[:, :, 0] = frame[:, :, 1] = frame[:, :, 2] = new_array.astype('uint8')
+
+def colorize_frame(frame, pixel, value):
+    view = frame[:, :, pixel]
+    frame[:, :, pixel] = np.where(view.astype('uint16') + value >= 255, 255, view + value)
 
 
 # def frame_portion_to_dark(frame):

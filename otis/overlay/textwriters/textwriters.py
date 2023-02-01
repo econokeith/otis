@@ -320,10 +320,10 @@ class TextWriter(bases.AssetWriter, bases.RectangleType, bases.TextType):
         cy = b - h//2
 
         if isinstance(self.background, bases.RectangleType) and show_outline is True:
-            self.background.write(frame, (cx, cy, w, h), color=color)
+            self.background.write(frame, (cx, cy, w, h), color=self.back_color)
 
         if isinstance(self.border, bases.RectangleType) and show_outline is True:
-            self.border.write(frame, (cx, cy, w, h), color=color)
+            self.border.write(frame, (cx, cy, w, h), color=self.b_color)
 
         if self.invert_background is True:
             _color = 'w'

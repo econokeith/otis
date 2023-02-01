@@ -23,9 +23,11 @@ pargs.output_scale = 1
 pargs.servo = True
 pargs.cf = 2 # computer vision compression factor
 pargs.max_fps = 30
-pargs.record = True
+pargs.record = False
 pargs.record_dim= (1080, 1080)
 pargs.record_to = 'keith_meets_otis.mov'
+pargs.servo_address = '192.168.1.115'
+pargs.servo_pins = (22, 17)
 
 if pargs.servo is True:
     try:

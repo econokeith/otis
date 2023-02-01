@@ -93,6 +93,9 @@ def translate_box_coords(coords,
     elif in_format == 'trbl':
         t, r, b, l = coords
 
+    elif in_format == 'lrtb':
+        l,r,t,b = coords
+
     elif in_format == 'cwh':
         cx, cy, w, h = coords
         cx, cy = absolute_point((cx, cy), ref, dim)

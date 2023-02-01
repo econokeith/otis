@@ -76,7 +76,6 @@ def camera_display_process(shared):
                                            name='Taylor Swift',
                                            color='g',
                                            name_tag_border=True,
-                                           moving_average=(3, 3, 10, 10)
                                            )
 
     boxes = [bounder_0, bounder_1]
@@ -137,7 +136,7 @@ def computer_vision_process(shared_data_object):
 
     while True:
 
-        frame_copy[:, :, :] = np.array(shared.frame)
+        frame_copy[:, :, :] = np.array(shared.frame, copy=False)
         frame_copy = frame_copy[:, :, ::-1]
         compressed_frame = cvtools.resize(frame_copy, 1 / CF)
 

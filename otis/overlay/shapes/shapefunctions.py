@@ -85,6 +85,26 @@ def draw_line(frame, point0, point1, color='r', thickness=1, ltype=None, ref=Non
     _point1 = coordtools.absolute_point(point1, ref, frame)
     cv2.line(frame, _point0, _point1, _color, thickness, ltype)
 
+def draw_arrow(frame, point0, point1, color='r', thickness=1, ltype=None, tipLength=None, ref=None):
+    """
+
+    Args:
+        frame:
+        point0:
+        point1:
+        color:
+        thickness:
+        ltype:
+        ref:
+
+    Returns:
+
+    """
+    _color = colortools.color_function(color)
+    _point0 = coordtools.absolute_point(point0, ref, frame)
+    _point1 = coordtools.absolute_point(point1, ref, frame)
+    cv2.arrowedLine(frame, _point0, _point1, _color, thickness, ltype, tipLength=tipLength)
+
 def draw_cal_line(frame, center, angle, length, color='r', thickness=1, ltype=None, ref=None):
     """
     draw a text from the center angle and length

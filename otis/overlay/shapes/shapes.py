@@ -219,7 +219,7 @@ class Circle(ShapeAsset, CircleType):
         return self.coords[2]
 
     def write(self, frame, center=None, coords=None, radius=None, color=None, ref=None, save=False):
-        #TODO. Fix the differences in write between circle and rectangle
+        # TODO. Fix the differences in write between circle and rectangle
         """
         :type frame: np.array
         """
@@ -228,7 +228,7 @@ class Circle(ShapeAsset, CircleType):
             _radius = self.radius if radius is None else radius
         else:
             _center = coords[:2]
-            _radius = coords[2]//2
+            _radius = coords[2] // 2
 
         _color = self.color if color is None else color
         _ref = self.ref if ref is None else ref
@@ -396,7 +396,8 @@ class Line(bases.AssetWriter, LineType):
                  color='r',
                  thickness=2,
                  ltype=None,
-                 coord_format='points',# points (x1, y1, x2, y2), 'pal': (x1, y1, angle, length), 'cal' center angle length
+                 coord_format='points',
+                 # points (x1, y1, x2, y2), 'pal': (x1, y1, angle, length), 'cal' center angle length
                  ref=None,
                  dim=None
                  ):
@@ -472,7 +473,6 @@ class TransparentBackground(RectangleType):
                  coord_format='rtlb',
                  ref=None,
                  ):
-
         super().__init__()
 
         self.coords = coords
@@ -487,13 +487,12 @@ class TransparentBackground(RectangleType):
               ref=None,
               color=None
               ):
-
         _coords, _transparency, _ref = misc.update_save_keyword_attributes(self,
                                                                            locals(),
                                                                            ['coords',
-                                                                  'transparency',
-                                                                  'ref'
-                                                                  ]
+                                                                            'transparency',
+                                                                            'ref'
+                                                                            ]
                                                                            )
 
         shapefunctions.write_transparent_background(frame,
