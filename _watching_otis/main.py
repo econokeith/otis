@@ -21,10 +21,9 @@ pargs.output_scale = 1
 pargs.servo = True
 pargs.cf = 2 # computer vision compression factor
 pargs.max_fps = 30
-pargs.record = False
+pargs.record = True
 pargs.record_dim= (1080, 1080)
-pargs.record_to = '/home/keith/Dropbox/otis_films/otis_introduces_himself/watching_otis.mp4'
-
+pargs.record_to = '/home/keith/Dropbox/otis_films/watching_otis/watching_otis.mp4'
 
 if pargs.servo is True:
     try:

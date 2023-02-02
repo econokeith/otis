@@ -38,7 +38,7 @@ class CameraPlayer:
                  record_dim=None,
                  flip = True, # flip horizontal axis
                  output_scale:float=1,
-                 record_codec = 'MP4V'
+                 record_codec = 'mp4v'
                  ):
         """
         Convenience object based on around cv2.CaptureVideo
