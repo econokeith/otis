@@ -13,7 +13,9 @@ from otis.overlay.screeneffects import ScreenGrid
 RADIUS_SCALE = 1.2
 COLUMNS = 8
 ROWS = 8
-
+RUN_DURATION = 10
+WINDOW_OFFSET = 10
+FRAME_1_SIZE = 400, 400
 
 def target(shared, pargs):
 
@@ -25,8 +27,6 @@ def target(shared, pargs):
                                     flip=True,
                                     record=pargs.record,
                                     record_to=pargs.record_to,
-                                    output_scale=pargs.output_scale,
-                                    record_dim=pargs.record_dim,
                                     f_dim=pargs.f_dim,
                                     ).start()
 
@@ -60,9 +60,11 @@ def target(shared, pargs):
     screen_grid = ScreenGrid(pargs.f_dim, COLUMNS, ROWS)
 
     blinker = timers.Blinker(cycle_time=.2)
+    stop_timer = timers.TimeElapsedBool(RUN_DURATION)
 
     ########################################## setup for intro screen #################################################
     show_info = True
+    TIMER_BEGIN = False
     while True:
 
         ############################### ##graphics ####################################################################
@@ -74,6 +76,10 @@ def target(shared, pargs):
         success1, frame1 = capture1.read()
         if not success1:
             continue
+
+        if TIMER_BEGIN is False and success1 is True and success1 is True:
+            TIMER_BEGIN = True
+            stop_timer()
 
         shared.frame[:] = frame0  # latest frame copied to shared frame
 
@@ -92,17 +98,17 @@ def target(shared, pargs):
 
         if show_info is True:
             fps_writer.write(frame0, int(fps_average(fps_timer())))
-        # Flip the frame horizontally for a selfie-view display.
 
-        frame1 = cv2.resize(frame1, (300, 300))
+        frame1 = cv2.resize(frame1, FRAME_1_SIZE)
         y_1, x_1, _ = frame1.shape
         dim = pargs.f_dim
-        frame0[dim[1] - 10 - y_1:dim[1] - 10, dim[0] - 10 - x_1:dim[0] - 10] = frame1
+        frame0[dim[1] - WINDOW_OFFSET - y_1:dim[1] - WINDOW_OFFSET, dim[0] - WINDOW_OFFSET - x_1:dim[0] - WINDOW_OFFSET] = frame1
 
         capture0.show()
         ############################ keyboard inputs ###################################################################
 
         keyboard_input = cv2.waitKey(1) & 0xFF  # only camera process receives the keyboard input
+
         # could probably have done without the new_keyboard_input and done it around the value of keyboard_input
         if shared.new_keyboard_input.value is False and keyboard_input != 255:  # 255 is the value given for no input
 
@@ -124,8 +130,15 @@ def target(shared, pargs):
             shared.key_input_received[:] = False
             shared.keyboard_input.value = 255
 
+        if stop_timer() is True:
+            break
+
     # exit and destroy frames, etc
+    shared.keyboard_input.value = ord('q')
+    shared.new_keyboard_input.value = True
+
     capture0.stop()
+    capture1.stop()
     sys.exit()
 
 
