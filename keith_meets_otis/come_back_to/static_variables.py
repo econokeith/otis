@@ -17,7 +17,7 @@ path_to_faces = './faces'
 ######################## SERVO PROCESS VARIABLES #######################################################################
 
 MAX_SERVO_UPDATES_PER_SECOND = 10
-# X_PID_VALUES = (.0001, .000000001, .00000001)
+# _X_PID_VALUES = (.0001, .000000001, .00000001)
 # Y_PID_VALUES = (.0001, .000000001, .00000001)
 X_PID_VALUES = (1e-4, 1e-10, 2e-7)
 Y_PID_VALUES = (5e-5 ,1e-10, 2e-7)

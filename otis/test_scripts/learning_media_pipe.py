@@ -37,12 +37,12 @@ with mp_face_mesh.FaceMesh(
             print("Ignoring empty camera frame.")
             # If loading a video, use 'break' instead of 'continue'.
             continue
-        # To improve performance, optionally mark the image as not writeable to
+        # To improve performance, optionally mark the frame as not writeable to
         # pass by reference.
         image.flags.writeable = False
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         results = face_mesh.process(image)
-        # Draw the face mesh annotations on the image.
+        # Draw the face mesh annotations on the frame.
         image.flags.writeable = True
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
@@ -58,20 +58,20 @@ with mp_face_mesh.FaceMesh(
                     connection_drawing_spec=style
                 )
         #                 mp_drawing.draw_landmarks(
-        #                     image=image,
+        #                     frame=frame,
         #                     landmark_list=face_landmarks,
         #                     connections=mp_face_mesh.FACEMESH_CONTOURS,
         #                     landmark_drawing_spec=None,
         #                     connection_drawing_spec=mp_drawing_styles
         #                     .get_default_face_mesh_contours_style())
         #                 mp_drawing.draw_landmarks(
-        #                     image=image,
+        #                     frame=frame,
         #                     landmark_list=face_landmarks,
         #                     connections=mp_face_mesh.FACEMESH_IRISES,
         #                     landmark_drawing_spec=None,
         #                     connection_drawing_spec=mp_drawing_styles
         #                     .get_default_face_mesh_iris_connections_style())
-        # Flip the image horizontally for a selfie-view display.
+        # Flip the frame horizontally for a selfie-view display.
 
         image = cv2.flip(image, 1)
         tock = time.time()
@@ -83,7 +83,7 @@ with mp_face_mesh.FaceMesh(
                     cv2.FONT_HERSHEY_SIMPLEX,
                     1, (0, 0, 255), 1)
         tick = tock
-        # cv2.resize(image, (0,0), fx=2, fy=2)
+        # cv2.resize(frame, (0,0), fx=2, fy=2)
 
         cv2.imshow('hh', image)
 

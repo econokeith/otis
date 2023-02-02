@@ -668,7 +668,7 @@ class Hitbox:
 
 
 if __name__ == '__main__':
-    # Reading an image in default mode
+    # Reading an frame in default mode
     from otis.helpers.colortools import ColorCycle
     from otis.overlay import imageassets
     dim = (400, 400)

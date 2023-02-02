@@ -12,13 +12,13 @@ def main():
     capture = camera.ThreadedCameraPlayer(c_dim='720p')
     center = capture.f_center
     print(center)
-    # set up image asset without an image, we'll update once the frame is running
+    # set up frame asset without an frame, we'll update once the frame is running
     image_asset = imageassets.ImageAsset(resize_to=(square_size, square_size),
                                          hitbox_type='rectangle',
                                          border=True,
                                          b_color='b'
                                          )
-    # set up the mover holding the image asset
+    # set up the mover holding the frame asset
     mover = assetholders.AssetMover(image_asset,
                                   velocity=(200, 1),
                                   dim=capture.f_dim,
@@ -26,7 +26,7 @@ def main():
                                   )
     # line connecting center of frame to center of mover
     line = shapes.Line(thickness=2, color='g')
-    # define the border of the center square that'll be copied to the image asset each frame
+    # define the border of the center square that'll be copied to the frame asset each frame
     square = shapes.Rectangle(coords=(0, 0, square_size, square_size),
                               color='u',
                               ref='c',
@@ -47,7 +47,7 @@ def main():
                                                            )
         # write the line connecting centers
         line.write(frame, coords=(*center, *mover.center))
-        # set copy of center to the image of the image asset of the mover
+        # set copy of center to the frame of the frame asset of the mover
         mover.asset.image = frame_portion_saved
         # update / mover / write the mover
         mover.update_move_write(frame)

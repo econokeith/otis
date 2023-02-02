@@ -21,13 +21,13 @@ def main():
                                           )
     center = capture.f_center # note that this is a np.ndarray
 
-    # set up image asset without an image, we'll update once the frame is running
+    # set up frame asset without an frame, we'll update once the frame is running
     image_asset = imageassets.ImageAsset(resize_to=(square_size, square_size),
                                          hitbox_type='rectangle',
                                          border=True,
                                          b_color='b'
                                          )
-    # set up the mover holding the image asset
+    # set up the mover holding the frame asset
     mover = assetholders.AssetMover(image_asset,
                                     center=center + (200, 200),
                                     velocity=v0,
@@ -36,7 +36,7 @@ def main():
                                     )
     # line connecting center of frame to center of mover
     line = shapes.Line(thickness=2, color='g')
-    # define the border of the center square that'll be copied to the image asset each frame
+    # define the border of the center square that'll be copied to the frame asset each frame
 
     square = shapes.Rectangle(coords=(0, 0, square_size, square_size),
                               color='u',
@@ -62,7 +62,7 @@ def main():
                                          jtype='l',
                                          transparent_background=.9,
                                          )
-    # set up the mover holding the image asset
+    # set up the mover holding the frame asset
     mover1 = assetholders.AssetMover(type_writer,
                                      center=center - (200, 200),
                                      velocity=v1,
@@ -131,7 +131,7 @@ def main():
                                                            )
         # write the line connecting centers
 
-        # set copy of center to the image of the image asset of the mover
+        # set copy of center to the frame of the frame asset of the mover
         mover.asset.image = frame_portion_saved
         # update / mover / write the mover
         mover_manager.update_velocities()

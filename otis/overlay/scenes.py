@@ -30,7 +30,11 @@ class SceneManager:
         #         self.name_tracker = cvtools.NameTracker(pargs.path_to_faces)
         #     except:
         #         self.name_tracker = None
-        self.name_tracker = cvtools.NameTracker(pargs.path_to_faces, file=self.file)
+        if names is True:
+            try:
+                self.name_tracker = cvtools.NameTracker(pargs.path_to_faces, file=self.file)
+            except:
+                self.name_tracker=False
 
         if capture is None:
             self.capture = camera.ThreadedCameraPlayer(0,
@@ -41,7 +45,7 @@ class SceneManager:
                                                   record_to=pargs.record_to,
                                                   output_scale=pargs.output_scale,
                                                   record_dim=pargs.record_dim,
-                                                  f_dim=pargs.crop_to,
+                                                  f_dim=pargs.f_dim,
                                                   **kwargs
                                                   ).start()
         else:

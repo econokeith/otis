@@ -18,7 +18,7 @@ class Timer(abc.ABC):
     @abc.abstractmethod
     def __call__(self, *args, **kwargs):
         """
-        all call methods should allow for overriding args in
+        all call methods should allow for overriding pargs in
 
         """
         return True

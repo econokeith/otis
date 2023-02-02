@@ -135,10 +135,10 @@ def main():
                     cv2.line(image, xy_pixels[start_idx], xy_pixels[end_idx], (0,255,0), 1)
 
                 # for point in oval_set:
-                #     cv2.circle(image, xy_pixels[point], 2, (0,255,0),-1)
+                #     cv2.circle(frame, xy_pixels[point], 2, (0,255,0),-1)
 
             # mp_drawing.draw_landmarks(
-            #     image=image,
+            #     frame=frame,
             #     landmark_list=face_landmarks,
             #     connections=mp_face_mesh.FACEMESH_TESSELATION,
             #     landmark_drawing_spec=face_drawing_spec,

@@ -135,6 +135,7 @@ class RPiWifi(RPiMicroController):
                 servo._written = True
 
     def close(self):
+
         self.factory.close()
         self._open = False
 

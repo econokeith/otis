@@ -29,7 +29,7 @@ def main():
             print("Ignoring empty camera frame.")
             # If loading a video, use 'break' instead of 'continue'.
             continue
-        # To improve performance, optionally mark the image as not writeable to
+        # To improve performance, optionally mark the frame as not writeable to
         image.flags.writeable = False
         image = cv2.flip(image, 1)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)

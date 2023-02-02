@@ -10,12 +10,12 @@ from _piardservo.microcontrollers import RPiWifi
 from _piardservo.pid import PIDController
 
 MAX_SERVO_UPDATES_PER_SECOND = 20
-# X_PID_VALUES = (.0001, .000000001, .00000001)
+# _X_PID_VALUES = (.0001, .000000001, .00000001)
 # Y_PID_VALUES = (.0001, .000000001, .00000001)
 X_PID_VALUES = (2e-4/4, 1e-10, 2e-7/4)
 Y_PID_VALUES = (5e-5/4,1e-10, 2e-7/4)
 
-# X_PID_VALUES = (2e-5, 1e-10, 2e-8)
+# _X_PID_VALUES = (2e-5, 1e-10, 2e-8)
 # Y_PID_VALUES = (5e-4 ,1e-10, 2e-8)
 
 
@@ -44,10 +44,10 @@ def target(shared_data_object, args):
 
     update_limiter = timers.CallFrequencyLimiter(1 / MAX_SERVO_UPDATES_PER_SECOND)
 
-    # target = np.asarray(shared_data_object.servo_target)
+    # target = np.asarray(shared.servo_target)
     video_center = np.array(args.video_center)
     # error = np.zeros(2, dtype=int)W
-    # target[:] = args.video_center
+    # target[:] = pargs.video_center
     SERVO_TRACKING = True
     ACTIVE_TARGET = False
     reset_counter = 0

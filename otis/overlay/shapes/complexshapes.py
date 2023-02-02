@@ -81,6 +81,7 @@ class ServoFaceTracker(shapes.Circle):
                  *args,
                  thickness=2,
                  ltc_thickness=1,
+                 radius_scale = 1.2,
                  **kwargs
                  ):
         """
@@ -96,6 +97,7 @@ class ServoFaceTracker(shapes.Circle):
                          thickness=thickness,
                          **kwargs
                          )
+        self.radius_scale = radius_scale
 
         self.line_to_center = shapes.Line(color='c',
                                           thickness=1,
@@ -185,12 +187,14 @@ class ServoFaceTracker(shapes.Circle):
         CROSS_COLOR = 'w'
         CIRCLE_COLOR = 'g'
         ARROW_THICKNESS = 2
-        if dist_to_center > self.radius:
+        radius = self.radius * self.radius_scale
+
+        if dist_to_center > radius:
             CIRCLE_COLOR = 'c'
 
-        super().write(frame, color=CIRCLE_COLOR)
+        super().write(frame, color=CIRCLE_COLOR, radius=radius)
 
-        if dist_to_center > self.radius:
+        if dist_to_center > radius:
 
             self.up_down_lines.thickness = 2
             self.up_down_lines.write(frame, (center[0], 0, center[0], dim[1]), color=CROSS_COLOR)
@@ -198,8 +202,8 @@ class ServoFaceTracker(shapes.Circle):
             self.up_down_lines.thickness = 1
             self.up_down_lines.write(frame, (center[0], 0, center[0], dim[1]), color='b')
             self.up_down_lines.write(frame, (0, center[1], dim[0], center[1]), color='b')
-            self.cross_lines.write(frame, (*self.center, 0, 2.05 * self.radius))
-            self.cross_lines.write(frame, (*self.center, 90, 2.05 * self.radius))
+            self.cross_lines.write(frame, (*self.center, 0, 2.05 * radius))
+            self.cross_lines.write(frame, (*self.center, 90, 2.05 * radius))
 
 
             # line to center

@@ -61,7 +61,7 @@ def camera_display_process(shared):
                                           ).start()
 
     ### set up screen assets ##
-    # define the image asset that will fill one of the bounding boxes
+    # define the frame asset that will fill one of the bounding boxes
     image_asset = imageassets.ImageAsset(border=True,
                                          b_color='r',
                                          b_thickness=1)

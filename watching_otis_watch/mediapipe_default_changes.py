@@ -166,11 +166,11 @@ def draw_pose_landmarks(
         Mapping[int, DrawingSpec]] = DrawingSpec(
             color=_RED),
         connection_drawing_spec: Union[DrawingSpec, Mapping[Tuple[int, int], DrawingSpec]] = DrawingSpec()):
-    """Draws the landmarks_list and the connections on the image.
+    """Draws the landmarks_list and the connections on the frame.
     Args:
-      image: A three channel BGR image represented as numpy ndarray.
+      image: A three channel BGR frame represented as numpy ndarray.
       landmark_list: A normalized landmark list proto message to be annotated on
-        the image.
+        the frame.
       connections: A list of landmark index tuples that specifies how landmarks_list to
         be connected in the drawing.
       landmark_drawing_spec: Either a DrawingSpec object or a mapping from hand
@@ -183,13 +183,13 @@ def draw_pose_landmarks(
         set to None, no landmark connections will be drawn.
     Raises:
       ValueError: If one of the followings:
-        a) If the input image is not three channel BGR.
+        a) If the input frame is not three channel BGR.
         b) If any connetions contain invalid landmark index.
     """
     if not landmark_list:
         return
     if image.shape[2] != _BGR_CHANNELS:
-        raise ValueError('Input image must contain three channel bgr data.')
+        raise ValueError('Input frame must contain three channel bgr data.')
 
     image_rows, image_cols, _ = image.shape
     idx_to_coordinates = {}
@@ -264,7 +264,7 @@ def _normalized_to_pixel_coordinates(
 
     if not (is_valid_normalized_value(normalized_x) and
             is_valid_normalized_value(normalized_y)):
-        # TODO: Draw coordinates even if it's outside of the image bounds.
+        # TODO: Draw coordinates even if it's outside of the frame bounds.
         return None
     x_px = min(math.floor(normalized_x * image_width), image_width - 1)
     y_px = min(math.floor(normalized_y * image_height), image_height - 1)

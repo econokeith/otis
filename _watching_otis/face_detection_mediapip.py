@@ -95,7 +95,7 @@ def main():
                 screen_grid.find_sector(bbox.center, colorize=(frame, 0, 150))
                 screen_grid.write(frame)
 
-
+            bbox.write(frame)
 
             if update_limiter() is True and SERVO_TRACKING is True:
                 error = bbox.center - frame_center

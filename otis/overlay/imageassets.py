@@ -32,8 +32,8 @@ class ImageAsset(bases.AssetWriter):
         makes the images
         Args:
             image: cv2 frame or portion, default = None
-            mask: mask to change the shape of the image, default is None
-            resize_to: resize the image to (x, y), default = None (will set itself to image size)
+            mask: mask to change the shape of the frame, default is None
+            resize_to: resize the frame to (x, y), default = None (will set itself to frame size)
             scale: increases dimensions (w, h) by scale, default = 1, has no effect if resize_to is set
             center: (x,y) coords of the center of the object
             ref: reference point for (x, y), if ref = None, (x, y) are absolute if None, else cartesian relative coords
@@ -41,8 +41,8 @@ class ImageAsset(bases.AssetWriter):
             hitbox_type: either 'circle' or 'rectangle'.
             copy_updates:
             mask_bit:
-            use_mask: loads, resizes, and uses a circle mask so only a circle centered at the center of the image
-                             is copied onto the frame. The image needs to be perfectly square, otherwise, the pose_results can
+            use_mask: loads, resizes, and uses a circle mask so only a circle centered at the center of the frame
+                             is copied onto the frame. The frame needs to be perfectly square, otherwise, the pose_results can
                              be unstable
         """
 
@@ -120,15 +120,15 @@ class ImageAsset(bases.AssetWriter):
 
     @image.setter
     def image(self, new_image):
-        # Todo ImageAsset - need to change the image update to be able to not resize when resize is set
+        # Todo ImageAsset - need to change the frame update to be able to not resize when resize is set
         """
-        1) if there isn't an image saved, it will save the image
-            - if resize_to is set, then it will resize the image
+        1) if there isn't an frame saved, it will save the frame
+            - if resize_to is set, then it will resize the frame
             = otherwise it will set resize
-        2) if there's an image saved it will resize the new image to that size
+        2) if there's an frame saved it will resize the new frame to that size
         3) if copy_updates is True, it will copy it. otherwise it will save the reference
             (this only occurs if there isn't a resize
-        4) if we don't want a resize on a new image, set self. resize = None before adding the image
+        4) if we don't want a resize on a new frame, set self. resize = None before adding the frame
 
         Args:
             new_image: frame or frame portion
@@ -219,7 +219,7 @@ class ImageAsset(bases.AssetWriter):
 
         :param new_image:
         :return:
-        returns image it's the same size as the one saved
+        returns frame it's the same size as the one saved
         """
         if (new_image is None) or (self._image is None) or (new_image.shape[:2] == self._image.shape[:2]):
             return new_image
@@ -238,7 +238,7 @@ class ImageAsset(bases.AssetWriter):
 
     def add_image_from_file(self, path_to_images, file=None):
         """
-        loads an image from file
+        loads an frame from file
         Args:
             path_to_images: path to images. if it is relative, there needs to be a ./ or ../ in the path
             file: must always be used as __file__
@@ -264,7 +264,7 @@ class ImageAsset(bases.AssetWriter):
 
         Args:
             frame: cv2 camera frame
-            image: if image is not None, will write/resize self.image,
+            image: if frame is not None, will write/resize self.frame,
             coords:
             ref:
             in_format:

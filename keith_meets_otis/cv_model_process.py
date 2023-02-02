@@ -106,6 +106,6 @@ def target(shared_data_object, args):
 
 # if __name__=='__main__':
 #     import face_recognition
-#     image = face_recognition.load_image_file('/users/keithblackwell/documents/github\
+#     frame = face_recognition.load_image_file('/users/keithblackwell/documents/github\
 #                                             /otis/image_sprinkler/faces/keith_test.jpg')
-#     print(face_recognition.face_locations(image))
+#     print(face_recognition.face_locations(frame))

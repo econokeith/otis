@@ -30,7 +30,7 @@ def main():
     print(image.shape)
 
     print(image.shape)
-    # set up image asset without an image, we'll update once the frame is running
+    # set up frame asset without an frame, we'll update once the frame is running
     image_asset = imageassets.ImageAsset(
                                          hitbox_type='rectangle',
                                          border=True,
@@ -38,7 +38,7 @@ def main():
                                          resize_to = (300, 300)
                                          )
     image_asset.image = image
-    # set up the mover holding the image asset
+    # set up the mover holding the frame asset
     mover = assetholders.AssetMover(image_asset,
                                     center=center,
                                     velocity=v0,
@@ -93,7 +93,7 @@ def main():
         #                                                    )
         # write the line connecting centers
         # frame[:,:,:]=1
-        # set copy of center to the image of the image asset of the mover
+        # set copy of center to the frame of the frame asset of the mover
         mover.asset.image = image
         # update / mover / write the mover
         mover_manager.update_velocities()

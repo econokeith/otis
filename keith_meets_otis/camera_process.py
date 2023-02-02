@@ -310,7 +310,7 @@ class BallSprinkler:
         ################################### bouncies ##################################################################
         self.mover_velocity_magnitude = MOVER_VELOCITY_MAGNITUDE
         self.frame_portion = None
-        # default target for image assets if a bounding box isn't available
+        # default target for frame assets if a bounding box isn't available
         self.circle = shapes.Circle((0, 0), 100, ref='c', dim=self.capture.f_dim, to_abs=True)
         # how often to introduce new bouncies
         self.new_ball_timer = timers.CallFrequencyLimiter(self.new_ball_wait)

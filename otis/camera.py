@@ -379,7 +379,7 @@ class ThreadedCameraPlayer(CameraPlayer):
                 else:
                     self._cached_frame[:,:,:] = self._frame
 
-                if self.flip is not None:
+                if self.flip is True:
                     self._cached_frame[:,:,:] = self._cached_frame[:,::-1, :]
 
             except RuntimeError:

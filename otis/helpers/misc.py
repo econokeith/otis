@@ -84,7 +84,7 @@ def update_save_keyword_attributes(self, local_dict, attributes=(), save=False):
     note: all keyword values in method must be already defined attributes or properties of the object
     ===================== use it like =================================
     class AssetWriter:
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *pargs, **kwargs):
             self.kw1 = ...
             self.kw2 = ...
             self.kw3 = ...
@@ -214,8 +214,8 @@ class ArgParser:
 
 def crop_image_to_square(img):
     """
-    crops a rectangular image into a square with sides equal to the length of the shortest side and
-    the same center as the original image
+    crops a rectangular frame into a square with sides equal to the length of the shortest side and
+    the same center as the original frame
     """
     y, x, _ = img.shape
     if x == y:
