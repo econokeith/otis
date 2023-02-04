@@ -6,16 +6,13 @@ import platform
 
 import cv2
 import numpy as np
-import mediapipe as mp
-
 
 from otis.helpers import multitools as mtools
 from otis.helpers import timers, cvtools
 from otis.helpers import dstructures as utils
 
-
-
 def target(shared_data_object, args):
+    import mediapipe as mp
 
     signal.signal(signal.SIGTERM, mtools.close_gracefully)
     signal.signal(signal.SIGINT, mtools.close_gracefully)

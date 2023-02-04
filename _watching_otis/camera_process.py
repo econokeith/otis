@@ -13,9 +13,9 @@ from otis.overlay.screeneffects import ScreenGrid
 RADIUS_SCALE = 1.2
 COLUMNS = 8
 ROWS = 8
-RUN_DURATION = 10
-WINDOW_OFFSET = 10
-FRAME_1_SIZE = 400, 400
+RUN_DURATION = 120
+WINDOW_OFFSET = 20
+FRAME_1_SIZE = 350, 350
 
 def target(shared, pargs):
 
@@ -38,14 +38,15 @@ def target(shared, pargs):
                                     )
 
     def close_gracefully(sig, frame):
-        print('closing down')
+
+
         capture0.stop()
         capture1.stop()
+        print('[info] Camera(s) Closed')
         sys.exit()
 
-    # signal.signal(signal.SIGSEGV, close_gracefully)
-    # signal.signal(signal.SIGTERM, close_gracefully)
-    # signal.signal(signal.SIGINT, close_gracefully)
+    signal.signal(signal.SIGTERM, close_gracefully)
+    signal.signal(signal.SIGINT, close_gracefully)
 
     fps_writer = textwriters.InfoWriter(text_fun=lambda x: f'fps = {x}', coords=(50, 50))
     fps_average = helpers.maths.MovingAverage(10)
@@ -60,11 +61,13 @@ def target(shared, pargs):
     screen_grid = ScreenGrid(pargs.f_dim, COLUMNS, ROWS)
 
     blinker = timers.Blinker(cycle_time=.2)
-    stop_timer = timers.TimeElapsedBool(RUN_DURATION)
+    stop_timer = timers.TimeElapsedBool(RUN_DURATION) # since mediapipe breaks key inputs, i have to set a hard timer
+                                                      # for stops, otherwise the other processes don't quit
 
     ########################################## setup for intro screen #################################################
-    show_info = True
+    show_info = False
     TIMER_BEGIN = False
+
     while True:
 
         ############################### ##graphics ####################################################################
@@ -77,7 +80,7 @@ def target(shared, pargs):
         if not success1:
             continue
 
-        if TIMER_BEGIN is False and success1 is True and success1 is True:
+        if TIMER_BEGIN is False:
             TIMER_BEGIN = True
             stop_timer()
 
@@ -102,7 +105,8 @@ def target(shared, pargs):
         frame1 = cv2.resize(frame1, FRAME_1_SIZE)
         y_1, x_1, _ = frame1.shape
         dim = pargs.f_dim
-        frame0[dim[1] - WINDOW_OFFSET - y_1:dim[1] - WINDOW_OFFSET, dim[0] - WINDOW_OFFSET - x_1:dim[0] - WINDOW_OFFSET] = frame1
+        frame0[dim[1] - WINDOW_OFFSET - y_1:dim[1] - WINDOW_OFFSET, dim[0] -
+                                                                    WINDOW_OFFSET - x_1:dim[0] - WINDOW_OFFSET] = frame1
 
         capture0.show()
         ############################ keyboard inputs ###################################################################

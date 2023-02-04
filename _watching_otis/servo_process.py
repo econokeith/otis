@@ -17,23 +17,18 @@ _X_PID_VALUES = (2e-4 / _UPDATE_FACTOR, 1e-10, 1e-7 / _UPDATE_FACTOR)
 Y_PID_VALUES = (2e-4 / _UPDATE_FACTOR, 1e-10, 1e-7 / _UPDATE_FACTOR)
 
 MINIMUM_MOVE_SIZE_PIXELS = 5
-SERVO_START = np.array((-.06, -.72))/2
+SERVO_START = np.array((-.2, -.3))
 KEYBOARD_MOVE_INCREMENT = -.01
 STEPS_TO_RESET = 2
 SERVO_ADDRESS = '192.168.1.115'
 SERVO_PINS = (17, 22)
 
 
-# def close_gracefully(sig, frame):
-#     Servos.close()
-#     sys.exit(0)
-
 def target(shared_data_object, pargs):
     SERVO_TRACKING = True
     # signal.signal(signal.SIGTERM, close_gracefully)
     # signal.signal(signal.SIGINT, close_gracefully)
-    signal.signal(signal.SIGTERM, mtools.close_gracefully)
-    signal.signal(signal.SIGINT, mtools.close_gracefully)
+
 
     shared = shared_data_object
 
@@ -44,10 +39,22 @@ def target(shared_data_object, pargs):
                   pins=SERVO_PINS
                   )
 
-    Servos = ServoContainer(n=2,
-                            microcontroller=rpi,
-                            min_pulse_width=600,
-                            max_pulse_width=2400).connect()
+    try:
+        Servos = ServoContainer(n=2,
+                                microcontroller=rpi,
+                                min_pulse_width=600,
+                                max_pulse_width=2400).connect()
+    except OSError:
+        print(f'OSERROR: Unable to connect {Servos.host}:{Servos.port}')
+        sys.exit(0)
+
+    def close_gracefully(sig, frame):
+        print('[INFO] Closing Servo Connection and Existing...')
+        Servos.close()
+        sys.exit(0)
+
+    signal.signal(signal.SIGTERM, close_gracefully)
+    signal.signal(signal.SIGINT, close_gracefully)
 
     Servos[0].value,  Servos[1].value = SERVO_START
 

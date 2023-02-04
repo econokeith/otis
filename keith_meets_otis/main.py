@@ -23,9 +23,9 @@ pargs.output_scale = 1
 pargs.servo = True
 pargs.cf = 2 # computer vision compression factor
 pargs.max_fps = 30
-pargs.record = False
+pargs.record = True
 pargs.record_dim= (1080, 1080)
-pargs.record_to = 'keith_meets_otis.mov'
+pargs.record_to = 'keith_meets_otis_1.mov'
 pargs.servo_address = '192.168.1.115'
 pargs.servo_pins = (22, 17)
 
@@ -50,7 +50,7 @@ def main():
     shared_data_object.add_value('keyboard_input', 'i', 0)
     shared_data_object.add_value('new_keyboard_input', ctypes.c_bool, False)
     shared_data_object.add_value('servo_tracking', ctypes.c_bool, False)
-    shared_data_object.add_array('key_input_receivedv', 'i', 0)
+    shared_data_object.add_value('key_input_received', 'i', 0)
 
     # add shared arrays
     shared_data_object.add_array('frame', ctypes.c_uint8, (pargs.crop_to[1], pargs.crop_to[0], 3)) # dims are backwards
