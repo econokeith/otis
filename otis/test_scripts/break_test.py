@@ -13,8 +13,10 @@ while True:
 
     time.sleep(1/30)
     cv2.imshow("frame", frame)
-    if cv2.waitKey(1) & 0xFF == 1:
+    if cv2.waitKey(1) & 0xFF == ord('q'):
         print("you hit 'q'")
         break
 
+capture.release()
+cv2.destroyAllWindows()
 print('finished!')
