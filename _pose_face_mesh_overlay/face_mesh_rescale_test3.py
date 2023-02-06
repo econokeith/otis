@@ -1,3 +1,5 @@
+
+import time
 import cv2
 import mediapipe as mp
 import math
@@ -60,7 +62,7 @@ def main():
 
     x_values = np.empty(_N_FACE_LANDSMARKS, dtype=float)
     y_values = np.empty(_N_FACE_LANDSMARKS, dtype=float)
-    xy_pixels = np.empty((_N_FACE_LANDSMARKS, 2), dtype=int)
+    xyz_pixels = np.empty((_N_FACE_LANDSMARKS, 2), dtype=int)
     square = Rectangle(coords=(1760, 160, 300, 300),
                        coord_format='cwh',
                        color='b',
@@ -120,8 +122,7 @@ def main():
                 xy_pixels = (xy_pixels-center_center_x) * TARGET_WIDTH/avg_w + square_center
                 xy_pixels = xy_pixels.astype(int)
 
-                xy_pixels.tofile(f'face_test_{i}', sep=',')
-                i+=1
+
 
                 # Draws the connections if the start and end landmarks_list are both visible.
                 for i, connection in enumerate(FACEMESH_TESSELATION):
@@ -135,6 +136,10 @@ def main():
 
 
                     cv2.line(image, xy_pixels[start_idx], xy_pixels[end_idx], (0,255,0), 1)
+
+                xy_pixels.tofile(f'face_test_{i}', sep=',')
+                i+=1
+                time.sleep(.5)
 
                 # for point in oval_set:
                 #     cv2.circle(frame, xy_pixels[point], 2, (0,255,0),-1)
@@ -171,6 +176,26 @@ def convert_landmarks_to_pixels(landmarks_list, image):
     xy_pixels[:,1] = np.minimum(y_values * image_height, image_height - 1).astype(int)
 
     return xy_pixels
+
+def convert_landmarks_to_pixels_z(landmarks_list, image):
+    n_landmarks = len(landmarks_list)
+    x_values = np.empty(n_landmarks, dtype=float)
+    y_values = np.empty(n_landmarks, dtype=float)
+    z_values = np.empty(n_landmarks, dtype=float)
+    xyz_pixels = np.empty((n_landmarks, 3), dtype=int)
+
+    image_height, image_width, _ = image.shape
+
+    for i, landmark in enumerate(landmarks_list):
+        x_values[i] = landmark.x
+        y_values[i] = landmark.y
+        z_values[i] = landmark.z
+
+    xyz_pixels[:,0] = np.minimum(x_values * image_width, image_width - 1).astype(int)
+    xyz_pixels[:,1] = np.minimum(y_values * image_height, image_height - 1).astype(int)
+    xyz_pixels[:, 1] = np.minimum(z_values * image_width, image_width - 1).astype(int)
+
+    return xyz_pixels
 
 
 
