@@ -5,8 +5,8 @@ import time
 import numpy as np
 from otis.helpers.timers import TimedCycle, SmartSleeper
 
-
-def spiral_sphere_coordinates(radius, c_spirals, n_points, center=(0,0,0), order=(0,1,2),dtype=int):
+# https://en.wikipedia.org/wiki/Spiral
+def spiral_sphere_coordinates(radius, c_spirals, n_points, center=(0,0,0), order=(0,1,2), dtype=int):
     grid = np.linspace(0, np.pi, n_points)
     out = np.zeros((n_points, 3), dtype=float) + center
     sin_theta = np.sin(grid)
@@ -45,6 +45,8 @@ def rotate_points(points, center, R):
     return np.dot(_points, R) + center
 
 
+
+
 if __name__ == '__main__':
 
     RECORD = False
@@ -52,14 +54,14 @@ if __name__ == '__main__':
     import os
     from otis.helpers.timers import TimeElapsedBool
 
-    frame_center = np.array([540, 540, 0], int)
-    # sphere = spiral_sphere_coordinates(400, 300, 500, center=frame_center)
+
+    # _sphere = spiral_sphere_coordinates(400, 300, 500, center=frame_center)
 
     frame = np.zeros((1080, 1080, 3),'uint8')
     background_cycler = TimedCycle(max_i=20, cycle_t=1.3, updown=True)
+    frame_center = np.array((540, 540, 0))
 
-
-    x_grid = np.linspace(0, 2*np.pi, 100)
+    x_grid = np.linspace(0, 2 * np.pi, 100)
     y_grid = np.linspace(0, 2 * np.pi, 100)
     z_grid = np.linspace(0, 2 * np.pi, 100)
 
@@ -79,7 +81,6 @@ if __name__ == '__main__':
 
     C0 = 200
     P0 = 500
-
 
     file_name = '/home/keith/Dropbox/otis_films/3d Rotations/rotating_sphere2.mp4'
     HIDE = True
@@ -105,7 +106,7 @@ if __name__ == '__main__':
 
         sphere = spiral_sphere_coordinates(400, c_new, 500, center=frame_center)
         _sphere = (sphere - frame_center)
-        # # _sphere = (sphere - frame_center)*r_new
+        # # _sphere = (_sphere - frame_center)*r_new
         R = get_rotation_matrix(0, 0, np.pi/3.5)
         _sphere = (np.dot(_sphere, R)  + frame_center).astype(int)
 
