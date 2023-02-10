@@ -11,7 +11,7 @@ class NameTag(TextWriter):
                  h_offset=0,
                  attached_to=None,
                  color=None,
-                 box_reference='c',  # 'c', 'l', 'r'
+                 box_reference='c_spirals',  # 'c_spirals', 'l', 'radius'
                  anchor_point='cb',
                  line_to_box=False,
                  ltb_offset=0,
@@ -60,7 +60,7 @@ class NameTag(TextWriter):
         if self.box_reference == 'l':
             ref = (x - w // 2, y - h // 2)
 
-        elif self.box_reference == 'r':
+        elif self.box_reference == 'radius':
             ref = (x + w // 2, y - h // 2)
         else:
             ref = (x, y - h // 2)

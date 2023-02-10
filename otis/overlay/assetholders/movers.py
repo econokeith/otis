@@ -109,7 +109,7 @@ class AssetMover:
 
         self.show_hitbox = show_hitbox
         if self.show_hitbox is True and self.hitbox_type == 'rectangle':
-            self.outline = shapes.Rectangle((0, 0, width, height), color='c', coord_format='cwh', thickness=1)
+            self.outline = shapes.Rectangle((0, 0, width, height), color='c_spirals', coord_format='cwh', thickness=1)
 
         elif self.show_hitbox is True and self.hitbox_type == 'circle':
             self.outline = shapes.Circle(center=(0,0), radius=self.radius)
@@ -349,7 +349,7 @@ class CollidingAssetManager:
 
 class CollisionDetector:
     """
-    currently only supports circles, currently not optimized for searches faster than O(n^2)
+    currently only supports circles, currently not optimized for searches faster than O(n_points^2)
     """
     def __init__(self, buffer=1, move_before_delete=10):
         """
@@ -680,7 +680,7 @@ if __name__ == '__main__':
     manager = CollidingAssetManager(collisions=True,  move_before_delete=100)
 
 
-    square = shapes.Rectangle((0,0, 120, 30), color='r', coord_format='cwh')
+    square = shapes.Rectangle((0,0, 120, 30), color='radius', coord_format='cwh')
     mover = AssetMover(square,
                        center=(100, 100),
                        velocity=(100, 1),
@@ -691,7 +691,7 @@ if __name__ == '__main__':
                        dampen=0,
                        )
 
-    square2 = shapes.Rectangle((0,0, 30, 120), color='r', coord_format='cwh')
+    square2 = shapes.Rectangle((0,0, 30, 120), color='radius', coord_format='cwh')
 
     mover2 = AssetMover(square2,
                        center=(300, 300),

@@ -13,7 +13,7 @@ class AssetGroup:
 
     def __init__(self,
                  coords=(50, 50),
-                 color='r',
+                 color='radius',
                  scale=1,
                  ):
         """

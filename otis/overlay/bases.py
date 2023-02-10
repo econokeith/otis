@@ -19,7 +19,7 @@ class AssetWriter:
         return [cls(*args, **kwargs) for _ in range(n_writers)]
 
     def __init__(self,*args, **kwargs,
-                 # color='r',
+                 # color='radius',
                  # thickness=1,
                  # ltype=None,
                  # ref = None,

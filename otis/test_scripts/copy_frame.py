@@ -14,7 +14,7 @@ if __name__ == "__main__":
     big_output_dim = (300, 300)
     dim = (1280, 720)
     capture = camera.ThreadedCameraPlayer(max_fps=30, dim=dim, flip=False).start()
-    square = shapes.Rectangle((0, 0, *square_dim), 'cwh', ref='c', dim=dim, thickness=2)
+    square = shapes.Rectangle((0, 0, *square_dim), 'cwh', ref='c_spirals', dim=dim, thickness=2)
     n_littles = 1
     while True:
         _, frame = capture.read()
@@ -30,7 +30,7 @@ if __name__ == "__main__":
                                                  (*ff[i], *big_output_dim),
                                                  source_format='cwh',
                                                  destination_format=corner+'wh',
-                                                 source_ref='c',
+                                                 source_ref='c_spirals',
                                                  destination_ref=corner,
                                                  )
 
@@ -43,7 +43,7 @@ if __name__ == "__main__":
                                                  (bw+i*w, 5, *wide_dim),
                                                  source_format='cwh',
                                                  destination_format='lbwh',
-                                                 source_ref='c',
+                                                 source_ref='c_spirals',
                                                  destination_ref='lb',
                                                  )
         for i in range(n_littles):
@@ -53,7 +53,7 @@ if __name__ == "__main__":
                                                  (-bw - i * w, 5, *wide_dim),
                                                  source_format='cwh',
                                                  destination_format='rbwh',
-                                                 source_ref='c',
+                                                 source_ref='c_spirals',
                                                  destination_ref='rb',
                                                  )
 
@@ -64,7 +64,7 @@ if __name__ == "__main__":
                                                  (-bw - i * w, -5, *wide_dim),
                                                  source_format='cwh',
                                                  destination_format='rtwh',
-                                                 source_ref='c',
+                                                 source_ref='c_spirals',
                                                  destination_ref='rt',
                                                  )
 
@@ -75,7 +75,7 @@ if __name__ == "__main__":
                                                  (bw + i * w, -5, *wide_dim),
                                                  source_format='cwh',
                                                  destination_format='ltwh',
-                                                 source_ref='c',
+                                                 source_ref='c_spirals',
                                                  destination_ref='lt',
                                                  )
 
@@ -84,7 +84,7 @@ if __name__ == "__main__":
                                              (5, -210, *(50, 300)),
                                              source_format='cwh',
                                              destination_format='ltwh',
-                                             source_ref='c',
+                                             source_ref='c_spirals',
                                              destination_ref='lt',
                                              )
 
@@ -93,7 +93,7 @@ if __name__ == "__main__":
                                              (-5, -210, *(50, 300)),
                                              source_format='cwh',
                                              destination_format='rtwh',
-                                             source_ref='c',
+                                             source_ref='c_spirals',
                                              destination_ref='rt',
                                              )
 

@@ -40,7 +40,7 @@ def main():
 
     square = shapes.Rectangle(coords=(0, 0, square_size, square_size),
                               color='u',
-                              ref='c',
+                              ref='c_spirals',
                               dim=capture.f_dim,
                               thickness=2,
                               coord_format='cwh'
@@ -58,7 +58,7 @@ def main():
                                          line_length_format='chars',
                                          perma_border=True,
                                          border_spacing=(.5, .5),
-                                         anchor_point='c',
+                                         anchor_point='c_spirals',
                                          jtype='l',
                                          transparent_background=.9,
                                          )
@@ -84,7 +84,7 @@ def main():
                                          line_length_format='chars',
                                          # perma_border = True,
                                          border_spacing=(.5, .5),
-                                         anchor_point='c',
+                                         anchor_point='c_spirals',
                                          jtype='l',
                                          background=True,
                                          back_color='g',
@@ -111,7 +111,7 @@ def main():
     mover_manager.movers.append(mover2)
 
     center_square = shapes.Rectangle((0, 0, square_size, square_size),
-                                     ref='c',
+                                     ref='c_spirals',
                                      coord_format='cwh',
                                      to_abs=True,
                                      dim=capture.f_dim
@@ -125,7 +125,7 @@ def main():
         # copy the center of the frame
         frame_portion_saved = coordtools.get_frame_portion(frame,
                                                            (0, 0, square_size, square_size),
-                                                           ref='c',
+                                                           ref='c_spirals',
                                                            coord_format='cwh',
                                                            copy=True
                                                            )
@@ -146,7 +146,7 @@ def main():
         # get the reference frame
         frame_portion_reference = coordtools.get_frame_portion(frame,
                                                                (0, 0, square_size, square_size),
-                                                               ref='c',
+                                                               ref='c_spirals',
                                                                coord_format='cwh',
                                                                copy=False
                                                                )

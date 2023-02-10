@@ -29,7 +29,7 @@ def main():
 
     for coord, uline, bord  in zip(coords, borders, underlines):
         writer = textwriters.TextWriter(
-                            anchor_point='c',
+                            anchor_point='c_spirals',
                             coords=coord,
                             line_spacing=line_spacing,
                             # ref=capture.f_center,
@@ -54,13 +54,13 @@ def main():
     #
     # circle = shapes.Circle(center=capture.f_center, radius = 10, thickness=-1)
     # fx, fy = capture.f_dim
-    # line0 = shapes.Line((0, fy//2, fx, fy//2), color='r')
-    # line6 = shapes.Line((fx//2, 0, fx//2, fy), color='r')
+    # line0 = shapes.Line((0, fy//2, fx, fy//2), color='radius')
+    # line6 = shapes.Line((fx//2, 0, fx//2, fy), color='radius')
     #
-    # line2 = shapes.Line((0, fy//2+v_space, fx, fy//2+v_space), thickness=thickness, color='c',ltype=ltype)
-    # line3 = shapes.Line((0, fy//2-v_space, fx, fy//2-v_space), thickness=thickness, color='c',ltype=ltype)
-    # line4 = shapes.Line((0, fy//2+v_space+h, fx, fy//2+v_space+h), thickness=thickness, color='c',ltype=ltype)
-    # line5 = shapes.Line((0, fy//2-v_space-h, fx, fy//2-v_space-h), thickness=thickness, color='c',ltype=ltype)
+    # line2 = shapes.Line((0, fy//2+v_space, fx, fy//2+v_space), thickness=thickness, color='c_spirals',ltype=ltype)
+    # line3 = shapes.Line((0, fy//2-v_space, fx, fy//2-v_space), thickness=thickness, color='c_spirals',ltype=ltype)
+    # line4 = shapes.Line((0, fy//2+v_space+h, fx, fy//2+v_space+h), thickness=thickness, color='c_spirals',ltype=ltype)
+    # line5 = shapes.Line((0, fy//2-v_space-h, fx, fy//2-v_space-h), thickness=thickness, color='c_spirals',ltype=ltype)
     #
     # line7 = shapes.Line((fx//2+h_space, 0, fx//2+h_space, fy), thickness=thickness, color='y',ltype=ltype)
     # line8 = shapes.Line((fx//2-h_space, 0, fx//2-h_space, fy), thickness=thickness, color='y',ltype=ltype)

@@ -6,7 +6,7 @@ from otis.overlay.textwriters import texttools
 from otis.helpers import dstructures, colortools
 
 
-def draw_circle(frame, center, radius, color='r', thickness=1, ltype=None, ref=None):
+def draw_circle(frame, center, radius, color='radius', thickness=1, ltype=None, ref=None):
     _color = colortools.color_function(color)
 
     _center = coordtools.absolute_point(center, ref, dim=frame)
@@ -16,7 +16,7 @@ def draw_circle(frame, center, radius, color='r', thickness=1, ltype=None, ref=N
 
 def draw_rectangle(frame,
                    coords,
-                   color='r',
+                   color='radius',
                    thickness=1,
                    ltype=None,
                    ref=None,
@@ -45,7 +45,7 @@ def draw_rectangle(frame,
 def draw_line(frame,
               pt1,
               pt2,
-              color='r',
+              color='radius',
               thickness=1,
               ltype=None,
               ref=None,
@@ -65,7 +65,7 @@ def draw_line(frame,
     _pt2 = coordtools.absolute_point(pt2, ref, frame)
     cv2.line(frame, _pt1, _pt2, _color, thickness, ltype)
 
-def draw_line(frame, point0, point1, color='r', thickness=1, ltype=None, ref=None):
+def draw_line(frame, point0, point1, color='radius', thickness=1, ltype=None, ref=None):
     """
 
     Args:
@@ -85,7 +85,7 @@ def draw_line(frame, point0, point1, color='r', thickness=1, ltype=None, ref=Non
     _point1 = coordtools.absolute_point(point1, ref, frame)
     cv2.line(frame, _point0, _point1, _color, thickness, ltype)
 
-def draw_arrow(frame, point0, point1, color='r', thickness=1, ltype=None, tipLength=None, ref=None):
+def draw_arrow(frame, point0, point1, color='radius', thickness=1, ltype=None, tipLength=None, ref=None):
     """
 
     Args:
@@ -105,7 +105,7 @@ def draw_arrow(frame, point0, point1, color='r', thickness=1, ltype=None, tipLen
     _point1 = coordtools.absolute_point(point1, ref, frame)
     cv2.arrowedLine(frame, _point0, _point1, _color, thickness, ltype, tipLength=tipLength)
 
-def draw_cal_line(frame, center, angle, length, color='r', thickness=1, ltype=None, ref=None):
+def draw_cal_line(frame, center, angle, length, color='radius', thickness=1, ltype=None, ref=None):
     """
     draw a text from the center angle and length
     :param frame:
@@ -122,7 +122,7 @@ def draw_cal_line(frame, center, angle, length, color='r', thickness=1, ltype=No
     cv2.line(frame, _pt0, _pt1, _color, thickness, ltype)
 
 
-def draw_pal_line(frame, point, angle, length, color='r', thickness=1, ltype=None, ref=None):
+def draw_pal_line(frame, point, angle, length, color='radius', thickness=1, ltype=None, ref=None):
     """
     draw a text from point angle and length
     :param frame:
@@ -180,7 +180,7 @@ def write_bordered_text(frame,
                         lb_origin=True,
                         v_space=10,
                         h_space=10,
-                        b_color='r',
+                        b_color='radius',
                         b_ltype=1,
                         b_thickness=1,
                         ):
@@ -227,7 +227,7 @@ def write_transparent_background(frame,
 
 
 def copy_frame_portion_to(frame,
-                          source_coords,  # r, t, l, b
+                          source_coords,  # radius, t, l, b
                           destination_coords,
                           source_format='rtlb',
                           destination_format='rtlb',

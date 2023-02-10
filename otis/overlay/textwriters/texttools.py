@@ -29,7 +29,7 @@ def find_justified_start(text, coords, font, scale=1, thickness=1, jtype='l', re
         _font:
         scale:
         thickness:
-        jtype: justification type = 'l', 'r', or 'c'
+        jtype: justification type = 'l', 'radius', or 'c_spirals'
 
     Returns:
 
@@ -37,10 +37,10 @@ def find_justified_start(text, coords, font, scale=1, thickness=1, jtype='l', re
     _font = FONT_HASH[font]
 
     w, h = cv2.getTextSize(text, _font, scale, thickness)[0]
-    if jtype == 'r':
+    if jtype == 'radius':
         justified_start =  (int(coords[0] - w), coords[1])
 
-    elif jtype == 'c':
+    elif jtype == 'c_spirals':
         justified_start = (int(coords[0] - w / 2), coords[1])
     else:
         justified_start = coords

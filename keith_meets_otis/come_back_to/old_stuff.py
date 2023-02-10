@@ -19,7 +19,7 @@ class MirrorEffects:
                                              (*ff[i], *big_output_dim),
                                              source_format='cwh',
                                              destination_format=corner + 'wh',
-                                             source_ref='c',
+                                             source_ref='c_spirals',
                                              destination_ref=corner,
                                              )
 
@@ -31,7 +31,7 @@ class MirrorEffects:
                                              (bw + i * w, 5, *wide_dim),
                                              source_format='cwh',
                                              destination_format='lbwh',
-                                             source_ref='c',
+                                             source_ref='c_spirals',
                                              destination_ref='lb',
                                              )
     for i in range(n_littles):
@@ -41,7 +41,7 @@ class MirrorEffects:
                                              (-bw - i * w, 5, *wide_dim),
                                              source_format='cwh',
                                              destination_format='rbwh',
-                                             source_ref='c',
+                                             source_ref='c_spirals',
                                              destination_ref='rb',
                                              )
 
@@ -52,7 +52,7 @@ class MirrorEffects:
                                              (-bw - i * w, -5, *wide_dim),
                                              source_format='cwh',
                                              destination_format='rtwh',
-                                             source_ref='c',
+                                             source_ref='c_spirals',
                                              destination_ref='rt',
                                              )
 
@@ -63,7 +63,7 @@ class MirrorEffects:
                                              (bw + i * w, -5, *wide_dim),
                                              source_format='cwh',
                                              destination_format='ltwh',
-                                             source_ref='c',
+                                             source_ref='c_spirals',
                                              destination_ref='lt',
                                              )
 
@@ -72,7 +72,7 @@ class MirrorEffects:
                                          (5, -210, *(50, 300)),
                                          source_format='cwh',
                                          destination_format='ltwh',
-                                         source_ref='c',
+                                         source_ref='c_spirals',
                                          destination_ref='lt',
                                          )
 
@@ -81,7 +81,7 @@ class MirrorEffects:
                                          (-5, -210, *(50, 300)),
                                          source_format='cwh',
                                          destination_format='rtwh',
-                                         source_ref='c',
+                                         source_ref='c_spirals',
                                          destination_ref='rt',
                                          )
 

@@ -29,7 +29,7 @@ def main():
     # define the border of the center square that'll be copied to the frame asset each frame
     square = shapes.Rectangle(coords=(0, 0, square_size, square_size),
                               color='u',
-                              ref='c',
+                              ref='c_spirals',
                               dim=capture.f_dim,
                               thickness=2,
                               coord_format='cwh'
@@ -41,7 +41,7 @@ def main():
         # copy the center of the frame
         frame_portion_saved = coordtools.get_frame_portion(frame,
                                                            (0, 0, square_size, square_size),
-                                                           ref='c',
+                                                           ref='c_spirals',
                                                            coord_format='cwh',
                                                            copy=True
                                                            )
@@ -54,7 +54,7 @@ def main():
         # get a reference to the center of the screen
         frame_portion_reference = coordtools.get_frame_portion(frame,
                                                                (0, 0, square_size, square_size),
-                                                               ref='c',
+                                                               ref='c_spirals',
                                                                coord_format='cwh',
                                                                copy=False
                                                                )

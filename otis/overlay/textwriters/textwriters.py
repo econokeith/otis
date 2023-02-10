@@ -21,7 +21,7 @@ class TextWriter(bases.AssetWriter, bases.RectangleType, bases.TextType):
     def __init__(self,
                  coords=(0, 0),
                  font:str='duplex',
-                 color:Union[str, Tuple[int, int, int]]='r',  # can be 'r', 'g', 'u', 'w', 'b', 'y', 'c', 'm', 'grey' or (G, B, R) color tuple
+                 color:Union[str, Tuple[int, int, int]]='radius',  # can be 'radius', 'g', 'u', 'w', 'b', 'y', 'c_spirals', 'm', 'grey' or (G, B, R) color tuple
                  scale:float=1.,
                  ltype:int=1,
                  thickness:int=1,
@@ -63,7 +63,7 @@ class TextWriter(bases.AssetWriter, bases.RectangleType, bases.TextType):
             font: str
                 'simplex', 'plain', 'duplex', 'complex', 'triplex', 'c_small', 's_simplex', 's_complex'
             color: str or tuple
-                can be 'r', 'g', 'u', 'w', 'b', 'y', 'c', 'm', 'grey' or (G, B, R) color tuple
+                can be 'radius', 'g', 'u', 'w', 'b', 'y', 'c_spirals', 'm', 'grey' or (G, B, R) color tuple
             scale: float
                 increases the size of text
             ltype: int
@@ -83,7 +83,7 @@ class TextWriter(bases.AssetWriter, bases.RectangleType, bases.TextType):
             max_lines: int or None.
                 if max_line_length is also set
             jtype: str
-                justification type, 'c', 'l', 'r'
+                justification type, 'c_spirals', 'l', 'radius'
             u_spacing: int/float
                 underline vertical spacing int or float if int -> pixels. float -> % of font height
             u_ltype:int
@@ -394,9 +394,9 @@ class TextWriter(bases.AssetWriter, bases.RectangleType, bases.TextType):
         for i, stub in enumerate(self.stubs):
             # this has to just keep running the ref stuff otherwise the justifications don't work
             # I think
-            if self.jtype == 'c':
+            if self.jtype == 'c_spirals':
                 j_offset = (self.text_object.width - self.get_text_size(stub)[0]) // 2
-            elif self.jtype == 'r':
+            elif self.jtype == 'radius':
                 j_offset = (self.text_object.width - self.get_text_size(stub)[0])
             else:
                 j_offset = 0

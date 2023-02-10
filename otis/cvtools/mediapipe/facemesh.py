@@ -15,7 +15,4 @@ class FaceMesh:
         elif isinstance(points, str):
             self.points = np.zeros((468, 3), dtype=int)
 
-
         self.connections = FACEMESH_TESSELATION
-
-

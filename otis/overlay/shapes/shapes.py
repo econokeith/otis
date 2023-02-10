@@ -11,7 +11,7 @@ class ShapeAsset(bases.AssetWriter, abc.ABC):
 
     def __init__(self,
                  coords=None,
-                 color='r',
+                 color='radius',
                  thickness=1,
                  ltype=None,
                  ref=None,
@@ -106,7 +106,7 @@ class Circle(ShapeAsset, CircleType):
                  coord_format='cwh',
                  update_format='cwh',
                  to_abs=False,
-                 color='r',
+                 color='radius',
                  thickness=1,
                  ltype=None,
                  ref=None,
@@ -253,7 +253,7 @@ class Rectangle(ShapeAsset, RectangleType):
 
     def __init__(self,
                  coords=None,
-                 color='r',
+                 color='radius',
                  thickness=1,
                  ltype=None,
                  ref=None,
@@ -393,7 +393,7 @@ class Line(bases.AssetWriter, LineType):
 
     def __init__(self,
                  coords=(0, 0, 0, 0),
-                 color='r',
+                 color='radius',
                  thickness=2,
                  ltype=None,
                  coord_format='points',

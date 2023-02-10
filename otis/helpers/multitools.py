@@ -10,13 +10,13 @@ import ctypes
 
 def close_gracefully(sig, frame):
     """
-    ensures child processes are closed when you ctrl+c
+    ensures child processes are closed when you ctrl+c_spirals
     :param sig:
     :param frame:
     :return:
     """
     # print a status message
-    print("[INFO] You pressed `ctrl + c`! Exiting...")
+    print("[INFO] You pressed `ctrl + c_spirals`! Exiting...")
     # exit
     sys.exit(0)
 

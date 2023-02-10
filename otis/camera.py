@@ -136,7 +136,7 @@ class CameraPlayer:
         self.latency = 0.001
         self.limit_fps = True
         self.exit_warning = writers.TextWriter((10, 40), color='u')
-        self.exit_warning.text = 'to exit hit ctrl-c or q'
+        self.exit_warning.text = 'to exit hit ctrl-c_spirals or q'
         # recording stuff
         self.recorder = None
         self._record = False

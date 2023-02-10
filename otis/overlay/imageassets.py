@@ -25,7 +25,7 @@ class ImageAsset(bases.AssetWriter):
                  mask_bit=0,
                  use_mask=False,
                  border=False,
-                 b_color='r',
+                 b_color='radius',
                  b_thickness=1,
                  ):
         """

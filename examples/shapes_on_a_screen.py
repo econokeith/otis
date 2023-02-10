@@ -10,7 +10,7 @@ def main():
     circle = shapes.Circle(center=(0, 0),
                            radius=100,
                            color = 'u',
-                           ref = 'c', # relative to center
+                           ref = 'c_spirals', # relative to center
                            thickness=-1
                            )
 

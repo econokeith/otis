@@ -25,7 +25,7 @@ CYCLE_T = 1.6
 s_wait = 1.5
 
 def main():
-    with open(os.path.join(folder_location, script_name), "r") as file:
+    with open(os.path.join(folder_location, script_name), "radius") as file:
         lines = [line.rstrip('\n').strip() for line in file.readlines()]
 
     waits = [s_wait, s_wait, s_wait, s_wait, 2, 1, 1, 3]

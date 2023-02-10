@@ -29,7 +29,7 @@ class CircleWithLineToCenter(shapes.Circle):
                          **kwargs
                          )
 
-        self.line_to_center = shapes.Line(color='c',
+        self.line_to_center = shapes.Line(color='c_spirals',
                                           thickness=ltc_thickness,
                                           coord_format='points'
                                           )
@@ -52,14 +52,14 @@ class CircleWithLineToCenter(shapes.Circle):
         _color = 'g'
 
         if dist_to_center > self.radius:
-            _color = 'r'
+            _color = 'radius'
 
             # line to center
             self.line_to_center.write(frame, coords=tuple(self.center) + frame_center)
 
             # small circles on frame and box centers
-            self.small_circle.write(frame, center=self.center, color='r')
-            self.small_circle.write(frame, center=frame_center, color='r')
+            self.small_circle.write(frame, center=self.center, color='radius')
+            self.small_circle.write(frame, center=frame_center, color='radius')
 
             # little up/down lines on the tiny circles
             self.cross_lines.write(frame, (*frame_center, 90, 20))
@@ -99,7 +99,7 @@ class ServoFaceTracker(shapes.Circle):
                          )
         self.radius_scale = radius_scale
 
-        self.line_to_center = shapes.Line(color='c',
+        self.line_to_center = shapes.Line(color='c_spirals',
                                           thickness=1,
                                           coord_format='points',
                                           ltype=cv2.LINE_AA
@@ -144,13 +144,13 @@ class ServoFaceTracker(shapes.Circle):
         self.y_error = 0
         SCALE = 1
 
-        self.vert_color = colortools.color_function('r')
+        self.vert_color = colortools.color_function('radius')
         self.hor_color = colortools.color_function('g')
         self.diag_color = colortools.color_function('u')
 
         self.x_error_writer = textwriters.InfoWriter(text_fun=lambda x: f"{x}",
                                                      color=self.hor_color,
-                                                     ref='c',
+                                                     ref='c_spirals',
                                                      ltype=cv2.LINE_AA,
                                                      border=True,
                                                      scale=SCALE,
@@ -161,7 +161,7 @@ class ServoFaceTracker(shapes.Circle):
 
         self.y_error_writer = textwriters.InfoWriter(text_fun=lambda x: f"{x}",
                                                      color=self.vert_color,
-                                                     ref='c',
+                                                     ref='c_spirals',
                                                      ltype=cv2.LINE_AA,
                                                      scale=SCALE,
                                                      border=True,
@@ -190,7 +190,7 @@ class ServoFaceTracker(shapes.Circle):
         radius = self.radius * self.radius_scale
 
         if dist_to_center > radius:
-            CIRCLE_COLOR = 'c'
+            CIRCLE_COLOR = 'c_spirals'
 
         super().write(frame, color=CIRCLE_COLOR, radius=radius)
 
@@ -242,7 +242,7 @@ class ServoFaceTracker(shapes.Circle):
             self.small_circle_nf.write(frame, center=hor_point, color='b')
             self.small_circle_nf.write(frame, center=center, color='b')
 
-            self.small_circle.write(frame, center=frame_center, color='r')
+            self.small_circle.write(frame, center=frame_center, color='radius')
             self.cross_lines.write(frame, (*frame_center, 90, 20))
             self.cross_lines.write(frame, (*frame_center, 0, 20))
 

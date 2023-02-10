@@ -17,7 +17,7 @@ class BoundingAsset(bases.AssetHolderMixin, bases.AssetWriter):
                  show_name=True,
                  show_self=True,
                  time_to_inactive=1,
-                 color='r',
+                 color='radius',
                  moving_average = None,
                  scale = 1,
                  dimensions = None,

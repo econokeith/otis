@@ -11,7 +11,7 @@ def main():
                                           f_dim=(720, 400)).start()
     TEXT = "HELLO I AM OTIS, I WOULD LOVE TO BE YOUR FRIEND"
     anchor_points = ('lb', 'lt', 'rb', 'rt')
-    justifications = ('r', 'c', 'l', 'c')
+    justifications = ('radius', 'c_spirals', 'l', 'c_spirals')
 
     writers = []
     for anchor, justi in zip(anchor_points, justifications):
@@ -47,10 +47,10 @@ def main():
     fx, fy = capture.f_dim
 
 
-    line2 = shapes.Line((0, fy//2+v_space, fx, fy//2+v_space), thickness=thickness, color='c',ltype=ltype)
-    line3 = shapes.Line((0, fy//2-v_space, fx, fy//2-v_space), thickness=thickness, color='c',ltype=ltype)
-    line4 = shapes.Line((0, fy//2+v_space+h, fx, fy//2+v_space+h), thickness=thickness, color='c',ltype=ltype)
-    line5 = shapes.Line((0, fy//2-v_space-h, fx, fy//2-v_space-h), thickness=thickness, color='c',ltype=ltype)
+    line2 = shapes.Line((0, fy//2+v_space, fx, fy//2+v_space), thickness=thickness, color='c_spirals',ltype=ltype)
+    line3 = shapes.Line((0, fy//2-v_space, fx, fy//2-v_space), thickness=thickness, color='c_spirals',ltype=ltype)
+    line4 = shapes.Line((0, fy//2+v_space+h, fx, fy//2+v_space+h), thickness=thickness, color='c_spirals',ltype=ltype)
+    line5 = shapes.Line((0, fy//2-v_space-h, fx, fy//2-v_space-h), thickness=thickness, color='c_spirals',ltype=ltype)
 
     line7 = shapes.Line((fx//2+h_space, 0, fx//2+h_space, fy), thickness=thickness, color='y',ltype=ltype)
     line8 = shapes.Line((fx//2-h_space, 0, fx//2-h_space, fy), thickness=thickness, color='y',ltype=ltype)

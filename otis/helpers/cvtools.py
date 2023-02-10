@@ -13,10 +13,10 @@ def box_stabilizer(box0, box1, threshold=.25):
     checks that the distance between center points is
     less than a percentage of the
     hopefully keeps bboxes from jumping around so much.
-    :param box0: (t, r, b, l)
-    :param box1: (t, r, b, l)
+    :param box0: (t, radius, b, l)
+    :param box1: (t, radius, b, l)
     :param threshold: float
-    :return: (t, r, b, l)
+    :return: (t, radius, b, l)
     """
     if threshold == 0:
         return box1
@@ -45,10 +45,10 @@ class BBoxStabilizer:
         checks that the distance between center points is
         less than a percentage of the
         hopefully keeps bboxes from jumping around so much.
-        :param box0: (t, r, b, l)
-        :param box1: (t, r, b, l)
+        :param box0: (t, radius, b, l)
+        :param box1: (t, radius, b, l)
         :param threshold: float
-        :return: (t, r, b, l)
+        :return: (t, radius, b, l)
         """
         centers = []
         radii = []

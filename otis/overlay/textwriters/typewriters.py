@@ -18,7 +18,7 @@ class TypeWriter(textwriters.TextWriter):
     def __init__(self,
                  coords=(0, 0),
                  font='duplex',
-                 color='r',
+                 color='radius',
                  scale=1,
                  ltype=1,
                  thickness=1,
@@ -257,9 +257,9 @@ class TypeWriter(textwriters.TextWriter):
         for i, stub in enumerate(self.completed_stubs + [self._output + self.cursor()]):
             # this has to just keep running the ref stuff otherwise the justifications don't work
             # I think
-            if self.jtype == 'c':
+            if self.jtype == 'c_spirals':
                 j_offset = (self.text_object.width - self.get_text_size(stub)[0]) // 2
-            elif self.jtype == 'r':
+            elif self.jtype == 'radius':
                 j_offset = (self.text_object.width - self.get_text_size(stub)[0])
             else:
                 j_offset = 0
@@ -274,9 +274,9 @@ if __name__ == '__main__':
     capture = camera.ThreadedCameraPlayer(max_fps=30).start()
 
     # writer = TypeWriter(coords=(0, 0),
-    #                     ref='c',
-    #                     jtype='c',
-    #                     anchor_point='c',
+    #                     ref='c_spirals',
+    #                     jtype='c_spirals',
+    #                     anchor_point='c_spirals',
     #                     scale=1.5,
     #                     perma_border=True,
     #                     underline=True,
@@ -305,7 +305,7 @@ if __name__ == '__main__':
              "I'm justified center with a right-top anchor_point ('tr')"]
 
     aps = ('lb', 'lt', 'rb', 'rt')
-    justs = ('r', 'c', 'l', 'c')
+    justs = ('radius', 'c_spirals', 'l', 'c_spirals')
     # justs = ('l')*4
     writers = []
     TEXT = "HELLO I AM OTIS, I WOULD LOVE TO BE YOUR FRIEND AND HELP YOU MAKE THINGS, YEAH"
@@ -313,7 +313,7 @@ if __name__ == '__main__':
         writer = TypeWriter(text=TEXT,
                             coords=(0, 0),
                             u_spacing=u_spacing,
-                            ref='c',
+                            ref='c_spirals',
                             jtype=j,
                             anchor_point=a,
                             scale=scale,

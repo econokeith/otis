@@ -2,7 +2,7 @@ import numpy as np
 
 
 __FRAME_HASH = {}
-__FRAME_HASH['c'] = lambda s: (int(s[1] / 2), int(s[0] / 2))
+__FRAME_HASH['c_spirals'] = lambda s: (int(s[1] / 2), int(s[0] / 2))
 __FRAME_HASH['lt'] = lambda s: (0, 0)
 __FRAME_HASH['lb'] = lambda s: (0, s[0])
 __FRAME_HASH['rb'] = lambda s: (s[1], s[0])
@@ -12,7 +12,7 @@ __FRAME_HASH['bl'] = lambda s: (0, s[0])
 __FRAME_HASH['br'] = lambda s: (s[1], s[0])
 __FRAME_HASH['tr'] = lambda s: (s[1], 0)
 __FRAME_HASH['l'] = lambda s: (0, int(s[0] / 2))
-__FRAME_HASH['r'] = lambda s: (s[1], int(s[0] / 2))
+__FRAME_HASH['radius'] = lambda s: (s[1], int(s[0] / 2))
 __FRAME_HASH['t'] = lambda s: (int(s[1] / 2), 0)
 __FRAME_HASH['b'] = lambda s: (int(s[1] / 2), s[0])
 __FRAME_HASH['cl'] = lambda s: (0, int(s[0] / 2))

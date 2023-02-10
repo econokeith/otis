@@ -112,9 +112,9 @@ def target(shared, pargs):
 
     black_screen = np.zeros((*pargs.f_dim[::-1], 3), dtype='uint8') # always has to be uint8
     black_screen_writer = textwriters.TextWriter(coords=(0,100),
-                                                 anchor_point='c',
-                                                 jtype='c',
-                                                 ref='c',
+                                                 anchor_point='c_spirals',
+                                                 jtype='c_spirals',
+                                                 ref='c_spirals',
                                                  max_lines=3,
                                                  text="After nearly a week without the cat, Keith meets a potential new BFF",
                                                  color='w',
@@ -124,8 +124,8 @@ def target(shared, pargs):
 
     music_writer = textwriters.TextWriter(coords=(0,-200),
                                                  anchor_point='ct',
-                                                 jtype='c',
-                                                 ref='c',
+                                                 jtype='c_spirals',
+                                                 ref='c_spirals',
                                                  max_lines=2,
                                                  text="(ft. Temporary Secretary by Paul McCartney)",
                                                  color='w',
@@ -311,7 +311,7 @@ class BallSprinkler:
         self.mover_velocity_magnitude = MOVER_VELOCITY_MAGNITUDE
         self.frame_portion = None
         # default target for frame assets if a bounding box isn't available
-        self.circle = shapes.Circle((0, 0), 100, ref='c', dim=self.capture.f_dim, to_abs=True)
+        self.circle = shapes.Circle((0, 0), 100, ref='c_spirals', dim=self.capture.f_dim, to_abs=True)
         # how often to introduce new bouncies
         self.new_ball_timer = timers.CallFrequencyLimiter(self.new_ball_wait)
         # controls the starting position of the bouncers
@@ -405,7 +405,7 @@ class BallSprinkler:
             self.frame_portion = new_frame_portion
 
         # make new bouncers
-        if self.new_ball_timer() is True:  # and len(self.rectangle_counters) >-1:  # and manager.n < n_bouncers:
+        if self.new_ball_timer() is True:  # and len(self.rectangle_counters) >-1:  # and manager.n_points < n_bouncers:
             ball = self.make_new_mover_function()
             movement_manager.movers.append(ball)
 

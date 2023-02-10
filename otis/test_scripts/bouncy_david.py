@@ -73,7 +73,7 @@ def main():
 
 
     # center_square = shapes.Rectangle((0, 0, square_size, square_size),
-    #                                  ref='c',
+    #                                  ref='c_spirals',
     #                                  coord_format='cwh',
     #                                  to_abs=True,
     #                                  dim=capture.f_dim
@@ -87,7 +87,7 @@ def main():
         # copy the center of the frame
         # frame_portion_saved = coordtools.get_frame_portion(frame,
         #                                                    (0, 0, square_size, square_size),
-        #                                                    ref='c',
+        #                                                    ref='c_spirals',
         #                                                    coord_format='cwh',
         #                                                    copy=True
         #                                                    )
@@ -106,7 +106,7 @@ def main():
         # get the reference frame
         # frame_portion_reference = coordtools.get_frame_portion(frame,
         #                                                        (0, 0, square_size, square_size),
-        #                                                        ref='c',
+        #                                                        ref='c_spirals',
         #                                                        coord_format='cwh',
         #                                                        copy=False
         #                                                        )
