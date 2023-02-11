@@ -3,8 +3,16 @@ import time
 import numpy as np
 from otis.helpers.timers import TimedCycle, SmartSleeper
 
+
 # https://en.wikipedia.org/wiki/Spiral
-def spiral_sphere_coordinates(radius, c_spirals, n_points, center=(0,0,0), order=(0,1,2), dtype=int):
+def spiral_sphere_coordinates(radius,
+                              c_spirals,
+                              n_points,
+                              center=(0, 0, 0),
+                              order=(0, 1, 2),
+                              dtype=int
+                              ):
+
     grid = np.linspace(0, np.pi, n_points)
     _center = np.array(center)[list(order)]
     out = np.zeros((n_points, 3), dtype=float)
@@ -16,7 +24,7 @@ def spiral_sphere_coordinates(radius, c_spirals, n_points, center=(0,0,0), order
     out[:, 1] = radius * cos_theta + _center[1]
     out[:, 2] = radius * sin_theta * c_sin_theta + _center[2]
 
-    return out[:, list(order)].astype(dtype)
+    return (out[:, list(order)]).astype(dtype)
 
 def get_rotation_matrix(x=0, y=0, z=0):
     cos_x = np.cos(x)
@@ -31,12 +39,12 @@ def get_rotation_matrix(x=0, y=0, z=0):
                     [0, 0, 1]])
 
     R_y = np.array([[cos_y, 0, sin_y],
-                    [0,1,0],
+                    [0, 1, 0],
                     [-sin_y, 0, cos_y]])
 
     R_x = np.array([[1, 0, 0],
                     [0, cos_x, -sin_x],
-                   [0, sin_x, cos_x]])
+                    [0, sin_x, cos_x]])
 
     # R_z = np.array([[cos_z, 0, sin_z],
     #                 [0,1,0],
@@ -48,21 +56,23 @@ def get_rotation_matrix(x=0, y=0, z=0):
 
     return np.linalg.multi_dot([R_z, R_y, R_x])
 
+
 def rotate_points(points, center, R):
     _points = points - center
     return np.dot(_points, R) + center
+
 
 class Rotator3D:
 
     def __init__(self,
                  points=None,
-                 origin=(0,0,0),
-                 x_range = (0, 2*np.pi),
-                 y_range = (0, 2*np.pi),
-                 z_range = (0, 2*np.pi),
-                 periods = (0,0,0),
-                 go_back = (False, False, False),
-                 fps = 30
+                 origin=(0, 0, 0),
+                 x_range=(0, 2 * np.pi),
+                 y_range=(0, 2 * np.pi),
+                 z_range=(0, 2 * np.pi),
+                 periods=(0, 0, 0),
+                 go_back=(False, False, False),
+                 fps=30
                  ):
 
         if points is not None:
@@ -73,7 +83,7 @@ class Rotator3D:
         self._x = 0
         self._y = 0
         self._z = 0
-        self._R = np.empty((3,3))
+        self._R = np.empty((3, 3))
         self.x_range = x_range
         self.y_range = y_range
         self.z_range = z_range
@@ -81,7 +91,7 @@ class Rotator3D:
         self.fps = fps
         self.go_back = go_back
 
-        self.d_angles = [0]*3
+        self.d_angles = [0] * 3
         for i, period in enumerate(self.periods):
             if period != 0:
                 self.d_angles[i] = 2 * np.pi / period / self.fps
@@ -118,43 +128,42 @@ class Rotator3D:
         return self._points
 
 
-
 if __name__ == '__main__':
     import cv2
-    import os
     from otis.helpers.timers import TimeElapsedBool
+
     DIM = (1080, 1080)
     frame = np.zeros((*DIM[::-1], 3), 'uint8')
-    frame_center = np.array([DIM[0]//2, DIM[1]//2, 0], int)
+    frame_center = np.array([DIM[0] // 2, DIM[1] // 2, 0], int)
     # _sphere = spiral_sphere_coordinates(400, 20, 500, center= (540, 0, 540) , order=(1, 2, 0))
-    sphere = spiral_sphere_coordinates(400, 50, 2000, center= (540, 540, 0))
-    rotator = Rotator3D(sphere, frame_center, periods=(10,3,9))
-    HIDE = False
+    sphere = spiral_sphere_coordinates(400, 100, 2000, center=(540, 540, 0))
+    rotator = Rotator3D(sphere, frame_center, periods=(10, 3, 9))
+    HIDE = True
 
     # axis = np.array([
     #     [540, 0, 0], [540, 1080, 0],
     #     [0, 540, 0], [1080, 540, 0],
     #     [540,540, 540], [540,540,-540]
     # ], int)
+    long_line = 100000
+
     axis = np.array([
-        [540, -2000, 0], [540, 2000, 0],
-        [-2000, 540, 0], [2000, 540, 0],
-        [540,540, 2000], [540,540,-2000]
+        [540, -long_line, 0], [540, long_line, 0],
+        [-long_line, 540, 0], [long_line, 540, 0],
+        [540, 540, long_line], [540, 540, -long_line]
     ], int)
 
     stop_timer = TimeElapsedBool(60)
-    sleeper = SmartSleeper(1/30)
-
-
+    sleeper = SmartSleeper(1 / 30)
 
     while True:
-        frame[:,:,:] = 0
+        frame[:, :, :] = 0
         _sphere = rotator.periodic_rotate()
         _axis = rotate_points(axis, frame_center, rotator._R).astype(int)
 
-        cv2.line(frame, _axis[0, :2], _axis[1, :2], (255, 0, 0), 1, lineType=cv2.LINE_AA)
-        # cv2.line(frame, _axis[2, :2], _axis[3,:2], (255, 0, 0), 1, lineType=cv2.LINE_AA)
-        # cv2.line(frame, _axis[4, :2], _axis[5, :2], (255, 0, 0), 1, lineType=cv2.LINE_AA)
+        cv2.line(frame, _axis[0, :2], _axis[1, :2], (255, 0, 0), 3, lineType=cv2.LINE_AA)
+        cv2.line(frame, _axis[2, :2], _axis[3, :2], (255, 0, 0), 3, lineType=cv2.LINE_AA)
+        cv2.line(frame, _axis[4, :2], _axis[5, :2], (255, 0, 0), 3, lineType=cv2.LINE_AA)
 
         for i in range(_sphere.shape[0] - 1):
             p0 = _sphere[i]
@@ -167,11 +176,9 @@ if __name__ == '__main__':
                     cv2.circle(frame, p1[:2], 1, (0, 0, 255), -1)
 
         cv2.imshow('', frame)
-        xx = cv2.waitKey(1) & 0xFF
-        if xx == ord('q'):
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-        sleeper(1/30)
-
+        sleeper(1 / 30)
 
     cv2.destroyAllWindows()
