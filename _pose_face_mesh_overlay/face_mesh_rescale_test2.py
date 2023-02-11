@@ -82,7 +82,6 @@ def main():
     i = 0
     while True:
         success, image = capture.read()
-
         if not success:
             continue
 
@@ -92,7 +91,6 @@ def main():
         face_results = face_mesh.process(image)
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
         image.flags.writeable = True
-
 
         if face_results.multi_face_landmarks:
             for face_landmarks in face_results.multi_face_landmarks:
