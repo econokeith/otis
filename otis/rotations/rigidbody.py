@@ -80,3 +80,8 @@ class RigidBody3D:
         self._points = (np.dot(self._points, self._R) + self.origin).astype(int)
         return self._points
 
+
+# class SpiralSphere(RigidBody3D):
+#
+#     def __init__(self, ):
+
