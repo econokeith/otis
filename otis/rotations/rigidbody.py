@@ -7,7 +7,6 @@ from otis.helpers.timers import TimedCycle, SmartSleeper, TimeElapsedBool
 from otis.helpers.colortools import color_function
 from otis.rotations.rotationtools import get_rotation_matrix, spiral_sphere_coordinates
 
-
 class RigidBody3D:
 
     def __init__(self,
@@ -18,14 +17,20 @@ class RigidBody3D:
                  z_range=(0, 2 * np.pi),
                  periods=(0, 0, 0),
                  go_back=(False, False, False),
-                 fps=30
+                 fps=30,
+                 ltype=cv2.LINE_AA,
+                 e_color='g',
+                 n_color='r',
+                 n_radius=1,
+                 n_thickness=1,
+                 e_thickness=1,
                  ):
 
         if points is not None:
             self.original = np.copy(points).astype(int)
             self._points = np.copy(points).astype(int)
 
-        self.origin = np.array(origin)
+        self._origin = np.array(origin)
         self._x = 0
         self._y = 0
         self._z = 0
@@ -38,9 +43,20 @@ class RigidBody3D:
         self.go_back = go_back
 
         self.d_angles = [0] * 3
+
         for i, period in enumerate(self.periods):
             if period != 0:
                 self.d_angles[i] = 2 * np.pi / period / self.fps
+
+        self.ltype = ltype
+
+        self.e_color = color_function(e_color)
+        self.n_color = color_function(n_color)
+
+        self.n_radius = int(n_radius)
+
+        self.e_thickness = e_thickness
+        self.n_thickness = n_thickness
 
     @property
     def n(self):
@@ -54,6 +70,19 @@ class RigidBody3D:
     def points(self, new_points):
         self.original = np.copy(new_points)
         self._points = np.copy(new_points)
+
+    @property
+    def origin(self):
+        return self._origin
+
+    @origin.setter
+    def origin(self, new_origin):
+        self._points -= self.origin - new_origin
+        self._origin = new_origin
+
+    def resize(self, scale):
+        self._points = ((self._points - self._origin) * scale ).astype(int)+ self._origin
+
 
     def rotate_to(self, x=None, y=None, z=None):
 
@@ -102,12 +131,7 @@ class SpiralSphere(RigidBody3D):
                  origin=(0, 0, 0),
                  order=(0,1,2),
                  hide=False,
-                 ltype=cv2.LINE_AA,
-                 e_color = 'g',
-                 n_color = 'r',
-                 n_radius = 1,
-                 n_thickness = 1,
-                 e_thickness = 1,
+
                  **kwargs
                  ):
 
@@ -128,15 +152,7 @@ class SpiralSphere(RigidBody3D):
                          )
 
         self.hide = hide
-        self.ltype = ltype
 
-        self.e_color = color_function(e_color)
-        self.n_color = color_function(n_color)
-
-        self.n_radius = int(n_radius)
-
-        self.e_thickness = e_thickness
-        self.n_thickness = n_thickness
 
     def write(self, frame):
         _sphere = self.points
@@ -185,6 +201,7 @@ if __name__=='__main__':
     while True:
         frame[:, :, :] = 0
         sphere.periodic_rotate()
+        sphere.resize(.5)
         sphere.write(frame)
         cv2.imshow('', frame)
 
