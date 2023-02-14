@@ -11,6 +11,7 @@ class MediaPipe3d(RigidBody3D):
     def __init__(self,
                  points=None,
                  dim = (1920, 1080),
+                 hide = False,
                  **kwargs):
 
         _points = np.load(points)
@@ -24,6 +25,7 @@ class MediaPipe3d(RigidBody3D):
             
         super().__init__(points=_points, **kwargs)
 
+        self.hide = hide
         self.connections = FACEMESH_TESSELATION
         self.dim = misc.dimensions_function(dim)
         self._VISIBILITY_THRESHOLD = .5
@@ -62,6 +64,9 @@ class MediaPipe3d(RigidBody3D):
             end_i = connection[1]
 
             if start_i in self.included and end_i in self.included:
+                if self.hide is True and (self._points[start_i, 2]>0 and self._points[end_i, 2]>0):
+                    continue
+
                 cv2.line(frame,
                          self._points[start_i, :2],
                          self._points[end_i, :2],
@@ -93,7 +98,6 @@ class MeshFace(MediaPipe3d):
         self.center_x0_line = (0,0)
         self.center_x1_line = (0,0)
 
-
     def find_rotation_point(self):
         xc00, xc01 = self.xc0_landmarks
         xc10, xc11 = self.xc1_landmarks
@@ -111,6 +115,15 @@ class MeshFace(MediaPipe3d):
         super().update_from_results(results)
         self.find_rotation_point()
 
+    def move_xy(self, new_xy):
+        xy_old = self.origin[:2]
+        self._points[:,:2] -= xy_old - new_xy
+        self.original = self._points.copy()
+        self.origin[:2] = new_xy
+
+
+
+
 def main():
     import otis.camera as camera
     import mediapipe as mp
@@ -124,7 +137,7 @@ def main():
                                         min_tracking_confidence=0.5
                                         )
 
-    mesh_face = MeshFace(dim=(1080, 1080))
+    mesh_face = MeshFace(dim=(1080, 1080), hide=True)
     i = 0
     j = 0
     while True:
@@ -153,17 +166,36 @@ def main():
 
 def main1():
     import os
-    file_name = 'mesh_face_4.npy'
+    file_name = 'static_forms/mesh_face/mesh_face_0.npy'
     file_name = os.path.join(os.path.dirname(__file__), file_name)
 
+    PERIOD = 3
     frame = np.zeros((1080, 1080, 3), dtype='uint8')
     mesh_face = MeshFace(points=file_name,
                          dim=(1080, 1080),
                          fps=30,
-                         periods=(0, 10, 0)
+                         periods=(0, PERIOD, 0),
+                         y_range = (-np.pi/4, np.pi/4),
+                         hide=True,
+
                          )
 
     mesh_face.find_rotation_point()
+    mesh_face.move_xy((540, 540))
+
+    mesh_face1 = MeshFace(points=file_name,
+                         dim=(1080, 1080),
+                         fps=30,
+                         periods=(0, PERIOD, 0),
+                         y_range = (-np.pi/4, np.pi/4),
+                         hide=True,
+
+                         )
+
+    mesh_face1.find_rotation_point()
+    mesh_face1.move_xy((540, 540))
+    mesh_face1.rotate_by(y=np.pi/2)
+    mesh_face1.update_original()
 
     sleeper = SmartSleeper(1/30)
 
@@ -171,7 +203,12 @@ def main1():
         frame[:,:,:] = 0
         mesh_face.periodic_rotate()
         mesh_face.write_connections(frame)
+
+        mesh_face1.periodic_rotate()
+        mesh_face1.write_connections(frame)
+
         cv2.imshow("", frame)
+        sleeper()
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
