@@ -97,9 +97,21 @@ class RigidBody3D:
         return self._points
 
     def periodic_rotate(self):
+        new_x = self._x + self.d_angles[0]
+        new_y = self._y + self.d_angles[1]
+        new_z = self._z + self.d_angles[2]
+
+        if new_x > self.x_range[1]:
+            new_x = self.x_range[1]
+            self.d_angles[0] *= -1
+        elif new_x < self.x_range[0]:
+            new_x = self.x_range[0]
+            self.d_angles[0] *= -1
+
         self._x += self.d_angles[0]
         self._y += self.d_angles[1]
         self._z += self.d_angles[2]
+
         self.rotate_to()
 
         return self._points

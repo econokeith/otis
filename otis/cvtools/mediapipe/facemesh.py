@@ -174,7 +174,7 @@ def main1():
         cv2.imshow("", frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-
+        sleeper()
     cv2.destroyAllWindows()
 
 if __name__=='__main__':
