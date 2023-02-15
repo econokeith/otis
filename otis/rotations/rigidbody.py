@@ -80,6 +80,9 @@ class RigidBody3D:
         self._points -= self.origin - new_origin
         self._origin = new_origin
 
+    def update_original(self):
+        self.original = self._points.copy()
+
     def resize(self, scale):
         self._points = ((self._points - self._origin) * scale ).astype(int)+ self._origin
 

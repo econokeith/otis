@@ -1,3 +1,6 @@
+# Copied from mediapipe code. Main reason is to allow this stuff to work without
+# loading or using mediapipe
+
 FACEMESH_TESSELATION = frozenset([
     (127, 34),  (34, 139),  (139, 127), (11, 0),    (0, 37),    (37, 11),
     (232, 231), (231, 120), (120, 232), (72, 37),   (37, 39),   (39, 72),
