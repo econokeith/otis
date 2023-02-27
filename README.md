@@ -77,15 +77,17 @@ the frame location of Taylor Swift's bounding box (when available) is used as a 
 - The **AssetMover** class provides movement, collision tracking, and basic physics (i.e. gravity, elasticity, etc) to 
 ScreenAssets
 
- ![bouncy_movers](./readme_gifs/bouncy3.gif)
+ ![bouncy_movers](./readme_gifs/bouncy_movers.gif)
 
 (find code [here](https://github.com/econokeith/otis/blob/master/examples/bouncy_movers.py))
 
 - The **AssetGroup** class is an extendable multi-asset container class to allow grouping and common movement of multiple Screen Assets.
 
 ## Camera Tracking
-OTIS includes a package for working controlling servo mounted cameras for camera tracking with either Rasperry Pi
+OTIS includes a package for working controlling servo mounted cameras for camera tracking with either Raspberry Pi
 or Arduino microcontrollers. 
 
+![camera_tracking](./readme_gifs/camera540.gif)
 
-Please, note that while OTIS works well with camera tracking, it requires additional dependencies to interact 
+Please, note that while OTIS works well with camera tracking, it requires additional dependencies to interact with the 
+individual microcontrollers
