@@ -12,24 +12,21 @@ class MediaPipe3d(RigidBody3D):
                  points=None,
                  dim = (1920, 1080),
                  hide = False,
-                 hide_dist = 100,
-                 n_points = 468,
-                 connections = None,
                  **kwargs):
 
-        if points is None:
-            _points = np.zeros((n_points, 3), dtype=int)
-        elif isinstance(points, np.ndarray):
-            assert points.shape == (n_points, 3)
-            _points = points
-        elif isinstance(points, str):
-            _points = np.load(points)
+        _points = np.load(points)
+        # if points is None:
+        #     _points = np.zeros((468, 3), dtype=int)
+        # elif isinstance(points, np.ndarray):
+        #     assert points.shape == (468, 3)
+        #     _points = points
+        # elif isinstance(points, str):
+        #     _points = np.load(str)
             
         super().__init__(points=_points, **kwargs)
 
         self.hide = hide
-        self.hide_dist = hide_dist
-        self.connections = connections
+        self.connections = FACEMESH_TESSELATION
         self.dim = misc.dimensions_function(dim)
         self._VISIBILITY_THRESHOLD = .5
         self._PRESENCE_THRESHOLD = .5
@@ -67,8 +64,7 @@ class MediaPipe3d(RigidBody3D):
             end_i = connection[1]
 
             if start_i in self.included and end_i in self.included:
-                if self.hide is True and (self._points[start_i, 2]>self.hide_dist
-                                          and self._points[end_i, 2]>self.hide_dist):
+                if self.hide is True and (self._points[start_i, 2]>0 and self._points[end_i, 2]>0):
                     continue
 
                 cv2.line(frame,
@@ -92,10 +88,8 @@ class MediaPipe3d(RigidBody3D):
 
 class MeshFace(MediaPipe3d):
 
-    def __init__(self, *args,
-                 connections = FACEMESH_TESSELATION,
-                 **kwargs):
-        super().__init__(*args, connections=connections, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.xc0_landmarks = (234, 454)
         self.xc1_landmarks = (93, 323)
         self.yc_landmarks = (10, 152)
@@ -127,6 +121,9 @@ class MeshFace(MediaPipe3d):
         self.original = self._points.copy()
         self.origin[:2] = new_xy
 
+
+
+
 def main():
     import otis.camera as camera
     import mediapipe as mp
@@ -135,12 +132,12 @@ def main():
     capture = camera.CameraPlayer(f_dim=(1080, 1080), c_dim=(1920, 1080), max_fps=10)
 
     mesh_finder = mp_face_mesh.FaceMesh(max_num_faces=1,
-                                        refine_landmarks=True,
+                                        refine_landmarks=False,
                                         min_detection_confidence=0.5,
                                         min_tracking_confidence=0.5
                                         )
 
-    mesh_face = MeshFace(dim=(1080, 1080), hide=True, n_radius=2, n_points=478)
+    mesh_face = MeshFace(dim=(1080, 1080), hide=True)
     i = 0
     j = 0
     while True:
@@ -155,12 +152,11 @@ def main():
             mesh_face.resize(2)
 
             mesh_face.write_connections(frame)
-            mesh_face.write_nodes(frame)
-            # i+=1
-            # if i % 15 == 0:
-            #     np.save(f'mesh_face_{j}.npy', mesh_face.points)
-            #     print(f'saved # {j}')
-            #     j+=1
+            i+=1
+            if i % 15 == 0:
+                np.save(f'mesh_face_{j}.npy', mesh_face.points)
+                print(f'saved # {j}')
+                j+=1
 
         capture.show()
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -170,7 +166,7 @@ def main():
 
 def main1():
     import os
-    file_name = 'static_forms/mesh_face/mesh_face_1.npy'
+    file_name = 'static_forms/mesh_face/mesh_face_0.npy'
     file_name = os.path.join(os.path.dirname(__file__), file_name)
 
     PERIOD = 3
@@ -178,10 +174,8 @@ def main1():
     mesh_face = MeshFace(points=file_name,
                          dim=(1080, 1080),
                          fps=30,
-                         periods=(PERIOD, PERIOD, PERIOD),
+                         periods=(0, PERIOD, 0),
                          y_range = (-np.pi/4, np.pi/4),
-                         n_color='w',
-                         n_radius=2,
                          hide=True,
 
                          )
@@ -192,9 +186,10 @@ def main1():
     mesh_face1 = MeshFace(points=file_name,
                          dim=(1080, 1080),
                          fps=30,
-                         periods=(0, PERIOD, PERIOD),
+                         periods=(0, PERIOD, 0),
                          y_range = (-np.pi/4, np.pi/4),
                          hide=True,
+
                          )
 
     mesh_face1.find_rotation_point()
@@ -208,27 +203,14 @@ def main1():
         frame[:,:,:] = 0
         mesh_face.periodic_rotate()
         mesh_face.write_connections(frame)
-        mesh_face.write_nodes(frame)
-        #
-        # mesh_face1.periodic_rotate()
-        # mesh_face1.write_connections(frame)
+
+        mesh_face1.periodic_rotate()
+        mesh_face1.write_connections(frame)
 
         cv2.imshow("", frame)
         sleeper()
-        wait_key = chr(cv2.waitKey(1) & 0xFF)
-
-        if wait_key=='q':
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-        elif wait_key == 'a':
-            mesh_face.rotate_by(y=-np.pi/180)
-        elif wait_key == 'd':
-            mesh_face.rotate_by(y=np.pi/180)
-        elif wait_key == 'w':
-            mesh_face.rotate_by(x=np.pi/180)
-        elif wait_key == 's':
-            mesh_face.rotate_by(x=-np.pi/180)
-        else:
-            pass
 
     cv2.destroyAllWindows()
 
