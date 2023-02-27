@@ -35,9 +35,6 @@ face_recognition isn't strictly necessary, but otis does require a computer visi
 OpenVino, etc) for face/object recognition and tracking. Each has pros and cons and the user is encouraged to use whichever 
 they feel most comfortable with. However, face_recognition is the easiest to use out-of-the-box, and I use it in some of my examples. 
 
-Also note that while OTIS works well with camera tracking, it does require additional servo controller software in order to 
-work with either an Arduino or Raspberry Pi microcontroller. 
-
 ## Display Assets
 ### Shapes
  
@@ -85,4 +82,10 @@ ScreenAssets
 (find code [here](https://github.com/econokeith/otis/blob/master/examples/bouncy_movers.py))
 
 - The **AssetGroup** class is an extendable multi-asset container class to allow grouping and common movement of multiple Screen Assets.
-- 
+
+## Camera Tracking
+OTIS includes a package for working controlling servo mounted cameras for camera tracking with either Rasperry Pi
+or Arduino microcontrollers. 
+
+
+Please, note that while OTIS works well with camera tracking, it requires additional dependencies to interact 

@@ -16,8 +16,8 @@ drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1, color=(0,255
 style = mp_drawing.DrawingSpec(color=(0,255,0), thickness=1)
 
 cap = cv2.VideoCapture(0)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, dim[0])
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, dim[1])
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
 tick = time.time()
 black_screen = np.zeros((1080, 1080, 3), dtype='uint8')
@@ -48,6 +48,7 @@ with mp_face_mesh.FaceMesh(
 
         if BLACK_SCREEN is True:
             image[:,:,:]=0
+
         if results.multi_face_landmarks:
             for face_landmarks in results.multi_face_landmarks:
                 mp_drawing.draw_landmarks(
@@ -57,20 +58,20 @@ with mp_face_mesh.FaceMesh(
                     landmark_drawing_spec=drawing_spec,
                     connection_drawing_spec=style
                 )
-        #                 mp_drawing.draw_landmarks(
-        #                     frame=frame,
-        #                     landmark_list=face_landmarks,
-        #                     connections=mp_face_mesh.FACEMESH_CONTOURS,
-        #                     landmark_drawing_spec=None,
-        #                     connection_drawing_spec=mp_drawing_styles
-        #                     .get_default_face_mesh_contours_style())
-        #                 mp_drawing.draw_landmarks(
-        #                     frame=frame,
-        #                     landmark_list=face_landmarks,
-        #                     connections=mp_face_mesh.FACEMESH_IRISES,
-        #                     landmark_drawing_spec=None,
-        #                     connection_drawing_spec=mp_drawing_styles
-        #                     .get_default_face_mesh_iris_connections_style())
+                # mp_drawing.draw_landmarks(
+                #     image=image,
+                #     landmark_list=face_landmarks,
+                #     connections=mp_face_mesh.FACEMESH_CONTOURS,
+                #     landmark_drawing_spec=None,
+                #     connection_drawing_spec=mp_drawing_styles
+                #     .get_default_face_mesh_contours_style())
+                # mp_drawing.draw_landmarks(
+                #     image=image,
+                #     landmark_list=face_landmarks,
+                #     connections=mp_face_mesh.FACEMESH_IRISES,
+                #     landmark_drawing_spec=None,
+                #     connection_drawing_spec=mp_drawing_styles
+                #     .get_default_face_mesh_iris_connections_style())
         # Flip the frame horizontally for a selfie-view display.
 
         image = cv2.flip(image, 1)
@@ -83,9 +84,9 @@ with mp_face_mesh.FaceMesh(
                     cv2.FONT_HERSHEY_SIMPLEX,
                     1, (0, 0, 255), 1)
         tick = tock
-        # cv2.resize(frame, (0,0), fx=2, fy=2)
 
-        cv2.imshow('hh', image)
+
+        cv2.imshow('hh', cv2.resize(image, (0,0), fx=2, fy=2))
 
         key_input = cv2.waitKey(1) & 0xFF
         if key_input == ord('1'):
